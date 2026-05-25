@@ -1,5 +1,7 @@
 import './globals.css'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Porra Mundial 2026',
   description: 'La porra definitiva del Mundial 2026 · USA · CAN · MEX',
