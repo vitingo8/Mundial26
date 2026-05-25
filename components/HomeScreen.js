@@ -72,7 +72,7 @@ function ScoreRow({ icon, label, pts }) {
       color: 'var(--muted)'
     }}>
       <span>{icon} {label}</span>
-      <span style={{ color: 'var(--accent)', fontWeight: 700, fontFamily: "'Barlow Condensed', sans-serif", fontSize: 16 }}>{pts} pts</span>
+      <span style={{ color: 'var(--accent-dark)', fontWeight: 700, fontFamily: "'Inter', sans-serif", fontSize: 16 }}>{pts} pts</span>
     </div>
   )
 }
@@ -93,27 +93,27 @@ const s = {
     fontSize: 24, animation: 'spin 8s linear infinite'
   },
   title: {
-    fontFamily: "'Barlow Condensed', sans-serif",
+    fontFamily: "'Inter', sans-serif",
     fontSize: 72, fontWeight: 900, lineHeight: 0.85,
     color: 'var(--text)', letterSpacing: 2, marginBottom: 12,
   },
   year: {
-    color: 'var(--accent)',
-    textShadow: '0 0 60px rgba(249,115,22,0.5)',
+    color: 'var(--accent-dark)',
+    textShadow: '0 4px 24px rgba(27,143,66,0.25)',
   },
   sub: {
     color: 'var(--muted)', fontSize: 13, letterSpacing: 3,
-    fontWeight: 600, fontFamily: "'Barlow Condensed', sans-serif"
+    fontWeight: 600, fontFamily: "'Inter', sans-serif"
   },
   actions: {
     display: 'flex', flexDirection: 'column', gap: 12, animationDelay: '0.1s'
   },
   btnCreate: {
-    background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+    background: 'linear-gradient(135deg, var(--accent-dark), var(--accent))',
     color: 'white', border: 'none', borderRadius: 14, padding: '16px 24px',
     fontSize: 17, fontWeight: 700, cursor: 'pointer', width: '100%',
-    boxShadow: '0 4px 28px var(--accent-glow)',
-    fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5,
+    boxShadow: '0 6px 24px var(--accent-glow)',
+    fontFamily: "'Inter', sans-serif", letterSpacing: 0.5,
   },
   divider: {
     display: 'flex', alignItems: 'center', gap: 12, color: 'var(--muted)',
@@ -127,19 +127,20 @@ const s = {
     flex: 1, background: 'var(--card)', border: '1.5px solid var(--border)',
     borderRadius: 12, padding: '13px 14px', color: 'var(--text)',
     fontSize: 16, outline: 'none', letterSpacing: 2,
-    textTransform: 'uppercase'
+    textTransform: 'uppercase', boxShadow: 'var(--card-shadow)'
   },
   btnJoin: {
-    background: 'var(--card2)', border: '1.5px solid var(--accent)',
-    color: 'var(--accent)', borderRadius: 12, padding: '13px 16px',
+    background: 'var(--card2)', border: '1.5px solid var(--accent-dark)',
+    color: 'var(--accent-dark)', borderRadius: 12, padding: '13px 16px',
     fontSize: 15, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap'
   },
   scoringCard: {
     background: 'var(--card)', border: '1px solid var(--border)',
-    borderRadius: 18, padding: 20, animationDelay: '0.2s'
+    borderRadius: 18, padding: 20, animationDelay: '0.2s',
+    boxShadow: 'var(--card-shadow)',
   },
   cardTitle: {
-    fontFamily: "'Barlow Condensed', sans-serif",
+    fontFamily: "'Inter', sans-serif",
     fontSize: 18, fontWeight: 800, marginBottom: 14, letterSpacing: 0.5
   },
   scoreGrid: { display: 'flex', flexDirection: 'column' },

@@ -1,12 +1,23 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import {
-  generateGroupMatches, KNOCKOUT_ROUNDS, SCORING,
+  KNOCKOUT_ROUNDS, SCORING,
   calcLeaderboard, isDeadlinePassed
 } from '../lib/gameData'
+import {
+  fetchWcMatchesClient,
+  transformGroupMatches,
+  transformKnockoutMatches,
+  formatMatchDateTime,
+  formatGroupLabel,
+  formatStageLabel,
+  matchStatusLabel,
+} from '../lib/footballData'
+import TeamCrest from './TeamCrest'
 
-const GROUP_MATCHES = generateGroupMatches()
+const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
+const UPCOMING_STATUSES = new Set(['SCHEDULED', 'TIMED'])
 
 export default function GroupDashboard({ group, user, refreshGroup, setCurrentUser, notify, onLeave }) {
   const [tab, setTab] = useState('group')
@@ -17,7 +28,13 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
   const [saving, setSaving] = useState(false)
   const [liveData, setLiveData] = useState([])
   const [apiStatus, setApiStatus] = useState('idle')
+  const [apiError, setApiError] = useState(null)
+  const [wcMatches, setWcMatches] = useState([])
+  const [wcLoading, setWcLoading] = useState(true)
   const [currentGroup, setCurrentGroup] = useState(group)
+
+  const groupMatches = useMemo(() => transformGroupMatches(wcMatches), [wcMatches])
+  const knockoutMatches = useMemo(() => transformKnockoutMatches(wcMatches), [wcMatches])
 
   const leaderboard = calcLeaderboard(currentGroup)
   const isAdmin = user.is_admin
@@ -30,11 +47,35 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
     if (updated) setCurrentGroup(updated)
   }
 
+  useEffect(() => {
+    let cancelled = false
+    async function loadWc() {
+      setWcLoading(true)
+      try {
+        const raw = await fetchWcMatchesClient()
+        if (!cancelled) setWcMatches(raw)
+      } catch (e) {
+        if (!cancelled) console.error('WC matches:', e.message)
+      } finally {
+        if (!cancelled) setWcLoading(false)
+      }
+    }
+    loadWc()
+    return () => { cancelled = true }
+  }, [])
+
   // Auto-refresh leaderboard every 60s
   useEffect(() => {
     const t = setInterval(handleRefresh, 60000)
     return () => clearInterval(t)
   }, [currentGroup.id])
+
+  useEffect(() => {
+    if (tab === 'live' && apiStatus === 'idle' && wcMatches.length > 0) {
+      setLiveData(wcMatches)
+      setApiStatus('ok')
+    }
+  }, [tab, wcMatches, apiStatus])
 
   async function savePredictions() {
     if (groupDeadlinePassed && predPhase === 'group') {
@@ -63,19 +104,15 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
 
   async function fetchLive() {
     setApiStatus('loading')
+    setApiError(null)
     try {
-      const res = await fetch('https://api.football-data.org/v4/competitions/WC/matches', {
-        headers: { 'X-Auth-Token': '' }
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setLiveData(data.matches || [])
-        setApiStatus('ok')
-      } else {
-        setApiStatus('unavailable')
-      }
-    } catch {
+      const raw = await fetchWcMatchesClient()
+      setWcMatches(raw)
+      setLiveData(raw)
+      setApiStatus('ok')
+    } catch (e) {
       setApiStatus('unavailable')
+      setApiError(e.message)
     }
   }
 
@@ -143,6 +180,9 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
             saving={saving} onSave={savePredictions}
             groupDeadlinePassed={groupDeadlinePassed}
             koDeadlinePassed={koDeadlinePassed}
+            groupMatches={groupMatches}
+            knockoutMatches={knockoutMatches}
+            wcLoading={wcLoading}
           />
         )}
 
@@ -151,7 +191,13 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
         )}
 
         {tab === 'live' && (
-          <LiveTab liveData={liveData} apiStatus={apiStatus} onFetch={fetchLive} />
+          <LiveTab
+            liveData={liveData}
+            apiStatus={apiStatus}
+            apiError={apiError}
+            onFetch={fetchLive}
+            wcLoading={wcLoading}
+          />
         )}
 
         {tab === 'admin' && isAdmin && (
@@ -160,6 +206,7 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
             setGroup={setCurrentGroup}
             refreshGroup={refreshGroup}
             notify={notify}
+            groupMatches={groupMatches}
           />
         )}
       </div>
@@ -202,7 +249,7 @@ function GroupTab({ group, leaderboard, shareUrl, onLeave }) {
 }
 
 // ─── PREDICTIONS TAB ──────────────────────────────────────────────────────────
-function PredictionsTab({ predPhase, setPredPhase, groupPreds, setGroupPreds, koPreds, setKoPreds, bonusPreds, setBonusPreds, saving, onSave, groupDeadlinePassed, koDeadlinePassed }) {
+function PredictionsTab({ predPhase, setPredPhase, groupPreds, setGroupPreds, koPreds, setKoPreds, bonusPreds, setBonusPreds, saving, onSave, groupDeadlinePassed, koDeadlinePassed, groupMatches, knockoutMatches, wcLoading }) {
 
   const phases = [
     { id: 'group', icon: '🏟️', label: 'Grupos', sub: '60%', locked: groupDeadlinePassed },
@@ -219,18 +266,23 @@ function PredictionsTab({ predPhase, setPredPhase, groupPreds, setGroupPreds, ko
             onClick={() => setPredPhase(p.id)}>
             <span style={{ fontSize: 20 }}>{p.icon}</span>
             <span style={s.phaseLabel}>{p.label}</span>
-            <span style={{ ...s.phaseSub, color: p.locked ? 'var(--red)' : 'var(--accent)' }}>
+            <span style={{ ...s.phaseSub, color: p.locked ? 'var(--red)' : 'var(--accent-dark)' }}>
               {p.locked ? '🔒' : p.sub}
             </span>
           </button>
         ))}
       </div>
 
+      {wcLoading && (
+        <div style={s.apiCard}>
+          <div style={s.apiMsg}>Cargando calendario FIFA 2026…</div>
+        </div>
+      )}
       {predPhase === 'group' && (
-        <GroupPhasePreds preds={groupPreds} setPreds={setGroupPreds} locked={groupDeadlinePassed} />
+        <GroupPhasePreds preds={groupPreds} setPreds={setGroupPreds} locked={groupDeadlinePassed} matches={groupMatches} />
       )}
       {predPhase === 'knockout' && (
-        <KnockoutPreds preds={koPreds} setPreds={setKoPreds} locked={koDeadlinePassed} />
+        <KnockoutPreds preds={koPreds} setPreds={setKoPreds} locked={koDeadlinePassed} matches={knockoutMatches} />
       )}
       {predPhase === 'bonuses' && (
         <BonusPreds preds={bonusPreds} setPreds={setBonusPreds} />
@@ -243,9 +295,9 @@ function PredictionsTab({ predPhase, setPredPhase, groupPreds, setGroupPreds, ko
   )
 }
 
-function GroupPhasePreds({ preds, setPreds, locked }) {
+function GroupPhasePreds({ preds, setPreds, locked, matches = [] }) {
   const byGroup = {}
-  GROUP_MATCHES.forEach(m => {
+  matches.forEach(m => {
     if (!byGroup[m.group]) byGroup[m.group] = []
     byGroup[m.group].push(m)
   })
@@ -257,7 +309,15 @@ function GroupPhasePreds({ preds, setPreds, locked }) {
   }
 
   const filled = Object.keys(preds).length
-  const total = GROUP_MATCHES.length
+  const total = matches.length
+
+  if (!matches.length) {
+    return (
+      <div style={s.apiCard}>
+        <div style={s.apiMsg}>No hay partidos de grupos. Comprueba FOOTBALL_DATA_API_KEY en el servidor.</div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -274,6 +334,8 @@ function GroupPhasePreds({ preds, setPreds, locked }) {
           {matches.map(m => (
             <MatchRow key={m.id}
               home={m.home} away={m.away}
+              homeCrest={m.homeCrest} awayCrest={m.awayCrest}
+              meta={formatMatchDateTime(m.utcDate) + (m.venue ? ` · ${m.venue}` : '')}
               homeVal={preds[m.id]?.home ?? ''}
               awayVal={preds[m.id]?.away ?? ''}
               onHome={v => setScore(m.id, 'home', v)}
@@ -287,18 +349,51 @@ function GroupPhasePreds({ preds, setPreds, locked }) {
   )
 }
 
-function KnockoutPreds({ preds, setPreds, locked }) {
+function KnockoutPreds({ preds, setPreds, locked, matches = [] }) {
   function setVal(id, key, val) {
     const v = key === 'home' || key === 'away' ? parseInt(val) : val
     if ((key === 'home' || key === 'away') && (isNaN(v) || v < 0)) return
     setPreds(p => ({ ...p, [id]: { ...p[id], [key]: v } }))
   }
 
+  const byRound = {}
+  matches.forEach(m => {
+    if (!byRound[m.roundId]) byRound[m.roundId] = { label: m.roundLabel, items: [] }
+    byRound[m.roundId].items.push(m)
+  })
+
+  if (matches.length > 0) {
+    return (
+      <div>
+        {locked && <div style={s.lockedBanner}>🔒 Plazo cerrado · Solo lectura</div>}
+        {Object.entries(byRound).map(([roundId, { label, items }]) => (
+          <div key={roundId} style={s.matchGroup}>
+            <div style={s.matchGroupHeader}>🏆 {label}</div>
+            {items.map(m => (
+              <div key={m.id}>
+                <MatchRow
+                  home={m.home} away={m.away}
+                  homeCrest={m.homeCrest} awayCrest={m.awayCrest}
+                  meta={formatMatchDateTime(m.utcDate) + (m.venue ? ` · ${m.venue}` : '')}
+                  homeVal={preds[m.id]?.home ?? ''}
+                  awayVal={preds[m.id]?.away ?? ''}
+                  onHome={v => setVal(m.id, 'home', v)}
+                  onAway={v => setVal(m.id, 'away', v)}
+                  locked={locked}
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div>
       {locked && <div style={s.lockedBanner}>🔒 Plazo cerrado · Solo lectura</div>}
       <div style={s.koNote}>
-        Introduce los equipos que crees que llegarán a cada ronda y el resultado.
+        Calendario eliminatorias no disponible. Usa predicción libre por ronda.
       </div>
       {KNOCKOUT_ROUNDS.map(round => (
         <div key={round.id} style={s.matchGroup}>
@@ -348,16 +443,25 @@ function BonusPreds({ preds, setPreds }) {
   )
 }
 
-function MatchRow({ home, away, homeVal, awayVal, onHome, onAway, locked }) {
+function MatchRow({ home, away, homeCrest, awayCrest, meta, homeVal, awayVal, onHome, onAway, locked }) {
   return (
-    <div style={s.matchRow}>
-      <span style={s.team}>{home}</span>
-      <div style={s.scoreBox}>
-        <input type="number" style={s.scoreIn} value={homeVal} onChange={e => onHome(e.target.value)} placeholder="-" disabled={locked} />
-        <span style={s.dash}>-</span>
-        <input type="number" style={s.scoreIn} value={awayVal} onChange={e => onAway(e.target.value)} placeholder="-" disabled={locked} />
+    <div style={s.matchRowWrap}>
+      <div style={s.matchRow}>
+        <div style={s.teamCell}>
+          <TeamCrest src={homeCrest} alt={home} size={22} />
+          <span style={s.team}>{home}</span>
+        </div>
+        <div style={s.scoreBox}>
+          <input type="number" style={s.scoreIn} value={homeVal} onChange={e => onHome(e.target.value)} placeholder="-" disabled={locked} />
+          <span style={s.dash}>-</span>
+          <input type="number" style={s.scoreIn} value={awayVal} onChange={e => onAway(e.target.value)} placeholder="-" disabled={locked} />
+        </div>
+        <div style={{ ...s.teamCell, justifyContent: 'flex-end' }}>
+          <span style={{ ...s.team, textAlign: 'right' }}>{away}</span>
+          <TeamCrest src={awayCrest} alt={away} size={22} />
+        </div>
       </div>
-      <span style={{ ...s.team, textAlign: 'right' }}>{away}</span>
+      {meta && <div style={s.matchMeta}>{meta}</div>}
     </div>
   )
 }
@@ -390,10 +494,10 @@ function LeaderboardTab({ leaderboard, onRefresh }) {
 }
 
 // ─── LIVE TAB ─────────────────────────────────────────────────────────────────
-function LiveTab({ liveData, apiStatus, onFetch }) {
+function LiveTab({ liveData, apiStatus, apiError, onFetch, wcLoading }) {
   const finished = liveData.filter(m => m.status === 'FINISHED')
-  const live = liveData.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED')
-  const upcoming = liveData.filter(m => m.status === 'SCHEDULED').slice(0, 10)
+  const live = liveData.filter(m => LIVE_STATUSES.has(m.status))
+  const upcoming = liveData.filter(m => UPCOMING_STATUSES.has(m.status)).slice(0, 15)
 
   return (
     <div style={s.tabContent}>
@@ -404,20 +508,25 @@ function LiveTab({ liveData, apiStatus, onFetch }) {
         </button>
       </div>
 
-      {apiStatus === 'idle' && (
+      {apiStatus === 'idle' && !wcLoading && liveData.length === 0 && (
         <div style={s.apiCard}>
-          <div style={s.apiMsg}>Pulsa "Actualizar" para cargar resultados del Mundial 2026</div>
-          <div style={s.apiSub}>Datos via football-data.org · Sin registro necesario</div>
+          <div style={s.apiMsg}>Pulsa "Actualizar" para cargar el calendario FIFA 2026</div>
+          <div style={s.apiSub}>Datos oficiales vía football-data.org (competición WC)</div>
+        </div>
+      )}
+      {wcLoading && apiStatus !== 'loading' && (
+        <div style={s.apiCard}>
+          <div style={s.apiMsg}>Cargando 104 partidos del Mundial…</div>
         </div>
       )}
       {apiStatus === 'unavailable' && (
-        <div style={{ ...s.apiCard, borderColor: 'rgba(251,191,36,0.3)' }}>
+        <div style={{ ...s.apiCard, borderColor: 'var(--yellow-border)' }}>
           <div style={{ color: 'var(--yellow)' }}>⚠️ API no disponible</div>
-          <div style={s.apiSub}>El Mundial 2026 empieza en junio 2026. Los datos aparecerán al inicio del torneo.</div>
+          <div style={s.apiSub}>{apiError || 'Configura FOOTBALL_DATA_API_KEY en Vercel (.env.local en local)'}</div>
         </div>
       )}
       {apiStatus === 'ok' && (
-        <div style={{ ...s.apiCard, borderColor: 'rgba(16,185,129,0.3)' }}>
+        <div style={{ ...s.apiCard, borderColor: 'var(--green-border)' }}>
           <div style={{ color: 'var(--green)' }}>✅ Datos actualizados</div>
         </div>
       )}
@@ -445,28 +554,50 @@ function LiveTab({ liveData, apiStatus, onFetch }) {
 }
 
 function LiveMatchCard({ match: m, highlight, upcoming }) {
+  const isUpcoming = upcoming || UPCOMING_STATUSES.has(m.status)
+  const home = m.homeTeam?.shortName || m.homeTeam?.name
+  const away = m.awayTeam?.shortName || m.awayTeam?.name
+  const groupInfo = m.group ? formatGroupLabel(m.group) : formatStageLabel(m.stage)
+
   return (
     <div style={{
       ...s.liveCard,
       ...(highlight ? { borderColor: 'var(--accent)', animation: 'glow 2s ease infinite' } : {})
     }}>
       <div style={s.liveTeams}>
-        <span style={s.liveTeam}>{m.homeTeam?.shortName || m.homeTeam?.name}</span>
-        <span style={s.liveScore}>
-          {upcoming
-            ? new Date(m.utcDate).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
-            : `${m.score?.fullTime?.home ?? '-'} - ${m.score?.fullTime?.away ?? '-'}`
-          }
-        </span>
-        <span style={{ ...s.liveTeam, textAlign: 'right' }}>{m.awayTeam?.shortName || m.awayTeam?.name}</span>
+        <div style={s.liveTeamSide}>
+          <TeamCrest src={m.homeTeam?.crest} alt={home} size={28} />
+          <span style={s.liveTeam}>{home}</span>
+        </div>
+        <div style={s.liveCenter}>
+          <span style={s.liveScore}>
+            {isUpcoming
+              ? formatMatchDateTime(m.utcDate)
+              : `${m.score?.fullTime?.home ?? '-'} - ${m.score?.fullTime?.away ?? '-'}`
+            }
+          </span>
+          {!isUpcoming && m.utcDate && (
+            <span style={s.liveTimeSub}>{formatMatchDateTime(m.utcDate)}</span>
+          )}
+        </div>
+        <div style={{ ...s.liveTeamSide, justifyContent: 'flex-end' }}>
+          <span style={{ ...s.liveTeam, textAlign: 'right' }}>{away}</span>
+          <TeamCrest src={m.awayTeam?.crest} alt={away} size={28} />
+        </div>
       </div>
-      <div style={s.liveMeta}>J{m.matchday} · {highlight ? '🟢 EN JUEGO' : upcoming ? '🔜 Próximo' : '✅ Finalizado'}</div>
+      <div style={s.liveMeta}>
+        {groupInfo}
+        {m.matchday ? ` · J${m.matchday}` : ''}
+        {m.venue ? ` · 📍 ${m.venue}` : ''}
+        {' · '}
+        {matchStatusLabel(m.status, highlight, isUpcoming)}
+      </div>
     </div>
   )
 }
 
 // ─── ADMIN TAB ────────────────────────────────────────────────────────────────
-function AdminTab({ group, setGroup, refreshGroup, notify }) {
+function AdminTab({ group, setGroup, refreshGroup, notify, groupMatches = [] }) {
   const [adminTab, setAdminTab] = useState('deadlines')
   const [groupDeadline, setGroupDeadline] = useState(group.group_deadline ? group.group_deadline.slice(0, 16) : '')
   const [koDeadline, setKoDeadline] = useState(group.knockout_deadline ? group.knockout_deadline.slice(0, 16) : '')
@@ -500,7 +631,7 @@ function AdminTab({ group, setGroup, refreshGroup, notify }) {
   }
 
   const byGroup = {}
-  GROUP_MATCHES.forEach(m => {
+  groupMatches.forEach(m => {
     if (!byGroup[m.group]) byGroup[m.group] = []
     byGroup[m.group].push(m)
   })
@@ -551,6 +682,8 @@ function AdminTab({ group, setGroup, refreshGroup, notify }) {
               {matches.map(m => (
                 <MatchRow key={m.id}
                   home={m.home} away={m.away}
+                  homeCrest={m.homeCrest} awayCrest={m.awayCrest}
+                  meta={formatMatchDateTime(m.utcDate)}
                   homeVal={results.group?.[m.id]?.home ?? ''}
                   awayVal={results.group?.[m.id]?.away ?? ''}
                   onHome={v => setGroupResult(m.id, 'home', v)}
@@ -605,8 +738,8 @@ function DeadlineBadge({ label, deadline, passed }) {
   return (
     <div style={{
       ...s.deadlineBadge,
-      borderColor: passed ? 'rgba(239,68,68,0.3)' : 'rgba(249,115,22,0.3)',
-      color: passed ? 'var(--red)' : 'var(--accent)'
+      borderColor: passed ? 'var(--red-border)' : 'var(--accent-glow)',
+      color: passed ? 'var(--red)' : 'var(--accent-dark)'
     }}>
       {passed ? '🔒' : '⏰'} {label}: {d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
     </div>
@@ -617,27 +750,28 @@ function DeadlineBadge({ label, deadline, passed }) {
 const s = {
   root: { minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 },
   header: {
-    background: 'rgba(8,8,16,0.95)', backdropFilter: 'blur(20px)',
-    borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 50
+    background: 'var(--glass)', backdropFilter: 'blur(20px)',
+    borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 50,
+    boxShadow: '0 4px 20px rgba(23, 70, 51, 0.06)'
   },
   headerTop: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
     padding: '14px 16px 8px', gap: 12
   },
   groupName: {
-    fontFamily: "'Barlow Condensed', sans-serif",
+    fontFamily: "'Inter', sans-serif",
     fontSize: 22, fontWeight: 900, letterSpacing: 0.5
   },
   groupMeta: { display: 'flex', gap: 8, marginTop: 2, flexWrap: 'wrap' },
   codeTag: {
     background: 'var(--accent-dim)', border: '1px solid var(--accent-glow)',
-    color: 'var(--accent)', borderRadius: 20, padding: '2px 10px',
+    color: 'var(--accent-dark)', borderRadius: 20, padding: '2px 10px',
     fontSize: 11, fontWeight: 700, letterSpacing: 1
   },
   userTag: { fontSize: 11, color: 'var(--muted)', alignSelf: 'center' },
   shareBtn: {
     background: 'var(--accent-dim)', border: '1px solid var(--accent-glow)',
-    color: 'var(--accent)', borderRadius: 10, padding: '8px 14px',
+    color: 'var(--accent-dark)', borderRadius: 10, padding: '8px 14px',
     fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0
   },
   deadlines: { display: 'flex', gap: 8, padding: '0 16px 8px', flexWrap: 'wrap' },
@@ -656,21 +790,21 @@ const s = {
     color: 'var(--muted)', padding: '8px 14px', cursor: 'pointer',
     fontSize: 18, flexShrink: 0, transition: 'all 0.2s'
   },
-  tabActive: { color: 'var(--accent)', borderBottomColor: 'var(--accent)' },
+  tabActive: { color: 'var(--accent-dark)', borderBottomColor: 'var(--accent)' },
   tabLabel: { fontSize: 10, fontWeight: 700, letterSpacing: 0.5 },
   content: { flex: 1, maxWidth: 640, width: '100%', margin: '0 auto', padding: '16px 16px 100px' },
   tabContent: { display: 'flex', flexDirection: 'column', gap: 14 },
   inviteCard: {
-    background: 'var(--accent-dim)', border: '1px solid var(--accent-glow)',
+    background: 'var(--accent-dim)', border: '1px solid var(--border-strong)',
     borderRadius: 14, padding: 14
   },
   inviteText: { fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 },
   shareUrl: {
-    color: 'var(--accent)', fontSize: 12, wordBreak: 'break-all',
+    color: 'var(--accent-dark)', fontSize: 12, wordBreak: 'break-all',
     marginTop: 4, fontWeight: 600
   },
   sectionTitle: {
-    fontFamily: "'Barlow Condensed', sans-serif",
+    fontFamily: "'Inter', sans-serif",
     fontSize: 17, fontWeight: 800, letterSpacing: 0.3, color: 'var(--text)'
   },
   participantCard: {
@@ -680,16 +814,16 @@ const s = {
   rank: { fontSize: 18, width: 28, textAlign: 'center', flexShrink: 0 },
   avatar: {
     width: 38, height: 38, borderRadius: '50%',
-    background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+    background: 'linear-gradient(135deg, var(--accent-dark), var(--accent))',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontWeight: 800, fontSize: 15, flexShrink: 0
   },
   pInfo: { flex: 1, minWidth: 0 },
   pName: { fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 },
   pMeta: { color: 'var(--muted)', fontSize: 11, marginTop: 1 },
-  pPts: { fontFamily: "'Barlow Condensed', sans-serif", fontSize: 20, fontWeight: 900, color: 'var(--accent)', flexShrink: 0 },
+  pPts: { fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 900, color: 'var(--accent-dark)', flexShrink: 0 },
   adminTag: {
-    background: 'rgba(249,115,22,0.15)', color: 'var(--accent)',
+    background: 'var(--accent-dim)', color: 'var(--accent-dark)',
     borderRadius: 8, padding: '1px 6px', fontSize: 10, fontWeight: 700
   },
   leaveBtn: {
@@ -707,7 +841,7 @@ const s = {
   phaseLabel: { fontSize: 11, fontWeight: 700, color: 'var(--text)', textAlign: 'center' },
   phaseSub: { fontSize: 10, fontWeight: 700 },
   lockedBanner: {
-    background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+    background: 'var(--red-dim)', border: '1px solid var(--red-border)',
     color: 'var(--red)', borderRadius: 10, padding: '8px 12px', fontSize: 13, fontWeight: 600
   },
   progressWrap: { display: 'flex', alignItems: 'center', gap: 10 },
@@ -716,31 +850,39 @@ const s = {
     borderRadius: 10, overflow: 'hidden'
   },
   progressFill: {
-    height: '100%', background: 'linear-gradient(90deg, var(--accent), var(--accent2))',
+    height: '100%', background: 'linear-gradient(90deg, var(--accent-dark), var(--accent2))',
     borderRadius: 10, transition: 'width 0.4s ease'
   },
   progressText: { fontSize: 12, color: 'var(--muted)', whiteSpace: 'nowrap' },
   matchGroup: {
     background: 'var(--card)', border: '1px solid var(--border)',
-    borderRadius: 12, overflow: 'hidden'
+    borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--card-shadow)'
   },
   matchGroupHeader: {
     background: 'var(--accent-dim)', borderBottom: '1px solid var(--border)',
     padding: '7px 12px', fontSize: 12, fontWeight: 800,
-    color: 'var(--accent)', letterSpacing: 1,
-    fontFamily: "'Barlow Condensed', sans-serif"
+    color: 'var(--accent-dark)', letterSpacing: 1,
+    fontFamily: "'Inter', sans-serif"
+  },
+  matchRowWrap: {
+    borderBottom: '1px solid var(--border)',
   },
   matchRow: {
     display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
-    borderBottom: '1px solid var(--border)'
   },
-  team: { flex: 1, fontSize: 12, fontWeight: 500, color: 'var(--text)' },
+  matchMeta: {
+    fontSize: 10, color: 'var(--muted)', padding: '0 12px 8px',
+  },
+  teamCell: {
+    flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0,
+  },
+  team: { flex: 1, fontSize: 12, fontWeight: 500, color: 'var(--text)', minWidth: 0 },
   scoreBox: { display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 },
   scoreIn: {
     width: 40, background: 'var(--bg)', border: '1px solid var(--border)',
     borderRadius: 8, padding: '5px 0', color: 'var(--text)',
     fontSize: 16, fontWeight: 700, textAlign: 'center', outline: 'none',
-    fontFamily: "'Barlow Condensed', sans-serif"
+    fontFamily: "'Inter', sans-serif"
   },
   dash: { color: 'var(--muted)', fontWeight: 700 },
   koNote: {
@@ -761,7 +903,7 @@ const s = {
     alignItems: 'center', gap: 8
   },
   bonusPts: {
-    background: 'var(--accent-dim)', color: 'var(--accent)',
+    background: 'var(--accent-dim)', color: 'var(--accent-dark)',
     borderRadius: 10, padding: '2px 8px', fontSize: 11, fontWeight: 700
   },
   input: {
@@ -770,12 +912,12 @@ const s = {
     fontSize: 14, outline: 'none', width: '100%', display: 'block'
   },
   saveBtn: {
-    background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+    background: 'linear-gradient(135deg, var(--accent-dark), var(--accent))',
     color: 'white', border: 'none', borderRadius: 12, padding: '14px 20px',
     fontSize: 15, fontWeight: 700, cursor: 'pointer', width: '100%',
     boxShadow: '0 4px 20px var(--accent-glow)', marginTop: 8,
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-    fontFamily: "'Barlow Condensed', sans-serif"
+    fontFamily: "'Inter', sans-serif"
   },
   lbHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   lbNote: {
@@ -793,12 +935,12 @@ const s = {
   },
   lbFirst: {
     border: '1px solid var(--accent)', background: 'var(--accent-dim)',
-    boxShadow: '0 0 20px var(--accent-glow)'
+    boxShadow: '0 4px 20px var(--accent-glow)'
   },
   lbRank: { fontSize: 18, width: 28, textAlign: 'center', flexShrink: 0 },
   lbAvatar: {
     width: 36, height: 36, borderRadius: '50%',
-    background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+    background: 'linear-gradient(135deg, var(--accent-dark), var(--accent))',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontWeight: 800, fontSize: 14, flexShrink: 0
   },
@@ -806,13 +948,13 @@ const s = {
   lbName: { fontWeight: 700, fontSize: 14 },
   lbBreak: { color: 'var(--muted)', fontSize: 11, marginTop: 1 },
   lbTotal: {
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: 22, fontWeight: 900, color: 'var(--accent)', flexShrink: 0
+    fontFamily: "'Inter', sans-serif",
+    fontSize: 22, fontWeight: 900, color: 'var(--accent-dark)', flexShrink: 0
   },
   liveHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   fetchBtn: {
     background: 'var(--card)', border: '1px solid var(--border)',
-    color: 'var(--accent)', borderRadius: 8, padding: '7px 12px',
+    color: 'var(--accent-dark)', borderRadius: 8, padding: '7px 12px',
     fontSize: 13, fontWeight: 700, cursor: 'pointer',
     display: 'flex', alignItems: 'center', gap: 6
   },
@@ -827,11 +969,14 @@ const s = {
     borderRadius: 12, padding: 12
   },
   liveTeams: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  liveTeam: { flex: 1, fontSize: 12, fontWeight: 600 },
+  liveTeamSide: { flex: 1, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 },
+  liveTeam: { fontSize: 12, fontWeight: 600, minWidth: 0 },
+  liveCenter: { display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, gap: 2 },
   liveScore: {
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: 20, fontWeight: 900, color: 'var(--accent)', textAlign: 'center', flexShrink: 0
+    fontFamily: "'Inter', sans-serif",
+    fontSize: 15, fontWeight: 800, color: 'var(--accent-dark)', textAlign: 'center',
   },
+  liveTimeSub: { fontSize: 10, color: 'var(--muted)' },
   liveMeta: { color: 'var(--muted)', fontSize: 11, textAlign: 'center', marginTop: 4 },
   adminTabs: { display: 'flex', gap: 6 },
   adminTab: {
@@ -841,7 +986,7 @@ const s = {
   },
   adminTabActive: {
     background: 'var(--accent-dim)', border: '1px solid var(--accent)',
-    color: 'var(--accent)'
+    color: 'var(--accent-dark)'
   },
   adminNote: {
     background: 'var(--card)', border: '1px solid var(--border)',

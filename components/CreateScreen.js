@@ -209,14 +209,15 @@ const s = {
   card: {
     background: 'var(--card)', border: '1px solid var(--border)',
     borderRadius: 20, padding: '28px 24px', width: '100%',
-    display: 'flex', flexDirection: 'column', gap: 18
+    display: 'flex', flexDirection: 'column', gap: 18,
+    boxShadow: 'var(--card-shadow)'
   },
   back: {
     background: 'transparent', border: 'none', color: 'var(--muted)',
     cursor: 'pointer', fontSize: 14, textAlign: 'left', padding: 0, fontWeight: 600
   },
   title: {
-    fontFamily: "'Barlow Condensed', sans-serif",
+    fontFamily: "'Inter', sans-serif",
     fontSize: 28, fontWeight: 900, color: 'var(--text)', margin: 0
   },
   field: { display: 'flex', flexDirection: 'column', gap: 6 },
@@ -227,12 +228,12 @@ const s = {
     fontSize: 15, outline: 'none', width: '100%',
   },
   btn: {
-    background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+    background: 'linear-gradient(135deg, var(--accent-dark), var(--accent))',
     color: 'white', border: 'none', borderRadius: 14, padding: '15px 24px',
     fontSize: 16, fontWeight: 700, cursor: 'pointer', width: '100%',
     boxShadow: '0 4px 24px var(--accent-glow)', marginTop: 4,
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-    fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5
+    fontFamily: "'Inter', sans-serif", letterSpacing: 0.5
   },
   spinner: {
     width: 18, height: 18, border: '2.5px solid rgba(255,255,255,0.3)',
@@ -243,10 +244,10 @@ const s = {
   checking: { fontSize: 12, color: 'var(--muted)', marginTop: 4 },
   preview: {
     fontSize: 13, color: 'var(--green)', marginTop: 4,
-    background: 'rgba(16,185,129,0.08)', borderRadius: 8, padding: '6px 10px'
+    background: 'var(--green-dim)', borderRadius: 8, padding: '6px 10px'
   },
   previewErr: {
     fontSize: 13, color: 'var(--red)', marginTop: 4,
-    background: 'rgba(239,68,68,0.08)', borderRadius: 8, padding: '6px 10px'
+    background: 'var(--red-dim)', borderRadius: 8, padding: '6px 10px'
   }
 }

@@ -188,18 +188,18 @@ function BgDecor() {
     <>
       <div style={{
         position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
-        backgroundImage: `linear-gradient(rgba(249,115,22,0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(249,115,22,0.03) 1px, transparent 1px)`,
+        backgroundImage: `linear-gradient(rgba(27,143,66,0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(27,143,66,0.06) 1px, transparent 1px)`,
         backgroundSize: '48px 48px'
       }} />
       <div style={{
         position: 'fixed', width: 700, height: 700, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(249,115,22,0.07) 0%, transparent 65%)',
+        background: 'radial-gradient(circle, rgba(132,204,22,0.18) 0%, transparent 65%)',
         top: -250, right: -250, zIndex: 0, pointerEvents: 'none'
       }} />
       <div style={{
         position: 'fixed', width: 500, height: 500, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 65%)',
+        background: 'radial-gradient(circle, rgba(27,143,66,0.12) 0%, transparent 65%)',
         bottom: -150, left: -150, zIndex: 0, pointerEvents: 'none'
       }} />
     </>
@@ -211,9 +211,9 @@ function Notification({ msg, type }) {
     <div style={{
       position: 'fixed', top: 20, right: 16, left: 16, zIndex: 9999,
       maxWidth: 400, margin: '0 auto',
-      background: type === 'error' ? 'var(--red)' : type === 'warning' ? '#d97706' : 'var(--green)',
+      background: type === 'error' ? 'var(--red)' : type === 'warning' ? 'var(--warning)' : 'var(--green)',
       color: 'white', padding: '14px 18px', borderRadius: 14,
-      fontWeight: 700, fontSize: 14, boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+      fontWeight: 700, fontSize: 14, boxShadow: 'var(--shadow-soft)',
       animation: 'slideDown 0.3s ease',
       display: 'flex', alignItems: 'center', gap: 8
     }}>
