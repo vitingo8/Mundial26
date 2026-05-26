@@ -27,9 +27,9 @@ export default function BestThirdPlacesTable({ rows, combinationKey }) {
               <th scope="col">Grupo</th>
               <th scope="col">Equipo</th>
               <th scope="col" title="Puntos">Pts</th>
-              <th scope="col" title="Diferencia de goles">DG</th>
-              <th scope="col" title="Goles a favor">GF</th>
-              <th scope="col" title="Partidos jugados">PJ</th>
+              <th scope="col" className="bt-col-dg" title="Diferencia de goles">DG</th>
+              <th scope="col" className="bt-col-gf" title="Goles a favor">GF</th>
+              <th scope="col" className="bt-col-pj" title="Partidos jugados">PJ</th>
             </tr>
           </thead>
           <tbody>
@@ -45,9 +45,9 @@ export default function BestThirdPlacesTable({ rows, combinationKey }) {
                   <span>{row.name}</span>
                 </td>
                 <td>{row.pts}</td>
-                <td>{row.gd > 0 ? `+${row.gd}` : row.gd}</td>
-                <td>{row.gf}</td>
-                <td>{row.pj}</td>
+                <td className="bt-col-dg">{row.gd > 0 ? `+${row.gd}` : row.gd}</td>
+                <td className="bt-col-gf">{row.gf}</td>
+                <td className="bt-col-pj">{row.pj}</td>
               </tr>
             ))}
           </tbody>

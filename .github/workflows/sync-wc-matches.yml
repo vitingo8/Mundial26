@@ -1,0 +1,41 @@
+# Sincroniza resultados a Supabase solo en ventanas de partido (calendario en código).
+# Fuera de pitido→+2h10: sale sin llamar a football-data.org. Cron mínimo: 5 min.
+name: Sync WC matches
+
+on:
+  schedule:
+    # Cada 5 min (mínimo en GitHub). El script sale en segundos si no hay partido en ventana.
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Forzar sync (ignorar ventana de partido)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Sync si hay partido en ventana
+        env:
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          ARGS=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.force }}" = "true" ]; then
+            ARGS="--force"
+          fi
+          node scripts/sync-wc-github.mjs $ARGS

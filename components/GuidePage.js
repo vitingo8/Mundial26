@@ -130,7 +130,7 @@ export default function GuidePage() {
               <strong>Unirse con enlace</strong>
               <span>
                 Si alguien te manda un enlace de invitación, al abrirlo la app ya sabe el código
-                del grupo; solo completas tu perfil si eres nuevo.
+                del grupo; solo Todos tu perfil si eres nuevo.
               </span>
             </li>
           </ol>
@@ -245,7 +245,7 @@ export default function GuidePage() {
             <FeatureCard
               icon="bolt"
               title="Eliminatorias (40%)"
-              text="Partidos reales del Mundial desde dieciseisavos hasta la final. Es independiente de tu bracket de Inicio: aquí predices los partidos oficiales del calendario."
+              text="Partidos reales del Mundial desde dieciseisavos hasta la final. Si predices empate (p. ej. 1-1), elige quién pasa: +1 pt extra si aciertas el clasificado (da igual prórroga o penaltis)."
             />
             <FeatureCard
               icon="star"
@@ -258,11 +258,11 @@ export default function GuidePage() {
           </div>
           <ul className="guia-steps" style={{ marginTop: '0.5rem' }}>
             <li>
-              <strong>Diaria</strong>
+              <strong>Día</strong>
               <span>Partidos agrupados por día de jornada.</span>
             </li>
             <li>
-              <strong>Completa</strong>
+              <strong>Todo</strong>
               <span>Todo el calendario de la fase en una lista.</span>
             </li>
             <li>
@@ -292,11 +292,11 @@ export default function GuidePage() {
             </p>
             <p>
               Puedes alternar entre <strong>fase de grupos</strong> y <strong>eliminatorias</strong>,
-              y usar las mismas vistas Diaria / Completa / Clasificación.
+              y usar las mismas vistas Día / Todo / Clasificación.
             </p>
             <p>
               Si tocas un partido, la app te lleva a la Porra en ese encuentro para revisar o
-              completar tu predicción (si el plazo sigue abierto).
+              Todor tu predicción (si el plazo sigue abierto).
             </p>
           </div>
           <Tip>
@@ -381,6 +381,10 @@ export default function GuidePage() {
             <div className="guia-score-row">
               <span>Marcador exacto (bonus, suma al acertar G/E/P)</span>
               <span>+{SCORING.exactScore} pts</span>
+            </div>
+            <div className="guia-score-row">
+              <span>Eliminatorias: acierto quién pasa (si predijiste empate)</span>
+              <span>+{SCORING.knockoutAdvance} pt</span>
             </div>
             <div className="guia-score-row">
               <span>Máximo goleador</span>

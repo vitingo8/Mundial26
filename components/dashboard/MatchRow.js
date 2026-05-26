@@ -1,83 +1,337 @@
 'use client'
+
+
+
 import { useRef } from 'react'
+
 import TeamCrest from '../TeamCrest'
+
 import { formatMatchKickoff, formatMatchShortDate } from '../../lib/matchSchedule'
+
 import { focusAwayInRow, focusNextMatchHomeScore } from '../../lib/scheduleScoreFocus'
+
 import ScoreInput from './ScoreInput'
 
-export default function MatchRow({
-  home,
-  away,
-  homeCrest,
-  awayCrest,
-  utcDate,
-  homeVal,
-  awayVal,
-  onHome,
-  onAway,
-  locked,
-  matchRef,
-  readOnly = false,
-  compact = false,
-  showMatchDate = false,
-}) {
-  const rowRef = useRef(null)
-  const kickoff = formatMatchKickoff(utcDate)
-  const matchDate = formatMatchShortDate(utcDate)
-  const crestSize = compact ? 22 : 28
+import { needsKnockoutAdvancePick } from '../../lib/knockoutAdvances'
 
-  function setRowRef(el) {
-    rowRef.current = el
-    if (matchRef) matchRef(el)
+
+
+function TeamBlock({
+
+  side,
+
+  name,
+
+  crest,
+
+  crestSize,
+
+  pickable,
+
+  eliminated,
+
+  onPick,
+
+  locked,
+
+}) {
+
+  const className = [
+
+    'schedule-match-team',
+
+    `schedule-match-team--${side}`,
+
+    pickable ? 'schedule-match-team--pick' : '',
+
+    eliminated ? 'schedule-match-team--out' : '',
+
+  ].filter(Boolean).join(' ')
+
+
+
+  const inner = (
+
+    <>
+
+      <TeamCrest src={crest} alt={name} size={crestSize} />
+
+      <span className="schedule-match-team-name">{name}</span>
+
+    </>
+
+  )
+
+
+
+  if (!pickable) {
+
+    return <div className={className}>{inner}</div>
+
   }
 
+
+
   return (
-    <div
-      className={`schedule-match-row${compact ? ' schedule-match-row--compact' : ''}`}
-      ref={setRowRef}
+
+    <button
+
+      type="button"
+
+      className={className}
+
+      disabled={locked}
+
+      aria-pressed={!eliminated}
+
+      aria-label={eliminated ? `${name} eliminado` : `${name} pasa de ronda`}
+
+      onClick={() => onPick(side)}
+
     >
-      <div className="schedule-match-team schedule-match-team--home">
-        <TeamCrest src={homeCrest} alt={home} size={crestSize} />
-        <span className="schedule-match-team-name">{home}</span>
-      </div>
-      <div className="schedule-match-center">
-        {readOnly ? (
-          <span className="schedule-match-time">{kickoff}</span>
-        ) : (
-          <>
-            <div className="schedule-match-scores">
-              <ScoreInput
-                value={homeVal}
-                onChange={onHome}
-                disabled={locked}
-                ariaLabel={`Goles ${home}`}
-                scoreSide="home"
-                onFilled={() => focusAwayInRow(rowRef.current)}
-              />
-              <ScoreInput
-                value={awayVal}
-                onChange={onAway}
-                disabled={locked}
-                ariaLabel={`Goles ${away}`}
-                scoreSide="away"
-                onFilled={() => focusNextMatchHomeScore(rowRef.current)}
-              />
-            </div>
-            {showMatchDate ? (
-              <span className="schedule-match-datetime">
-                <span className="schedule-match-date">{matchDate}</span>
-                <span className="schedule-match-kickoff">{kickoff}</span>
-              </span>
-            ) : (
-              <span className="schedule-match-kickoff">{kickoff}</span>
-            )}
-          </>
-        )}
-      </div>
-      <div className="schedule-match-team schedule-match-team--away">
-        <TeamCrest src={awayCrest} alt={away} size={crestSize} />
-        <span className="schedule-match-team-name">{away}</span>
-      </div>
-    </div>
+
+      {inner}
+
+    </button>
+
   )
+
 }
+
+
+
+export default function MatchRow({
+
+  home,
+
+  away,
+
+  homeCrest,
+
+  awayCrest,
+
+  utcDate,
+
+  matchNumber,
+
+  fifaMatchLabel,
+
+  knockoutMatchupLabel,
+
+  homeVal,
+
+  awayVal,
+
+  onHome,
+
+  onAway,
+
+  locked,
+
+  matchRef,
+
+  readOnly = false,
+
+  compact = false,
+
+  showMatchDate = false,
+
+  advancesVal,
+
+  onAdvance,
+
+  knockoutAdvance = false,
+
+}) {
+
+  const rowRef = useRef(null)
+
+  const kickoff = formatMatchKickoff(utcDate)
+
+  const matchDate = formatMatchShortDate(utcDate)
+
+  const crestSize = compact ? 22 : 28
+
+  const matchTag = fifaMatchLabel || (matchNumber != null ? `Partido ${matchNumber}` : null)
+
+  const slotLine = knockoutMatchupLabel || null
+
+  const predRow = {
+
+    home: homeVal === '' ? null : Number(homeVal),
+
+    away: awayVal === '' ? null : Number(awayVal),
+
+    advances: advancesVal,
+
+  }
+
+  const pickAdvance =
+
+    knockoutAdvance && !readOnly && needsKnockoutAdvancePick(predRow) && onAdvance
+
+
+
+  function setRowRef(el) {
+
+    rowRef.current = el
+
+    if (matchRef) matchRef(el)
+
+  }
+
+
+
+  return (
+
+    <div
+
+      className={`schedule-match-row${compact ? ' schedule-match-row--compact' : ''}${pickAdvance ? ' schedule-match-row--pick-advance' : ''}`}
+
+      ref={setRowRef}
+
+    >
+
+      <TeamBlock
+
+        side="home"
+
+        name={home}
+
+        crest={homeCrest}
+
+        crestSize={crestSize}
+
+        pickable={!!pickAdvance}
+
+        eliminated={pickAdvance && advancesVal === 'away'}
+
+        onPick={onAdvance}
+
+        locked={locked}
+
+      />
+
+      <div
+        className={`schedule-match-center${knockoutAdvance && !readOnly ? ' schedule-match-center--knockout' : ''}`}
+      >
+
+        {matchTag ? (
+
+          <span className="schedule-match-number" title={slotLine ? `${matchTag} · ${slotLine}` : matchTag}>
+
+            {matchTag}
+
+          </span>
+
+        ) : null}
+
+        {slotLine ? (
+
+          <span className="schedule-match-slots">{slotLine}</span>
+
+        ) : null}
+
+        {readOnly ? (
+
+          <span className="schedule-match-time">{kickoff}</span>
+
+        ) : (
+
+          <>
+
+            <div className="schedule-match-scores">
+
+              <ScoreInput
+
+                value={homeVal}
+
+                onChange={onHome}
+
+                disabled={locked}
+
+                ariaLabel={`Goles ${home}`}
+
+                scoreSide="home"
+
+                onFilled={() => focusAwayInRow(rowRef.current)}
+
+              />
+
+              <ScoreInput
+
+                value={awayVal}
+
+                onChange={onAway}
+
+                disabled={locked}
+
+                ariaLabel={`Goles ${away}`}
+
+                scoreSide="away"
+
+                onFilled={() => focusNextMatchHomeScore(rowRef.current)}
+
+              />
+
+            </div>
+
+            {showMatchDate ? (
+
+              <span className="schedule-match-datetime">
+
+                <span className="schedule-match-date">{matchDate}</span>
+
+                <span className="schedule-match-kickoff">{kickoff}</span>
+
+              </span>
+
+            ) : (
+
+              <span className="schedule-match-kickoff">{kickoff}</span>
+
+            )}
+
+            {knockoutAdvance && !readOnly ? (
+              <p
+                className={`schedule-match-advance-hint${pickAdvance ? ' schedule-match-advance-hint--visible' : ''}`}
+                role={pickAdvance ? 'status' : undefined}
+                aria-hidden={!pickAdvance}
+              >
+                Toca el equipo que pasa
+              </p>
+            ) : null}
+
+          </>
+
+        )}
+
+      </div>
+
+      <TeamBlock
+
+        side="away"
+
+        name={away}
+
+        crest={awayCrest}
+
+        crestSize={crestSize}
+
+        pickable={!!pickAdvance}
+
+        eliminated={pickAdvance && advancesVal === 'home'}
+
+        onPick={onAdvance}
+
+        locked={locked}
+
+      />
+
+    </div>
+
+  )
+
+}
+
+

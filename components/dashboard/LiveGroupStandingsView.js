@@ -11,6 +11,7 @@ export default function LiveGroupStandingsView({
   apiMatches = [],
   userPreds = {},
   onGoToPrediction,
+  onOpenMatch,
 }) {
   const rawById = useMemo(() => indexApiMatches(apiMatches), [apiMatches])
   const officialScores = useMemo(
@@ -75,6 +76,7 @@ export default function LiveGroupStandingsView({
                   compact
                   showMatchDate
                   onGoToPrediction={onGoToPrediction ? () => onGoToPrediction(m.id) : undefined}
+                  onOpenDetail={onOpenMatch ? () => onOpenMatch(m) : undefined}
                 />
               )
             })}

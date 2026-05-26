@@ -26,8 +26,9 @@ export default function Page() {
     const screenParam = params.get('screen')
 
     async function init() {
+      const atHome = typeof window !== 'undefined' && sessionStorage.getItem('porra_at_home')
       const savedSession = localStorage.getItem('porra_session')
-      if (savedSession) {
+      if (savedSession && !atHome) {
         try {
           const { groupId, userId } = JSON.parse(savedSession)
           if (code && code !== groupId) {
@@ -95,6 +96,7 @@ export default function Page() {
       if (group && participants) {
         const user = participants.find(p => p.id === userId)
         if (user) {
+          if (typeof window !== 'undefined') sessionStorage.removeItem('porra_at_home')
           setCurrentGroup({
             ...group,
             participants: Object.fromEntries(participants.map(p => [p.id, p])),
@@ -117,14 +119,42 @@ export default function Page() {
     localStorage.setItem('porra_session', JSON.stringify({ groupId, userId }))
   }
 
+  function goToHome() {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('porra_at_home', '1')
+    }
+    setCurrentGroup(null)
+    setCurrentUser(null)
+    setScreen('home')
+  }
+
   function clearSession() {
     if (typeof window !== 'undefined' && !window.confirm(
       '¿Salir del grupo? Tu porra sigue guardada. Vuelve entrando tu email en inicio.'
     )) return
     localStorage.removeItem('porra_session')
+    if (typeof window !== 'undefined') sessionStorage.removeItem('porra_at_home')
     setCurrentGroup(null)
     setCurrentUser(null)
     setScreen('home')
+  }
+
+  function enterDashboard(group, user) {
+    if (typeof window !== 'undefined') sessionStorage.removeItem('porra_at_home')
+    setCurrentGroup(group)
+    setCurrentUser(user)
+    setScreen('dashboard')
+  }
+
+  async function switchGroup(groupId, userId) {
+    saveSession(groupId, userId)
+    const ok = await restoreSession(groupId, userId)
+    if (ok) {
+      await createWriteToken(groupId, userId)
+      notify('Grupo cambiado')
+    } else {
+      notify('No se pudo cambiar de grupo', 'error')
+    }
   }
 
   async function refreshGroup(groupId) {
@@ -170,11 +200,9 @@ export default function Page() {
           setScreen={setScreen}
           notify={notify}
           onCreated={async (group, user) => {
-            setCurrentGroup(group)
-            setCurrentUser(user)
             saveSession(group.id, user.id)
             await createWriteToken(group.id, user.id)
-            setScreen('dashboard')
+            enterDashboard(group, user)
           }}
         />
       )}
@@ -212,14 +240,12 @@ export default function Page() {
           setScreen={setScreen}
           notify={notify}
           onJoined={async (group, user) => {
-            setCurrentGroup(group)
-            setCurrentUser(user)
             saveSession(group.id, user.id)
             await createWriteToken(group.id, user.id)
             setResumeUserId(null)
             setJoinEmail('')
             setJoinNewUser(false)
-            setScreen('dashboard')
+            enterDashboard(group, user)
           }}
         />
       )}
@@ -231,6 +257,8 @@ export default function Page() {
           setCurrentUser={setCurrentUser}
           notify={notify}
           onLeave={clearSession}
+          onGoHome={goToHome}
+          onSwitchGroup={switchGroup}
         />
       )}
     </div>

@@ -9,10 +9,12 @@
     "build": "next build",
     "postinstall": "npm run build:knockout",
     "start": "next start",
+    "build:fifa-catalog": "node scripts/build-group-stage-catalog.mjs",
     "build:third-place-map": "node scripts/build-third-place-map.mjs data/fifa-2026-third-place-combinations.txt",
     "build:knockout": "tsc -p lib/knockout/tsconfig.build.json",
     "test": "npm run build:knockout && node --test lib/knockout/knockout.test.mjs",
-    "test:all": "node --test lib/gameData.test.mjs lib/groupStandings.test.mjs lib/madridTime.test.mjs && npm test"
+    "test:all": "npm run build:knockout && node --test lib/gameData.test.mjs lib/groupStandings.test.mjs lib/madridTime.test.mjs lib/fifaMatchNumbers.test.mjs lib/knockoutSchedule.official.test.mjs lib/matchSyncWindow.test.mjs && npm test",
+    "sync:wc": "node scripts/sync-wc-github.mjs"
   },
   "devDependencies": {
     "@types/node": "25.9.1",

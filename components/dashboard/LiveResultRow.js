@@ -18,6 +18,7 @@ export default function LiveResultRow({
   userPred,
   compact = false,
   onGoToPrediction,
+  onOpenDetail,
   matchRef,
   showMatchDate = false,
 }) {
@@ -41,16 +42,17 @@ export default function LiveResultRow({
   const crestSize = compact ? 22 : 28
 
   const hasFooter = userPred || onGoToPrediction
+  const clickable = typeof onOpenDetail === 'function'
 
-  return (
-    <div className="schedule-match-row-wrap" ref={matchRef}>
-      <div
-        className={[
-          'schedule-match-row',
-          compact ? 'schedule-match-row--compact' : '',
-          isLive ? 'schedule-match-row--live' : '',
-        ].filter(Boolean).join(' ')}
-      >
+  const rowClass = [
+    'schedule-match-row',
+    compact ? 'schedule-match-row--compact' : '',
+    isLive ? 'schedule-match-row--live' : '',
+    clickable ? 'schedule-match-row--clickable' : '',
+  ].filter(Boolean).join(' ')
+
+  const rowInner = (
+    <>
       <div className="schedule-match-team schedule-match-team--home">
         <TeamCrest src={homeCrest} alt={home} size={crestSize} />
         <span className="schedule-match-team-name">{home}</span>
@@ -78,7 +80,23 @@ export default function LiveResultRow({
         <TeamCrest src={awayCrest} alt={away} size={crestSize} />
         <span className="schedule-match-team-name">{away}</span>
       </div>
-      </div>
+    </>
+  )
+
+  return (
+    <div className="schedule-match-row-wrap" ref={matchRef}>
+      {clickable ? (
+        <button
+          type="button"
+          className={rowClass}
+          onClick={onOpenDetail}
+          aria-label={`Ver detalle: ${home} contra ${away}`}
+        >
+          {rowInner}
+        </button>
+      ) : (
+        <div className={rowClass}>{rowInner}</div>
+      )}
       {hasFooter && (
         <div className="schedule-match-live-footer">
           {userPred && (
@@ -87,7 +105,11 @@ export default function LiveResultRow({
             </span>
           )}
           {onGoToPrediction && (
-            <button type="button" className="schedule-match-pred-link" onClick={onGoToPrediction}>
+            <button
+              type="button"
+              className="schedule-match-pred-link"
+              onClick={e => { e.stopPropagation(); onGoToPrediction() }}
+            >
               Ver mi predicción →
             </button>
           )}

@@ -8,7 +8,6 @@ import { isPhaseLocked, msUntilDeadline, formatCountdown } from '../lib/phaseLoc
 import { usePredictions } from '../hooks/usePredictions'
 import { useWcMatches } from '../hooks/useWcMatches'
 import { useAutoSyncResults } from '../hooks/useAutoSyncResults'
-import { countFinishedFromApi } from '../lib/syncResultsFromApi'
 
 import {
   KNOCKOUT_ROUNDS, SCORING, ALL_TEAMS, PROVISIONAL_TEAMS_NOTE,
@@ -16,13 +15,20 @@ import {
 } from '../lib/gameData'
 import {
   countFilledMatches, getUniqueTeamsFromMatches,
-  hasAnyPublishedResults, getDefaultPredPhase, getAdminTaskBadges,
+  getDefaultPredPhase, getAdminTaskBadges,
   enrichLeaderboardWithStats,
 } from '../lib/predictionUtils'
 import GroupStatsTable from './dashboard/GroupStatsTable'
+import ParticipantPredictionsSheet from './dashboard/ParticipantPredictionsSheet'
 import ProfileTab from './ProfileTab'
+import PredictionMirrorPanel from './PredictionMirrorPanel'
 import ParticipantDisplay, { ParticipantAvatar } from './ParticipantDisplay'
-import { readScheduleViewMode, writeScheduleViewMode, resizeLogoFile } from '../lib/participantProfile'
+import {
+  readScheduleViewMode,
+  writeScheduleViewMode,
+  resizeLogoFile,
+  LEAGUE_LOGO_FILE_MAX_BYTES,
+} from '../lib/participantProfile'
 import LeagueLogo from './LeagueLogo'
 import InstallAppButton from './InstallAppButton'
 import InviteButton from './InviteButton'
@@ -37,8 +43,21 @@ import GroupStandingsView from './dashboard/GroupStandingsView'
 import ScheduleViewTabs from './dashboard/ScheduleViewTabs'
 import LiveMatchDaySchedule from './dashboard/LiveMatchDaySchedule'
 import LiveGroupStandingsView from './dashboard/LiveGroupStandingsView'
+import MatchDetailSheet from './dashboard/MatchDetailSheet'
+import KnockoutBracketView from './dashboard/KnockoutBracketView'
 import PredictedKnockoutSection from './dashboard/PredictedKnockoutSection'
 import { buildInicioKnockoutSchedule } from '../lib/knockoutBridge'
+import { flattenKnockoutSchedule } from '../lib/knockoutBracketDisplay'
+import { patchKnockoutScore, patchKnockoutAdvance } from '../lib/knockoutAdvances'
+
+function isInicioKoMatchId(id) {
+  const s = String(id)
+  return s.startsWith('inicio-ko-') || s.startsWith('inicio-r32-')
+}
+
+function isInicioKoMatch(m) {
+  return m.isPredictedBracket || isInicioKoMatchId(m.id)
+}
 import {
   toMadridDatetimeLocalValue,
   fromMadridDatetimeLocal,
@@ -49,7 +68,9 @@ import {
   RoundHeader, TAB_ICONS, PHASE_ICONS, BONUS_FIELD_ICONS,
 } from './icons'
 
-export default function GroupDashboard({ group, user, refreshGroup, setCurrentUser, notify, onLeave }) {
+export default function GroupDashboard({
+  group, user, refreshGroup, setCurrentUser, notify, onLeave, onGoHome, onSwitchGroup,
+}) {
   const [tab, setTab] = useState('group')
   const [predPhase, setPredPhase] = useState('group')
   const [scrollToMatchId, setScrollToMatchId] = useState(null)
@@ -67,7 +88,7 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
   const {
     groupPreds, setGroupPreds, koPreds, setKoPreds,
     inicioKoPreds, setInicioKoPreds, bonusPreds, setBonusPreds,
-    saving, saveStatus, persistPredictions, flushSave,
+    saving, saveStatus, persistPredictions, flushSave, importPredictions,
   } = usePredictions({
     user, group: currentGroup, predPhase, tab, notify, setCurrentUser, isAdmin,
   })
@@ -130,6 +151,11 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
     setTab(next)
   }
 
+  async function handleGoHome() {
+    if (tab === 'predictions') await flushSave()
+    onGoHome?.()
+  }
+
   function goToPrediction(matchId) {
     setScrollToMatchId(String(matchId))
     if (groupMatches.find(x => String(x.id) === String(matchId))) setPredPhase('group')
@@ -176,6 +202,16 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
             <h1 className="dash-group-name" title={currentGroup.name}>{currentGroup.name}</h1>
           </div>
           <nav className="tab-bar-desktop dash-tabs" aria-label="Secciones">
+            <button
+              type="button"
+              className="dash-tab tab-btn-touch dash-tab--menu"
+              title="Menú inicial"
+              aria-label="Menú inicial"
+              onClick={() => void handleGoHome()}
+            >
+              <span className="dash-tab-icon" aria-hidden="true"><Icon name="bars3" /></span>
+              <span className="dash-tab-label" aria-hidden="true">Menú</span>
+            </button>
             {navTabs.map(t => (
               <button
                 key={t.id}
@@ -240,12 +276,26 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
             groupMatches={groupMatches} knockoutMatches={knockoutMatches} teamOptions={teamOptions.length ? teamOptions : ALL_TEAMS}
             wcLoading={wcLoading} groupPhase={currentGroup.phase}
             orphanGroupKeys={orphanGroupKeys} matchRefs={matchRefs}
-            deadlines={{ group: currentGroup.group_deadline, knockout: currentGroup.knockout_deadline }} />
+            deadlines={{ group: currentGroup.group_deadline, knockout: currentGroup.knockout_deadline }}
+            user={user}
+            groupId={currentGroup.id}
+            onApplyMirror={importPredictions}
+            onSwitchGroup={onSwitchGroup}
+            notify={notify}
+          />
         )}
         {tab === 'profile' && (
           <ProfileTab
             user={user}
             groupId={currentGroup.id}
+            currentPredictions={{
+              group: groupPreds,
+              knockout: koPreds,
+              inicioKnockout: inicioKoPreds,
+              bonuses: bonusPreds,
+            }}
+            onApplyMirror={importPredictions}
+            onSwitchGroup={onSwitchGroup}
             onSaved={handleProfileSaved}
             notify={notify}
           />
@@ -276,6 +326,16 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
         )}
       </main>
       <nav className="bottom-nav dash-main-nav" aria-label="Navegación principal">
+        <button
+          type="button"
+          className="bottom-nav-btn bottom-nav-btn--menu"
+          title="Menú inicial"
+          aria-label="Menú inicial"
+          onClick={() => void handleGoHome()}
+        >
+          <span className="bottom-nav-icon" aria-hidden="true"><Icon name="bars3" /></span>
+          <span className="bottom-nav-label" aria-hidden="true">Menú</span>
+        </button>
         {navTabs.map(t => (
           <button
             key={t.id}
@@ -301,11 +361,14 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
 // ─── GROUP TAB ────────────────────────────────────────────────────────────────
 function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, currentUserId }) {
   const [view, setView] = useState('ranking')
+  const [viewingParticipant, setViewingParticipant] = useState(null)
   const tableRows = useMemo(
     () => enrichLeaderboardWithStats(leaderboard, group),
     [leaderboard, group],
   )
-  const hasResults = hasAnyPublishedResults(group)
+  function openParticipantPreds(p) {
+    setViewingParticipant(p)
+  }
 
   return (
     <div className="dash-tab-panel">
@@ -333,15 +396,24 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
       {view === 'table' ? (
         <>
           <SectionTitle>Tabla de puntuación · {leaderboard.length}</SectionTitle>
-          <GroupStatsTable rows={tableRows} currentUserId={currentUserId} hasResults={hasResults} />
+          <p className="group-preds-hint">Toca un jugador para ver su clasificación y cuadro.</p>
+          <GroupStatsTable
+            rows={tableRows}
+            currentUserId={currentUserId}
+            onViewParticipant={openParticipantPreds}
+          />
         </>
       ) : (
         <>
           <SectionTitle>Participantes · {leaderboard.length}</SectionTitle>
+          <p className="group-preds-hint">Toca un jugador para ver su clasificación y cuadro.</p>
           {leaderboard.map((p, i) => (
-            <div
+            <button
               key={p.id}
-              className={`dash-player-row${p.id === currentUserId ? ' dash-player-row--you' : ''}${i === 0 ? ' dash-player-row--leader' : ''}`}
+              type="button"
+              className={`dash-player-row dash-player-row--clickable${p.id === currentUserId ? ' dash-player-row--you' : ''}${i === 0 ? ' dash-player-row--leader' : ''}`}
+              onClick={() => openParticipantPreds(p)}
+              aria-label={`Ver porra de ${p.team_name?.trim() || p.name}`}
             >
               <div className={`dash-rank${i > 2 ? ' dash-rank--num' : ''}`}>
                 <RankDisplay index={i} />
@@ -358,9 +430,18 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
                 {p.total}
                 <span className="dash-points-unit"> pts</span>
               </div>
-            </div>
+            </button>
           ))}
         </>
+      )}
+
+      {viewingParticipant && (
+        <ParticipantPredictionsSheet
+          participant={viewingParticipant}
+          groupMatches={groupMatches}
+          currentUserId={currentUserId}
+          onClose={() => setViewingParticipant(null)}
+        />
       )}
 
       <button type="button" className="dash-leave-card" onClick={onLeave}>Salir del grupo</button>
@@ -387,6 +468,7 @@ function PredictionsTab({
   groupDeadlinePassed, koDeadlinePassed,
   groupMatches, knockoutMatches, teamOptions, wcLoading, groupPhase, deadlines,
   orphanGroupKeys, matchRefs,
+  user, groupId, onApplyMirror, onSwitchGroup, notify,
 }) {
   const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
 
@@ -412,7 +494,7 @@ function PredictionsTab({
     {
       id: 'knockout',
       label: 'Eliminatorias',
-      sub: 'Calendario real · 40%',
+      sub: 'KO Real · 40%',
       locked: koDeadlinePassed,
       countdown: formatCountdown(msUntilDeadline(deadlines.knockout)),
     },
@@ -433,6 +515,22 @@ function PredictionsTab({
         </div>
       )}
 
+      {onApplyMirror && user?.email && (
+        <PredictionMirrorPanel
+          user={user}
+          currentGroupId={groupId}
+          currentPredictions={{
+            group: groupPreds,
+            knockout: koPreds,
+            inicioKnockout: inicioKoPreds,
+            bonuses: bonusPreds,
+          }}
+          onApplyToCurrent={onApplyMirror}
+          onSwitchGroup={onSwitchGroup}
+          notify={notify}
+        />
+      )}
+
       <div className="dash-phase-picker" role="tablist">
         {phases.map(p => (
           <button
@@ -444,14 +542,14 @@ function PredictionsTab({
             onClick={() => setPredPhase(p.id)}
           >
             <span className="dash-phase-icon"><Icon name={PHASE_ICONS[p.id]} /></span>
-            <span className="dash-phase-label-row">
+            <span className="dash-phase-body">
               <span className="dash-phase-label">{p.label}</span>
-              {!p.locked && p.countdown && p.countdown !== 'Plazo cerrado' && (
-                <span className="dash-phase-deadline-tag">{p.countdown}</span>
-              )}
-            </span>
-            <span className="dash-phase-sub" style={{ color: p.locked ? 'var(--dash-red)' : 'var(--dash-accent)' }}>
-              {p.locked ? 'Cerrado' : p.sub}
+              <span className="dash-phase-deadline" aria-hidden={p.locked || !p.countdown || p.countdown === 'Plazo cerrado'}>
+                {!p.locked && p.countdown && p.countdown !== 'Plazo cerrado' ? p.countdown : '\u00a0'}
+              </span>
+              <span className="dash-phase-sub" style={{ color: p.locked ? 'var(--dash-red)' : 'var(--dash-accent)' }}>
+                {p.locked ? 'Cerrado' : p.sub}
+              </span>
             </span>
           </button>
         ))}
@@ -464,6 +562,7 @@ function PredictionsTab({
           value={effectiveViewMode}
           onChange={handleScheduleViewMode}
           showGroups={predPhase === 'group'}
+          showBracket
         />
       )}
 
@@ -547,25 +646,17 @@ function GroupPhasePreds({
   )
 
   function handleScore(id, side, val) {
-    if (String(id).startsWith('inicio-ko-') || String(id).startsWith('inicio-r32-')) {
-      if (val === '' || val === undefined) {
-        setInicioKoPreds(p => {
-          const next = { ...p[id] }
-          delete next[side]
-          if (!Object.keys(next).length) {
-            const { [id]: _, ...rest } = p
-            return rest
-          }
-          return { ...p, [id]: next }
-        })
-        return
-      }
-      const v = parseInt(val, 10)
-      if (Number.isNaN(v) || v < 0 || v > 20) return
-      setInicioKoPreds(p => ({ ...p, [id]: { ...p[id], [side]: v } }))
+    if (isInicioKoMatchId(id)) {
+      setInicioKoPreds(p => patchKnockoutScore(p, id, side, val))
       return
     }
     setScore(id, side, val)
+  }
+
+  function handleAdvance(id, side) {
+    if (isInicioKoMatchId(id)) {
+      setInicioKoPreds(p => patchKnockoutAdvance(p, id, side))
+    }
   }
 
   function sectionKey(m) {
@@ -609,6 +700,16 @@ function GroupPhasePreds({
           matchRefs={matchRefs}
           onScore={setScore}
         />
+      ) : viewMode === 'bracket' ? (
+        <KnockoutBracketView
+          matches={inicioKo.schedule}
+          preds={inicioKoPreds}
+          onScore={handleScore}
+          onAdvance={handleAdvance}
+          locked={locked}
+          matchRefs={matchRefs}
+          error={inicioKo.error}
+        />
       ) : viewMode === 'daily' ? (
         <>
           {inicioKo.error && (
@@ -629,6 +730,8 @@ function GroupPhasePreds({
             locked={locked}
             matchRefs={matchRefs}
             onScore={handleScore}
+            onAdvance={handleAdvance}
+            advancePickerForMatch={isInicioKoMatch}
             schedulePhase="group"
             viewMode="daily"
             getSectionKey={sectionKey}
@@ -680,6 +783,8 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
 }
 
 function KnockoutPreds({ preds, setPreds, locked, matches = [], teamOptions = [], matchRefs, viewMode = 'daily' }) {
+  const scheduleMatches = useMemo(() => flattenKnockoutSchedule(matches), [matches])
+
   function setVal(id, key, val) {
     const v = key === 'home' || key === 'away' ? parseInt(val, 10) : val
     if ((key === 'home' || key === 'away') && (isNaN(v) || v < 0)) return
@@ -687,37 +792,45 @@ function KnockoutPreds({ preds, setPreds, locked, matches = [], teamOptions = []
   }
 
   function setScore(id, side, val) {
-    if (val === '' || val === undefined) {
-      setPreds(p => {
-        const next = { ...p[id] }
-        delete next[side]
-        if (!Object.keys(next).length) {
-          const { [id]: _, ...rest } = p
-          return rest
-        }
-        return { ...p, [id]: next }
-      })
-      return
-    }
-    setVal(id, side, val)
+    setPreds(p => patchKnockoutScore(p, id, side, val))
   }
 
-  if (matches.length > 0) {
+  function setAdvance(id, side) {
+    setPreds(p => patchKnockoutAdvance(p, id, side))
+  }
+
+  if (viewMode === 'bracket') {
     return (
-      <div>
+      <>
+        {locked && <div className="dash-banner dash-banner--lock">Plazo cerrado · Solo lectura</div>}
+        <KnockoutBracketView
+          matches={scheduleMatches}
+          preds={preds}
+          onScore={setScore}
+          onAdvance={setAdvance}
+          locked={locked}
+          matchRefs={matchRefs}
+        />
+      </>
+    )
+  }
+
+  if (scheduleMatches.length > 0) {
+    return (
+      <>
         {locked && <div className="dash-banner dash-banner--lock">Plazo cerrado · Solo lectura</div>}
         <MatchDaySchedule
-          matches={matches}
+          matches={scheduleMatches}
           preds={preds}
           locked={locked}
           matchRefs={matchRefs}
           onScore={setScore}
+          onAdvance={setAdvance}
           schedulePhase="knockout"
           viewMode={viewMode}
-          getSectionKey={m => m.roundId}
-          getSectionLabel={m => m.roundLabel}
+          flatMatchesPanel
         />
-      </div>
+      </>
     )
   }
 
@@ -835,6 +948,20 @@ function LiveTab({
 }) {
   const [livePhase, setLivePhase] = useState('group')
   const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
+  const [detailMatch, setDetailMatch] = useState(null)
+
+  function openMatchDetail(m) {
+    const preds = livePhase === 'group' ? userPreds?.group : userPreds?.knockout
+    setDetailMatch({
+      id: m.id,
+      home: m.home,
+      away: m.away,
+      homeCrest: m.homeCrest,
+      awayCrest: m.awayCrest,
+      utcDate: m.utcDate,
+      userPred: preds?.[m.id],
+    })
+  }
 
   function handleScheduleViewMode(mode) {
     setScheduleViewMode(mode)
@@ -915,15 +1042,25 @@ function LiveTab({
             value={effectiveViewMode}
             onChange={handleScheduleViewMode}
             showGroups={livePhase === 'group'}
+            showBracket={livePhase === 'knockout'}
           />
 
-          {!phaseMatches.length ? (
+          {!phaseMatches.length && effectiveViewMode !== 'bracket' ? (
             <div style={s.apiCard}>
               <div style={s.apiMsg}>No hay partidos en esta fase.</div>
             </div>
           ) : effectiveViewMode === 'groups' ? (
             <LiveGroupStandingsView
               matches={phaseMatches}
+              apiMatches={liveData}
+              userPreds={phasePreds}
+              onGoToPrediction={onGoToPrediction}
+              onOpenMatch={openMatchDetail}
+            />
+          ) : effectiveViewMode === 'bracket' ? (
+            <KnockoutBracketView
+              matches={phaseMatches}
+              readOnly
               apiMatches={liveData}
               userPreds={phasePreds}
               onGoToPrediction={onGoToPrediction}
@@ -934,6 +1071,7 @@ function LiveTab({
               apiMatches={liveData}
               userPreds={phasePreds}
               onGoToPrediction={onGoToPrediction}
+              onOpenMatch={openMatchDetail}
               schedulePhase={livePhase === 'group' ? 'group' : 'knockout'}
               viewMode={effectiveViewMode}
               getSectionKey={m => (livePhase === 'group' ? m.group || '—' : m.roundId)}
@@ -941,6 +1079,15 @@ function LiveTab({
             />
           )}
         </>
+      )}
+
+      {detailMatch && (
+        <MatchDetailSheet
+          matchId={detailMatch.id}
+          summary={detailMatch}
+          userPred={detailMatch.userPred}
+          onClose={() => setDetailMatch(null)}
+        />
       )}
     </div>
   )
@@ -953,7 +1100,15 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
     if (token) {
       const res = await fetch('/api/groups', { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ groupId: group.id, userId, token, updates }) })
-      if (!res.ok) { notify('Error al guardar', 'error'); return false }
+      if (!res.ok) {
+        let msg = 'Error al guardar'
+        try {
+          const body = await res.json()
+          if (body?.error) msg = body.error
+        } catch { /* ignore */ }
+        notify(msg, 'error')
+        return false
+      }
       notify('Guardado'); const g = await refreshGroup(group.id); if (g) setGroup(g); return true
     }
     const { error } = await supabase.from('porra_groups').update(updates).eq('id', group.id)
@@ -975,9 +1130,9 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
   const [actuals, setActuals] = useState(group.actuals || {})
   const [saving, setSaving] = useState(false)
 
-  const apiFinished = countFinishedFromApi(wcMatches)
   const storedGroup = Object.keys(group.results?.group || {}).length
   const storedKo = Object.keys(group.results?.knockout || {}).length
+  const hasStoredResults = storedGroup > 0 || storedKo > 0
 
   async function saveDeadlines() {
     setSaving(true)
@@ -1002,7 +1157,10 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
     e.target.value = ''
     if (!file) return
     try {
-      const dataUrl = await resizeLogoFile(file, { maxPx: 160 })
+      const dataUrl = await resizeLogoFile(file, {
+        maxPx: 160,
+        maxFileBytes: LEAGUE_LOGO_FILE_MAX_BYTES,
+      })
       setLeagueLogo(dataUrl)
     } catch (err) {
       notify(err.message || 'Error al procesar la imagen', 'error')
@@ -1043,16 +1201,9 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
         ))}
       </div>
 
-      <div className="dash-card admin-api-status">
-        <IconLabel icon="arrowPath" iconSize="sm">Resultados de partidos</IconLabel>
-        <p style={{ fontSize: 13, color: 'var(--dash-muted)', margin: '8px 0 0' }}>
-          Los marcadores de grupos y eliminatorias se sincronizan solos desde la API cuando los partidos finalizan.
-          Guardados: {storedGroup} grupos · {storedKo} eliminatorias
-          {apiFinished.group + apiFinished.knockout > 0 && (
-            <> · API: {apiFinished.group + apiFinished.knockout} finalizados detectados</>
-          )}
-        </p>
-      </div>
+      {!hasStoredResults && (
+        <p className="admin-sync-hint">Los resultados se actualizan solos al finalizar cada partido.</p>
+      )}
 
       {adminTab === 'settings' && (
         <div className="dash-card profile-form">
@@ -1085,7 +1236,7 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
                 </button>
               )}
             </div>
-            <p className="profile-field-hint">JPG o PNG, máx. 2 MB.</p>
+            <p className="profile-field-hint">JPG o PNG, máx. 5 MB.</p>
           </div>
           <button type="button" className="profile-save-btn" onClick={saveLeagueLogo} disabled={saving}>
             <SaveButtonLabel saving={saving}>Guardar configuración</SaveButtonLabel>
@@ -1132,10 +1283,16 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
             { id: 'mvp', label: 'MVP del torneo' },
           ].map(f => (
             <div key={f.id}>
-              <label style={s.label}><IconLabel icon={BONUS_FIELD_ICONS[f.id]} iconSize="sm">{f.label}</IconLabel></label>
-              <input style={s.input} placeholder="Nombre del jugador"
+              <label className="dash-field-label">
+                <IconLabel icon={BONUS_FIELD_ICONS[f.id]} iconSize="sm">{f.label}</IconLabel>
+              </label>
+              <input
+                type="text"
+                className="dash-field-input"
+                placeholder="Nombre del jugador"
                 value={actuals[f.id] || ''}
-                onChange={e => setActuals(a => ({ ...a, [f.id]: e.target.value }))} />
+                onChange={e => setActuals(a => ({ ...a, [f.id]: e.target.value }))}
+              />
             </div>
           ))}
           <button type="button" style={s.saveBtn} onClick={saveActuals} disabled={saving}>

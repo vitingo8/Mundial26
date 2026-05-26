@@ -39,7 +39,20 @@ export async function PATCH(request) {
     }
 
     const { error } = await supabase.from('porra_groups').update(patch).eq('id', groupId)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      const missingLeagueLogo =
+        error.code === '42703' && /league_logo/i.test(error.message || '')
+      if (missingLeagueLogo) {
+        return NextResponse.json(
+          {
+            error:
+              'Falta la columna league_logo en la base de datos. Ejecuta en Supabase → SQL Editor: ALTER TABLE porra_groups ADD COLUMN IF NOT EXISTS league_logo TEXT;',
+          },
+          { status: 503 },
+        )
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
     return NextResponse.json({ ok: true })
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 })

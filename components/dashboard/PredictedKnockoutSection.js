@@ -7,6 +7,7 @@ import {
   getKnockoutErrorHint,
 } from '../../lib/knockoutBridge'
 import MatchDaySchedule from './MatchDaySchedule'
+import { patchKnockoutScore, patchKnockoutAdvance } from '../../lib/knockoutAdvances'
 
 export default function PredictedKnockoutSection({
   groupMatches,
@@ -16,7 +17,7 @@ export default function PredictedKnockoutSection({
   locked,
   matchRefs,
   viewMode = 'daily',
-  /** En vista diaria el calendario unificado va en GroupPhasePreds */
+  /** En vista Día el calendario unificado va en GroupPhasePreds */
   hideSchedule = false,
 }) {
   const { schedule, error } = useMemo(
@@ -25,21 +26,11 @@ export default function PredictedKnockoutSection({
   )
 
   function setScore(id, side, val) {
-    if (val === '' || val === undefined) {
-      setInicioKoPreds(p => {
-        const next = { ...p[id] }
-        delete next[side]
-        if (!Object.keys(next).length) {
-          const { [id]: _, ...rest } = p
-          return rest
-        }
-        return { ...p, [id]: next }
-      })
-      return
-    }
-    const v = parseInt(val, 10)
-    if (Number.isNaN(v) || v < 0 || v > 20) return
-    setInicioKoPreds(p => ({ ...p, [id]: { ...p[id], [side]: v } }))
+    setInicioKoPreds(p => patchKnockoutScore(p, id, side, val))
+  }
+
+  function setAdvance(id, side) {
+    setInicioKoPreds(p => patchKnockoutAdvance(p, id, side))
   }
 
   if (!groupMatches.length) return null
@@ -65,10 +56,10 @@ export default function PredictedKnockoutSection({
           locked={locked}
           matchRefs={matchRefs}
           onScore={setScore}
+          onAdvance={setAdvance}
           schedulePhase="knockout"
           viewMode={viewMode}
-          getSectionKey={() => 'r32'}
-          getSectionLabel={() => 'Dieciseisavos previstos'}
+          flatMatchesPanel
         />
       )}
     </section>

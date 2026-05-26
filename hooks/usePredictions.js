@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { getStoredWriteToken } from '../lib/sessionToken'
 import { isPredPhaseEditable } from '../lib/phaseLock'
 import { normalizeInicioKoPreds } from '../lib/knockoutBridge'
+import { normalizePredictions } from '../lib/predictionMirror'
 
 const AUTOSAVE_MS = 2000
 
@@ -206,6 +207,21 @@ export function usePredictions({
     }
   }, [flushSave, saveStatus])
 
+  const importPredictions = useCallback(
+    async (raw, manual = true) => {
+      const norm = normalizePredictions(raw)
+      setGroupPreds(norm.group)
+      setKoPreds(norm.knockout)
+      setInicioKoPreds(norm.inicioKnockout)
+      setBonusPreds(norm.bonuses)
+      predsRef.current = norm
+      skipAutoSave.current = true
+      pendingRef.current = true
+      return runSave(manual)
+    },
+    [runSave],
+  )
+
   return {
     groupPreds,
     setGroupPreds,
@@ -219,5 +235,6 @@ export function usePredictions({
     saveStatus,
     persistPredictions,
     flushSave,
+    importPredictions,
   }
 }

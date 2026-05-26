@@ -5,9 +5,18 @@ import { supabase } from '../lib/supabase'
 import { getStoredWriteToken } from '../lib/sessionToken'
 import { resizeLogoFile } from '../lib/participantProfile'
 import { ParticipantAvatar } from './ParticipantDisplay'
+import PredictionMirrorPanel from './PredictionMirrorPanel'
 import { Icon } from './icons'
 
-export default function ProfileTab({ user, groupId, onSaved, notify }) {
+export default function ProfileTab({
+  user,
+  groupId,
+  currentPredictions,
+  onSaved,
+  notify,
+  onApplyMirror,
+  onSwitchGroup,
+}) {
   const [teamName, setTeamName] = useState(user.team_name || '')
   const [logo, setLogo] = useState(user.team_logo || '')
   const [saving, setSaving] = useState(false)
@@ -139,6 +148,17 @@ export default function ProfileTab({ user, groupId, onSaved, notify }) {
           {saving ? 'Guardando…' : 'Guardar perfil'}
         </button>
       </form>
+
+      {onApplyMirror && (
+        <PredictionMirrorPanel
+          user={user}
+          currentGroupId={groupId}
+          currentPredictions={currentPredictions}
+          onApplyToCurrent={onApplyMirror}
+          onSwitchGroup={onSwitchGroup}
+          notify={notify}
+        />
+      )}
     </div>
   )
 }

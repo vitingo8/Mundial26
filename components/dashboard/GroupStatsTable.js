@@ -11,18 +11,13 @@ const COLUMNS = [
   { key: 'mvpPts', label: 'MVP', title: 'MVP del torneo' },
 ]
 
-export default function GroupStatsTable({ rows, currentUserId, hasResults }) {
+export default function GroupStatsTable({ rows, currentUserId, onViewParticipant }) {
   if (!rows.length) {
     return <p className="dash-empty">Sin participantes todavía</p>
   }
 
   return (
     <div className="stats-table-wrap">
-      {!hasResults && (
-        <p className="stats-table-hint">
-          Los puntos se calculan cuando el organizador publique resultados.
-        </p>
-      )}
       <div className="stats-table-scroll" role="region" aria-label="Tabla de puntuación" tabIndex={0}>
         <table className="stats-table stats-table--compact">
           <thead>
@@ -37,10 +32,17 @@ export default function GroupStatsTable({ rows, currentUserId, hasResults }) {
           <tbody>
             {rows.map(row => {
               const isYou = row.id === currentUserId
+              const canView = typeof onViewParticipant === 'function'
+              const label = row.team_name?.trim() || row.name
               return (
                 <tr
                   key={row.id}
-                  className={`stats-table-row${isYou ? ' stats-table-row--you' : ''}${row.rank === 1 ? ' stats-table-row--leader' : ''}`}
+                  className={`stats-table-row${isYou ? ' stats-table-row--you' : ''}${row.rank === 1 ? ' stats-table-row--leader' : ''}${canView ? ' stats-table-row--clickable' : ''}`}
+                  onClick={canView ? () => onViewParticipant(row) : undefined}
+                  onKeyDown={canView ? e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onViewParticipant(row) } } : undefined}
+                  tabIndex={canView ? 0 : undefined}
+                  role={canView ? 'button' : undefined}
+                  aria-label={canView ? `Ver porra de ${label}` : undefined}
                 >
                   <td className="stats-table-rank">{row.rank}</td>
                   <td className="stats-table-name">

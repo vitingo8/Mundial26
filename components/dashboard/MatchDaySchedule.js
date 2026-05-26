@@ -9,11 +9,13 @@ import {
   todayDateKey,
 } from '../../lib/matchSchedule'
 
+import { groupMatchesByKnockoutRound } from '../../lib/knockoutBracketDisplay'
+
 import DayTabs from './DayTabs'
 import MatchRow from './MatchRow'
 
 /**
- * Calendario por días o vista completa (todos los partidos en una lista).
+ * Calendario por días o vista Todo (todos los partidos en una lista).
  * @param {'group'|'knockout'} schedulePhase
  * @param {'daily'|'full'} viewMode
  */
@@ -21,6 +23,7 @@ export default function MatchDaySchedule({
   matches,
   preds,
   onScore,
+  onAdvance,
   locked,
   matchRefs,
   getSectionLabel,
@@ -28,7 +31,16 @@ export default function MatchDaySchedule({
   filterMatch,
   schedulePhase = 'group',
   viewMode = 'daily',
+  /** Sin caja de fondo en el listado (p. ej. porra eliminatorias) */
+  flatMatchesPanel = false,
+  /** Si no se define, en fase knockout todos los partidos muestran selector en empate */
+  advancePickerForMatch,
 }) {
+  const knockoutAdvanceDefault = schedulePhase === 'knockout'
+  function showAdvancePicker(m) {
+    if (advancePickerForMatch) return advancePickerForMatch(m)
+    return knockoutAdvanceDefault
+  }
   const fullView = viewMode === 'full'
   const days = useMemo(
     () => buildDayTabs(matches, { phase: schedulePhase }),
@@ -64,22 +76,73 @@ export default function MatchDaySchedule({
   }, [filteredMatches, selectedDay, fullView])
 
   const sections = useMemo(() => {
+    if (schedulePhase === 'knockout') {
+      const source = fullView ? filteredMatches : dayMatches
+      return groupMatchesByKnockoutRound(source)
+    }
     if (fullView) {
-      return [{ label: null, items: dayMatches }]
+      return [{ key: 'all', label: null, items: dayMatches }]
     }
     const map = new Map()
     for (const m of dayMatches) {
       const key = getSectionKey(m)
-      if (!map.has(key)) map.set(key, { label: getSectionLabel(m), items: [] })
+      if (!map.has(key)) {
+        map.set(key, { key, label: getSectionLabel(m), items: [] })
+      }
       map.get(key).items.push(m)
     }
     return [...map.values()]
-  }, [dayMatches, getSectionKey, getSectionLabel, fullView])
+  }, [dayMatches, filteredMatches, getSectionKey, getSectionLabel, fullView, schedulePhase])
 
   if (!matches.length) return null
 
+  const listEmpty = schedulePhase === 'knockout' && fullView
+    ? filteredMatches.length === 0
+    : dayMatches.length === 0
+
+  const panelClass = [
+    'schedule-panel',
+    fullView ? 'schedule-panel--full' : '',
+    schedulePhase === 'knockout' ? 'schedule-panel--knockout' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const matchesPanelClass = [
+    'schedule-matches-panel',
+    flatMatchesPanel ? 'schedule-matches-panel--flat' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  function renderMatchRow(m, compact = false) {
+    return (
+      <MatchRow
+        key={m.id}
+        matchRef={el => { if (matchRefs) matchRefs.current[m.id] = el }}
+        home={m.home}
+        away={m.away}
+        homeCrest={m.homeCrest}
+        awayCrest={m.awayCrest}
+        utcDate={m.utcDate}
+        matchNumber={m.matchNumber}
+        fifaMatchLabel={m.fifaMatchLabel}
+        knockoutMatchupLabel={m.knockoutMatchupLabel}
+        homeVal={preds[m.id]?.home ?? ''}
+        awayVal={preds[m.id]?.away ?? ''}
+        onHome={v => onScore(m.id, 'home', v)}
+        onAway={v => onScore(m.id, 'away', v)}
+        advancesVal={preds[m.id]?.advances}
+        onAdvance={side => onAdvance?.(m.id, side)}
+        knockoutAdvance={showAdvancePicker(m)}
+        locked={locked}
+        compact={compact}
+      />
+    )
+  }
+
   return (
-    <div className={`schedule-panel${fullView ? ' schedule-panel--full' : ''}`}>
+    <div className={panelClass}>
       {!fullView && (
         <div className="schedule-day-picker">
           <DayTabs
@@ -91,10 +154,10 @@ export default function MatchDaySchedule({
         </div>
       )}
 
-      <div className="schedule-matches-panel">
-        {sections.length === 0 || dayMatches.length === 0 ? (
+      <div className={matchesPanelClass}>
+        {sections.length === 0 || listEmpty ? (
           <p className="schedule-empty-day">No hay partidos este día</p>
-        ) : fullView ? (
+        ) : fullView && schedulePhase !== 'knockout' ? (
           <div className="schedule-full-list">
             {dayMatches.map((m, i) => {
               const dayKey = matchDateKey(m.utcDate)
@@ -105,45 +168,21 @@ export default function MatchDaySchedule({
                   {showDay && (
                     <div className="schedule-full-day-label">{formatFullDayLabel(m.utcDate)}</div>
                   )}
-                  <MatchRow
-                    matchRef={el => { if (matchRefs) matchRefs.current[m.id] = el }}
-                    home={m.home}
-                    away={m.away}
-                    homeCrest={m.homeCrest}
-                    awayCrest={m.awayCrest}
-                    utcDate={m.utcDate}
-                    homeVal={preds[m.id]?.home ?? ''}
-                    awayVal={preds[m.id]?.away ?? ''}
-                    onHome={v => onScore(m.id, 'home', v)}
-                    onAway={v => onScore(m.id, 'away', v)}
-                    locked={locked}
-                    compact={fullView}
-                  />
+                  {renderMatchRow(m, true)}
                 </div>
               )
             })}
           </div>
         ) : (
           sections.map(sec => (
-            <section key={sec.label} className="schedule-block">
-              <header className="schedule-block-header">{sec.label}</header>
+            <section key={sec.key || sec.label} className="schedule-block">
+              {sec.label ? (
+                <header className="schedule-block-header schedule-block-header--round">
+                  {sec.label}
+                </header>
+              ) : null}
               <div className="schedule-block-list">
-                {sec.items.map(m => (
-                  <MatchRow
-                    key={m.id}
-                    matchRef={el => { if (matchRefs) matchRefs.current[m.id] = el }}
-                    home={m.home}
-                    away={m.away}
-                    homeCrest={m.homeCrest}
-                    awayCrest={m.awayCrest}
-                    utcDate={m.utcDate}
-                    homeVal={preds[m.id]?.home ?? ''}
-                    awayVal={preds[m.id]?.away ?? ''}
-                    onHome={v => onScore(m.id, 'home', v)}
-                    onAway={v => onScore(m.id, 'away', v)}
-                    locked={locked}
-                  />
-                ))}
+                {sec.items.map(m => renderMatchRow(m, fullView && schedulePhase === 'knockout'))}
               </div>
             </section>
           ))

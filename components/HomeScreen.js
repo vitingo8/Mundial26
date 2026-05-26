@@ -7,6 +7,7 @@ import { isValidEmail, normalizeEmail } from '../lib/emailUtils'
 import { findParticipantsByEmail } from '../lib/participantLookup'
 import { InputActionRow } from './InputRow'
 import { Icon, IconLabel } from './icons'
+import LeagueLogo from './LeagueLogo'
 
 export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJoinNewUser, notify, onRecovered }) {
   const [email, setEmail] = useState('')
@@ -64,8 +65,16 @@ export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJo
               }}
               style={s.pickBtn}
             >
-              <strong>{p.groupName}</strong>
-              <span style={s.pickSub}>como {p.name}</span>
+              <LeagueLogo
+                src={p.league_logo}
+                name={p.groupName}
+                size={44}
+                placeholder
+              />
+              <div style={s.pickBtnText}>
+                <strong>{p.groupName}</strong>
+                <span style={s.pickSub}>como {p.name}</span>
+              </div>
             </button>
           ))}
           <button type="button" style={s.btnLink} onClick={() => setPickList(null)}>
@@ -146,6 +155,7 @@ function ScoringCard() {
       <div style={s.scoreGrid}>
         <ScoreRow icon="checkCircle" label="Resultado correcto (G/E/P)" pts={`+${SCORING.correctOutcome}`} />
         <ScoreRow icon="viewfinderCircle" label="Marcador exacto (bonus)" pts={`+${SCORING.exactScore}`} />
+        <ScoreRow icon="bolt" label="Eliminatorias: acierto quién pasa (empate)" pts={`+${SCORING.knockoutAdvance}`} />
         <ScoreRow icon="user" label="Máximo goleador" pts={`+${SCORING.topScorer}`} />
         <ScoreRow icon="shieldCheck" label="Portero menos goleado" pts={`+${SCORING.topKeeper}`} />
         <ScoreRow icon="arrowTrendingUp" label="Máximo asistente" pts={`+${SCORING.topAssists}`} />
@@ -192,16 +202,17 @@ const s = {
   divider: {
     textAlign: 'center', color: 'var(--muted)', fontSize: 12, fontWeight: 600, letterSpacing: 1,
   },
-  pickHint: { fontSize: 13, color: 'var(--muted)', margin: '0 0 4px', lineHeight: 1.5 },
+  pickHint: { fontSize: 13, color: '#fff', margin: '0 0 4px', lineHeight: 1.5 },
   pickBtn: {
     background: 'var(--white)', border: '1px solid var(--border)',
     borderRadius: 12, padding: '14px 16px', cursor: 'pointer', textAlign: 'left',
-    fontWeight: 700, fontSize: 15, display: 'flex', flexDirection: 'column', gap: 4, width: '100%',
-    boxShadow: 'var(--card-shadow)',
+    fontWeight: 700, fontSize: 15, display: 'flex', flexDirection: 'row', alignItems: 'center',
+    gap: 12, width: '100%', boxShadow: 'var(--card-shadow)',
   },
+  pickBtnText: { display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 },
   pickSub: { fontSize: 13, color: 'var(--muted)', fontWeight: 500 },
   btnLink: {
-    background: 'none', border: 'none', color: 'var(--muted)',
+    background: 'none', border: 'none', color: '#fff',
     cursor: 'pointer', fontSize: 13, padding: 8, textAlign: 'center',
   },
   scoringCard: {

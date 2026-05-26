@@ -7,6 +7,7 @@ import {
   ArrowTopRightOnSquareIcon,
   ArrowTrendingUpIcon,
   AtSymbolIcon,
+  Bars3Icon,
   BoltIcon,
   BuildingLibraryIcon,
   CalendarDaysIcon,
@@ -43,6 +44,7 @@ export const ICONS = {
   arrowTopRightOnSquare: ArrowTopRightOnSquareIcon,
   arrowTrendingUp: ArrowTrendingUpIcon,
   atSymbol: AtSymbolIcon,
+  bars3: Bars3Icon,
   bolt: BoltIcon,
   buildingLibrary: BuildingLibraryIcon,
   calendarDays: CalendarDaysIcon,
@@ -188,7 +190,7 @@ export function MatchStatus({ status, highlight, upcoming }) {
     return <IconLabel icon="signal" iconSize="sm">EN JUEGO</IconLabel>
   }
   if (upcoming || UPCOMING_STATUSES.has(status)) {
-    return <IconLabel icon="clock" iconSize="sm">Próximo</IconLabel>
+    return null
   }
   if (status === 'FINISHED') {
     return <IconLabel icon="checkCircle" iconSize="sm">Finalizado</IconLabel>

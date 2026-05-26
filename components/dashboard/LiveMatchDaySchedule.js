@@ -14,13 +14,14 @@ import DayTabs from './DayTabs'
 import LiveResultRow from './LiveResultRow'
 
 /**
- * Calendario de resultados oficiales (diaria / completa), mismo layout que MatchDaySchedule.
+ * Calendario de resultados oficiales (Día / Todo), mismo layout que MatchDaySchedule.
  */
 export default function LiveMatchDaySchedule({
   matches,
   apiMatches = [],
   userPreds = {},
   onGoToPrediction,
+  onOpenMatch,
   getSectionLabel,
   getSectionKey,
   schedulePhase = 'group',
@@ -92,6 +93,7 @@ export default function LiveMatchDaySchedule({
         userPred={pred}
         compact={compact}
         onGoToPrediction={onGoToPrediction ? () => onGoToPrediction(m.id) : undefined}
+        onOpenDetail={onOpenMatch ? () => onOpenMatch(m) : undefined}
       />
     )
   }

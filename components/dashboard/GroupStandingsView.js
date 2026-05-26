@@ -13,6 +13,7 @@ export default function GroupStandingsView({
   onScore,
   locked,
   matchRefs,
+  gridClassName = '',
 }) {
   const groups = useMemo(
     () => computeGroupStandings(matches, preds),
@@ -27,7 +28,7 @@ export default function GroupStandingsView({
   if (!groups.length) return null
 
   return (
-    <div className="group-standings-grid">
+    <div className={`group-standings-grid${gridClassName ? ` ${gridClassName}` : ''}`}>
       {groups.map(group => (
         <section key={group.id} className="group-standings-card">
           <header className="group-standings-header">{group.label}</header>
@@ -38,9 +39,9 @@ export default function GroupStandingsView({
                 <tr>
                   <th scope="col">Equipo</th>
                   <th scope="col" title="Puntos">Pts</th>
-                  <th scope="col" title="Diferencia de goles">DG</th>
-                  <th scope="col" title="Goles a favor">GF</th>
-                  <th scope="col" title="Partidos jugados">PJ</th>
+                  <th scope="col" className="gs-col-dg" title="Diferencia de goles">DG</th>
+                  <th scope="col" className="gs-col-gf" title="Goles a favor">GF</th>
+                  <th scope="col" className="gs-col-pj" title="Partidos jugados">PJ</th>
                 </tr>
               </thead>
               <tbody>
@@ -51,9 +52,9 @@ export default function GroupStandingsView({
                       <span>{team.name}</span>
                     </td>
                     <td>{team.pts}</td>
-                    <td>{team.dg > 0 ? `+${team.dg}` : team.dg}</td>
-                    <td>{team.gf}</td>
-                    <td>{team.pj}</td>
+                    <td className="gs-col-dg">{team.dg > 0 ? `+${team.dg}` : team.dg}</td>
+                    <td className="gs-col-gf">{team.gf}</td>
+                    <td className="gs-col-pj">{team.pj}</td>
                   </tr>
                 ))}
               </tbody>
@@ -70,6 +71,9 @@ export default function GroupStandingsView({
                 homeCrest={m.homeCrest}
                 awayCrest={m.awayCrest}
                 utcDate={m.utcDate}
+                matchNumber={m.matchNumber}
+                fifaMatchLabel={m.fifaMatchLabel}
+                knockoutMatchupLabel={m.knockoutMatchupLabel}
                 homeVal={preds[m.id]?.home ?? ''}
                 awayVal={preds[m.id]?.away ?? ''}
                 onHome={v => onScore(m.id, 'home', v)}
