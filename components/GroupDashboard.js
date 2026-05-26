@@ -244,7 +244,7 @@ export default function GroupDashboard({
             <InstallAppButton variant="header" notify={notify} />
             <button
               type="button"
-              className={`dash-profile-btn tab-btn-touch${tab === 'profile' ? ' dash-profile-btn--active' : ''}`}
+              className="dash-profile-btn"
               title="Mi perfil"
               aria-label="Mi perfil"
               aria-selected={tab === 'profile'}

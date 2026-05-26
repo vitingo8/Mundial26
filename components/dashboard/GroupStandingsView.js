@@ -27,6 +27,8 @@ export default function GroupStandingsView({
 
   if (!groups.length) return null
 
+  const denseMatches = gridClassName.includes('participant')
+
   return (
     <div className={`group-standings-grid${gridClassName ? ` ${gridClassName}` : ''}`}>
       {groups.map(group => (
@@ -61,7 +63,7 @@ export default function GroupStandingsView({
             </table>
           </div>
 
-          <div className="group-standings-matches">
+          <div className={`group-standings-matches${denseMatches ? ' group-standings-matches--table' : ''}`}>
             {group.matches.map(m => (
               <MatchRow
                 key={m.id}
@@ -80,7 +82,8 @@ export default function GroupStandingsView({
                 onAway={v => onScore(m.id, 'away', v)}
                 locked={locked}
                 compact
-                showMatchDate
+                denseTable={denseMatches}
+                showMatchDate={!denseMatches}
               />
             ))}
           </div>

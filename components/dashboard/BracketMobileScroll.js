@@ -1,39 +1,39 @@
 'use client'
 
-import { useRef, useCallback, useEffect } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import BracketMatchSlot from './BracketMatchSlot'
-import { BRACKET_MOBILE_COLUMNS, BRACKET_MOBILE_ROWS } from '../../lib/bracketMobileColumns'
+import { BRACKET_MOBILE_COLUMNS } from '../../lib/bracketMobileColumns'
 import { BRACKET_CENTER } from '../../lib/knockoutBracketTreeLayout'
 import { formatKnockoutErrorForUi, getKnockoutErrorHint } from '../../lib/knockoutBridge'
 
-const COL_WIDTH = 152
-const COLLAPSE_THRESHOLD = COL_WIDTH * 0.55
-
-function BracketMobileColumn({ column, getMatch, colRef, ...slotProps }) {
-  const rowCount = column.rowCount || BRACKET_MOBILE_ROWS
+function BracketMobileColumn({ column, getMatch, ...slotProps }) {
+  const { layout } = column
 
   return (
-    <section
-      ref={colRef}
+    <div
       className={`bracket-mobile-col bracket-mobile-col--${column.id}`}
       aria-label={column.label}
-      data-round={column.id}
+      style={{ '--bracket-mobile-slot-h': `${layout.slotH}px` }}
     >
       <header className="bracket-mobile-col-label">{column.label}</header>
       <div
         className="bracket-mobile-col-grid"
-        style={{ '--bracket-mobile-rows': rowCount }}
+        style={{
+          gridTemplateRows: column.gridTemplateRows,
+          rowGap: `${layout.gap}px`,
+          '--bracket-mobile-divider-top': `${column.dividerOffsetPx ?? 0}px`,
+        }}
       >
-        <div className="bracket-mobile-band-divider" aria-hidden="true" />
+        {column.dividerAfterRow > 0 && (
+          <div className="bracket-mobile-band-divider" aria-hidden="true" />
+        )}
         {column.cells.map(cell => {
           const m = getMatch(cell.matchNum)
           return (
             <div
               key={cell.matchNum}
               className="bracket-mobile-cell"
-              style={{
-                gridRow: `${cell.rowStart + 1} / span ${cell.rowSpan}`,
-              }}
+              style={{ gridRow: `${cell.rowStart + 1}` }}
             >
               {cell.matchNum === BRACKET_CENTER.final && (
                 <img
@@ -61,7 +61,7 @@ function BracketMobileColumn({ column, getMatch, colRef, ...slotProps }) {
           )
         })}
       </div>
-    </section>
+    </div>
   )
 }
 
@@ -70,44 +70,28 @@ export default function BracketMobileScroll({
   error = null,
   ...slotProps
 }) {
-  const scrollRef = useRef(null)
-  const colRefs = useRef([])
+  const [activeIndex, setActiveIndex] = useState(0)
+  const viewportRef = useRef(null)
 
-  const updateCollapse = useCallback(() => {
-    const scroller = scrollRef.current
-    if (!scroller) return
-
-    const anchor = scroller.scrollLeft + scroller.clientWidth * 0.28
-
-    colRefs.current.forEach(el => {
-      if (!el) return
-      const colCenter = el.offsetLeft + el.offsetWidth / 2
-      const passed = colCenter < anchor - COLLAPSE_THRESHOLD
-      el.classList.toggle('bracket-mobile-col--collapsed', passed)
-    })
+  const updateIndexFromScroll = useCallback(() => {
+    const el = viewportRef.current
+    if (!el || el.clientWidth <= 0) return
+    const idx = Math.round(el.scrollLeft / el.clientWidth)
+    setActiveIndex(prev => (prev !== idx ? idx : prev))
   }, [])
 
-  useEffect(() => {
-    const scroller = scrollRef.current
-    if (!scroller) return undefined
-
-    updateCollapse()
-    scroller.addEventListener('scroll', updateCollapse, { passive: true })
-    const ro = new ResizeObserver(updateCollapse)
-    ro.observe(scroller)
-
-    return () => {
-      scroller.removeEventListener('scroll', updateCollapse)
-      ro.disconnect()
+  const goToPhase = useCallback((index) => {
+    const el = viewportRef.current
+    const next = Math.max(0, Math.min(BRACKET_MOBILE_COLUMNS.length - 1, index))
+    if (el && el.clientWidth > 0) {
+      const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      el.scrollTo({ left: next * el.clientWidth, behavior: smooth ? 'smooth' : 'auto' })
     }
-  }, [updateCollapse])
+    setActiveIndex(next)
+  }, [])
 
   return (
     <div className="knockout-bracket-scene knockout-bracket-scene--mobile">
-      <p className="bracket-mobile-scroll-hint">
-        Desliza hacia la derecha para avanzar de ronda · Arriba / abajo = cada mitad del cuadro
-      </p>
-
       {error && (
         <div className="predicted-knockout-alert knockout-bracket-alert" role="status">
           {formatKnockoutErrorForUi(error)}
@@ -117,20 +101,36 @@ export default function BracketMobileScroll({
         </div>
       )}
 
-      <div
-        ref={scrollRef}
-        className="bracket-mobile-scroll"
-        aria-label="Cuadro eliminatorio — desliza horizontalmente"
-      >
-        <div className="bracket-mobile-track">
+      <div className="bracket-mobile-phase-header" aria-live="polite">
+        <span className="bracket-mobile-phase-name">
+          {BRACKET_MOBILE_COLUMNS[activeIndex]?.label}
+        </span>
+        <div className="bracket-mobile-dots" role="tablist" aria-label="Fases del cuadro">
           {BRACKET_MOBILE_COLUMNS.map((col, i) => (
-            <BracketMobileColumn
+            <button
               key={col.id}
-              column={col}
-              getMatch={getMatch}
-              colRef={el => { colRefs.current[i] = el }}
-              {...slotProps}
+              type="button"
+              role="tab"
+              aria-selected={i === activeIndex}
+              aria-label={col.label}
+              className={`bracket-mobile-dot${i === activeIndex ? ' bracket-mobile-dot--active' : ''}`}
+              onClick={() => goToPhase(i)}
             />
+          ))}
+        </div>
+      </div>
+
+      <div className="bracket-mobile-stage">
+        <div
+          ref={viewportRef}
+          className="bracket-mobile-viewport"
+          aria-label="Cuadro eliminatorio"
+          onScroll={updateIndexFromScroll}
+        >
+          {BRACKET_MOBILE_COLUMNS.map(col => (
+            <div key={col.id} className="bracket-mobile-slide">
+              <BracketMobileColumn column={col} getMatch={getMatch} {...slotProps} />
+            </div>
           ))}
         </div>
       </div>

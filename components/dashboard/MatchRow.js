@@ -134,6 +134,8 @@ export default function MatchRow({
 
   compact = false,
 
+  denseTable = false,
+
   showMatchDate = false,
 
   advancesVal,
@@ -150,7 +152,8 @@ export default function MatchRow({
 
   const matchDate = formatMatchShortDate(utcDate)
 
-  const crestSize = compact ? 22 : 28
+  const crestSize = denseTable ? 14 : compact ? 22 : 28
+  const showDenseScores = denseTable && locked
 
   const matchTag = fifaMatchLabel || (matchNumber != null ? `Partido ${matchNumber}` : null)
 
@@ -186,7 +189,7 @@ export default function MatchRow({
 
     <div
 
-      className={`schedule-match-row${compact ? ' schedule-match-row--compact' : ''}${pickAdvance ? ' schedule-match-row--pick-advance' : ''}`}
+      className={`schedule-match-row${compact ? ' schedule-match-row--compact' : ''}${denseTable ? ' schedule-match-row--dense-table' : ''}${pickAdvance ? ' schedule-match-row--pick-advance' : ''}`}
 
       ref={setRowRef}
 
@@ -216,7 +219,7 @@ export default function MatchRow({
         className={`schedule-match-center${knockoutAdvance && !readOnly ? ' schedule-match-center--knockout' : ''}`}
       >
 
-        {matchTag ? (
+        {matchTag && !denseTable ? (
 
           <span className="schedule-match-number" title={slotLine ? `${matchTag} · ${slotLine}` : matchTag}>
 
@@ -226,7 +229,7 @@ export default function MatchRow({
 
         ) : null}
 
-        {slotLine ? (
+        {slotLine && !denseTable ? (
 
           <span className="schedule-match-slots">{slotLine}</span>
 
@@ -235,6 +238,17 @@ export default function MatchRow({
         {readOnly ? (
 
           <span className="schedule-match-time">{kickoff}</span>
+
+        ) : showDenseScores ? (
+
+          <span
+            className="schedule-match-scoreline"
+            aria-label={`${home} ${homeVal === '' ? 'sin marcar' : homeVal}, ${away} ${awayVal === '' ? 'sin marcar' : awayVal}`}
+          >
+            <span>{homeVal === '' ? '–' : homeVal}</span>
+            <span className="schedule-match-score-sep" aria-hidden>:</span>
+            <span>{awayVal === '' ? '–' : awayVal}</span>
+          </span>
 
         ) : (
 
