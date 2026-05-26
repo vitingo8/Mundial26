@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS porra_groups (
   bonus_deadline TIMESTAMPTZ,          -- fecha tope predicciones especiales
   actuals JSONB DEFAULT '{}',          -- resultados reales (goleador, MVP...)
   results JSONB DEFAULT '{"group":{}, "knockout":{}}',
+  league_logo TEXT,                    -- logo de la liga / porra (opcional)
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -40,6 +41,7 @@ CREATE TABLE IF NOT EXISTS porra_participants (
 -- ALTER TABLE porra_participants ALTER COLUMN email SET NOT NULL;
 -- CREATE INDEX IF NOT EXISTS idx_participants_email ON porra_participants(email);
 -- ALTER TABLE porra_groups ADD COLUMN IF NOT EXISTS bonus_deadline TIMESTAMPTZ;
+-- ALTER TABLE porra_groups ADD COLUMN IF NOT EXISTS league_logo TEXT;
 
 -- Índices
 CREATE INDEX IF NOT EXISTS idx_participants_group ON porra_participants(group_id);

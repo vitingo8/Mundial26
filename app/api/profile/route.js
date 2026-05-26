@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyWriteToken } from '../../../lib/sessionToken'
+import { normalizeLogoDataUrl } from '../../../lib/participantProfile'
 
 function getAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -8,8 +9,6 @@ function getAdmin() {
   if (!url || !key) throw new Error('Supabase no configurado')
   return createClient(url, key)
 }
-
-const MAX_LOGO_LEN = 70000
 
 export async function PATCH(request) {
   try {
@@ -31,14 +30,10 @@ export async function PATCH(request) {
 
     let teamLogo = undefined
     if (team_logo !== undefined) {
-      if (team_logo === null || team_logo === '') {
-        teamLogo = null
-      } else if (typeof team_logo !== 'string' || !team_logo.startsWith('data:image/')) {
-        return NextResponse.json({ error: 'Logo no válido' }, { status: 400 })
-      } else if (team_logo.length > MAX_LOGO_LEN) {
-        return NextResponse.json({ error: 'Logo demasiado grande' }, { status: 400 })
-      } else {
-        teamLogo = team_logo
+      try {
+        teamLogo = normalizeLogoDataUrl(team_logo)
+      } catch (e) {
+        return NextResponse.json({ error: e.message }, { status: 400 })
       }
     }
 

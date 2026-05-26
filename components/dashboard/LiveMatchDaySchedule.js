@@ -8,28 +8,26 @@ import {
   scheduleAnchorDateKey,
   todayDateKey,
 } from '../../lib/matchSchedule'
+import { getApiMatchDisplayScore, indexApiMatches } from '../../lib/apiMatchScores'
 
 import DayTabs from './DayTabs'
-import MatchRow from './MatchRow'
+import LiveResultRow from './LiveResultRow'
 
 /**
- * Calendario por días o vista completa (todos los partidos en una lista).
- * @param {'group'|'knockout'} schedulePhase
- * @param {'daily'|'full'} viewMode
+ * Calendario de resultados oficiales (diaria / completa), mismo layout que MatchDaySchedule.
  */
-export default function MatchDaySchedule({
+export default function LiveMatchDaySchedule({
   matches,
-  preds,
-  onScore,
-  locked,
-  matchRefs,
+  apiMatches = [],
+  userPreds = {},
+  onGoToPrediction,
   getSectionLabel,
   getSectionKey,
-  filterMatch,
   schedulePhase = 'group',
   viewMode = 'daily',
 }) {
   const fullView = viewMode === 'full'
+  const rawById = useMemo(() => indexApiMatches(apiMatches), [apiMatches])
   const days = useMemo(
     () => buildDayTabs(matches, { phase: schedulePhase }),
     [matches, schedulePhase],
@@ -52,10 +50,8 @@ export default function MatchDaySchedule({
   }, [days, today, anchor, fullView])
 
   const filteredMatches = useMemo(() => {
-    return matches
-      .filter(m => (filterMatch ? filterMatch(m) : true))
-      .sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate))
-  }, [matches, filterMatch])
+    return [...matches].sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate))
+  }, [matches])
 
   const dayMatches = useMemo(() => {
     if (fullView) return filteredMatches
@@ -77,6 +73,28 @@ export default function MatchDaySchedule({
   }, [dayMatches, getSectionKey, getSectionLabel, fullView])
 
   if (!matches.length) return null
+
+  function renderRow(m, compact) {
+    const raw = rawById[m.id]
+    const score = getApiMatchDisplayScore(raw)
+    const status = raw?.status || m.status
+    const pred = userPreds[m.id]
+    return (
+      <LiveResultRow
+        key={m.id}
+        home={m.home}
+        away={m.away}
+        homeCrest={m.homeCrest}
+        awayCrest={m.awayCrest}
+        utcDate={m.utcDate}
+        score={score}
+        status={status}
+        userPred={pred}
+        compact={compact}
+        onGoToPrediction={onGoToPrediction ? () => onGoToPrediction(m.id) : undefined}
+      />
+    )
+  }
 
   return (
     <div className={`schedule-panel${fullView ? ' schedule-panel--full' : ''}`}>
@@ -105,20 +123,7 @@ export default function MatchDaySchedule({
                   {showDay && (
                     <div className="schedule-full-day-label">{formatFullDayLabel(m.utcDate)}</div>
                   )}
-                  <MatchRow
-                    matchRef={el => { if (matchRefs) matchRefs.current[m.id] = el }}
-                    home={m.home}
-                    away={m.away}
-                    homeCrest={m.homeCrest}
-                    awayCrest={m.awayCrest}
-                    utcDate={m.utcDate}
-                    homeVal={preds[m.id]?.home ?? ''}
-                    awayVal={preds[m.id]?.away ?? ''}
-                    onHome={v => onScore(m.id, 'home', v)}
-                    onAway={v => onScore(m.id, 'away', v)}
-                    locked={locked}
-                    compact={fullView}
-                  />
+                  {renderRow(m, true)}
                 </div>
               )
             })}
@@ -128,22 +133,7 @@ export default function MatchDaySchedule({
             <section key={sec.label} className="schedule-block">
               <header className="schedule-block-header">{sec.label}</header>
               <div className="schedule-block-list">
-                {sec.items.map(m => (
-                  <MatchRow
-                    key={m.id}
-                    matchRef={el => { if (matchRefs) matchRefs.current[m.id] = el }}
-                    home={m.home}
-                    away={m.away}
-                    homeCrest={m.homeCrest}
-                    awayCrest={m.awayCrest}
-                    utcDate={m.utcDate}
-                    homeVal={preds[m.id]?.home ?? ''}
-                    awayVal={preds[m.id]?.away ?? ''}
-                    onHome={v => onScore(m.id, 'home', v)}
-                    onAway={v => onScore(m.id, 'away', v)}
-                    locked={locked}
-                  />
-                ))}
+                {sec.items.map(m => renderRow(m, false))}
               </div>
             </section>
           ))

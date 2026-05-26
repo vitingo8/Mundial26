@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 import { SCORING } from '../lib/gameData'
 import { isValidEmail, normalizeEmail } from '../lib/emailUtils'
@@ -70,6 +71,10 @@ export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJo
           <button type="button" style={s.btnLink} onClick={() => setPickList(null)}>
             ← Cambiar email
           </button>
+          <Link href="/guia" style={s.guideLink} className="on-pattern-muted">
+            <Icon name="academicCap" size="sm" />
+            Guía de uso
+          </Link>
         </div>
       </div>
     )
@@ -103,6 +108,7 @@ export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJo
           <Icon name="sparkles" size="md" />
           Crear nuevo grupo
         </button>
+
       </div>
 
       <ScoringCard />
@@ -110,6 +116,11 @@ export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJo
       <p className="on-pattern-muted" style={s.privacy}>
         Si ya tienes cuenta, entras con tu email. Si es nuevo, crearás tu perfil y luego el código del grupo.
       </p>
+
+      <Link href="/guia" style={s.guideLink} className="on-pattern-muted">
+        <Icon name="academicCap" size="sm" />
+        Guía de uso — ¿Cómo funciona todo?
+      </Link>
 
       <div style={s.footer}>Porra Mundial 2026 © {new Date().getFullYear()}</div>
     </div>
@@ -206,6 +217,21 @@ const s = {
     padding: '6px 12px', fontSize: 13, color: 'var(--muted)',
   },
   privacy: { fontSize: 11, textAlign: 'center', lineHeight: 1.5, padding: '0 8px' },
+  guideLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 4,
+    padding: '12px 16px',
+    fontSize: 13,
+    fontWeight: 600,
+    textDecoration: 'none',
+    borderRadius: 12,
+    background: 'rgba(255, 255, 255, 0.14)',
+    border: '1px solid rgba(255, 255, 255, 0.28)',
+    transition: 'background 0.2s ease',
+  },
   footer: {
     textAlign: 'center', color: 'var(--text-soft)', fontSize: 11,
     marginTop: 8, paddingTop: 8, letterSpacing: 1,

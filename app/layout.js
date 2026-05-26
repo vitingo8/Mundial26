@@ -1,6 +1,7 @@
 import './globals.css'
 import '../styles/responsive.css'
 import '../styles/dashboard.css'
+import PwaRegister from '../components/PwaRegister'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,8 +10,17 @@ export const metadata = {
   description: 'La porra definitiva del Mundial 2026 · USA · CAN · MEX',
   viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
   themeColor: '#49a942',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: 'Porra 2026',
+    statusBarStyle: 'default',
+  },
   icons: {
-    icon: '/favicon.svg',
+    icon: [
+      { url: '/logo-wc26.png', type: 'image/png', sizes: '192x192' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
     apple: '/apple-touch-icon.png',
   },
   openGraph: {
@@ -23,12 +33,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
-      <head>
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <link rel="manifest" href="/manifest.json" />
-      </head>
-      <body>{children}</body>
+      <body>
+        <PwaRegister />
+        {children}
+      </body>
     </html>
   )
 }

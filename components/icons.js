@@ -75,9 +75,8 @@ const SIZE_PX = { sm: 16, md: 20, lg: 24, xl: 28 }
 
 /** Tab / nav icon keys */
 export const TAB_ICONS = {
-  group: 'userGroup',
+  group: 'trophy',
   predictions: 'viewfinderCircle',
-  leaderboard: 'trophy',
   live: 'signal',
   profile: 'user',
   admin: 'cog6Tooth',
@@ -162,11 +161,11 @@ export function SaveButtonLabel({ saving, children = 'Guardar' }) {
   )
 }
 
-export function RefreshButtonLabel({ loading, children = 'Actualizar' }) {
+export function RefreshButtonLabel({ loading, children }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: children ? 8 : 0 }}>
       {loading ? <span style={{ width: 16, height: 16, border: '2px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <Icon name="arrowPath" size="sm" />}
-      {children}
+      {children || null}
     </span>
   )
 }

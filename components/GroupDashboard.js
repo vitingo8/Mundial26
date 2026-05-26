@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getStoredWriteToken } from '../lib/sessionToken'
@@ -8,34 +9,35 @@ import { usePredictions } from '../hooks/usePredictions'
 import { useWcMatches } from '../hooks/useWcMatches'
 import { useAutoSyncResults } from '../hooks/useAutoSyncResults'
 import { countFinishedFromApi } from '../lib/syncResultsFromApi'
-import InviteQr from './InviteQr'
 
 import {
   KNOCKOUT_ROUNDS, SCORING, ALL_TEAMS, PROVISIONAL_TEAMS_NOTE,
   calcLeaderboard, isDeadlinePassed,
 } from '../lib/gameData'
 import {
-  countFilledMatches, buildPointsBreakdown, getUniqueTeamsFromMatches,
+  countFilledMatches, getUniqueTeamsFromMatches,
   hasAnyPublishedResults, getDefaultPredPhase, getAdminTaskBadges,
   enrichLeaderboardWithStats,
 } from '../lib/predictionUtils'
 import GroupStatsTable from './dashboard/GroupStatsTable'
 import ProfileTab from './ProfileTab'
-import ParticipantDisplay, { ParticipantAvatar, participantPrimaryLabel } from './ParticipantDisplay'
-import { readFullScheduleView, writeFullScheduleView } from '../lib/participantProfile'
+import ParticipantDisplay, { ParticipantAvatar } from './ParticipantDisplay'
+import { readScheduleViewMode, writeScheduleViewMode, resizeLogoFile } from '../lib/participantProfile'
+import LeagueLogo from './LeagueLogo'
+import InstallAppButton from './InstallAppButton'
+import InviteButton from './InviteButton'
 import { PLAYER_SUGGESTIONS } from '../lib/playerSuggestions'
 import {
   transformGroupMatches,
   transformKnockoutMatches,
-  formatMatchDateTime,
-  formatGroupLabel,
-  formatStageLabel,
 } from '../lib/footballData'
-import TeamCrest from './TeamCrest'
 import MatchRow from './dashboard/MatchRow'
 import MatchDaySchedule from './dashboard/MatchDaySchedule'
-import DayTabs from './dashboard/DayTabs'
-import { buildDayTabs, matchDateKey, scheduleAnchorDateKey, todayDateKey } from '../lib/matchSchedule'
+import GroupStandingsView from './dashboard/GroupStandingsView'
+import ScheduleViewTabs from './dashboard/ScheduleViewTabs'
+import LiveMatchDaySchedule from './dashboard/LiveMatchDaySchedule'
+import LiveGroupStandingsView from './dashboard/LiveGroupStandingsView'
+import PredictedKnockoutSection from './dashboard/PredictedKnockoutSection'
 import {
   toMadridDatetimeLocalValue,
   fromMadridDatetimeLocal,
@@ -43,11 +45,8 @@ import {
 } from '../lib/madridTime'
 import {
   Icon, IconLabel, RankDisplay, LockedBanner, SaveButtonLabel, RefreshButtonLabel,
-  RoundHeader, MatchStatus, TAB_ICONS, PHASE_ICONS, BONUS_FIELD_ICONS,
+  RoundHeader, TAB_ICONS, PHASE_ICONS, BONUS_FIELD_ICONS,
 } from './icons'
-
-const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
-const UPCOMING_STATUSES = new Set(['SCHEDULED', 'TIMED'])
 
 export default function GroupDashboard({ group, user, refreshGroup, setCurrentUser, notify, onLeave }) {
   const [tab, setTab] = useState('group')
@@ -65,7 +64,8 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
   const isAdmin = user.is_admin
 
   const {
-    groupPreds, setGroupPreds, koPreds, setKoPreds, bonusPreds, setBonusPreds,
+    groupPreds, setGroupPreds, koPreds, setKoPreds,
+    inicioKoPreds, setInicioKoPreds, bonusPreds, setBonusPreds,
     saving, saveStatus, persistPredictions, flushSave,
   } = usePredictions({
     user, group: currentGroup, predPhase, tab, notify, setCurrentUser, isAdmin,
@@ -75,7 +75,6 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
   const leaderboard = calcLeaderboard(currentGroup)
   const groupDeadlinePassed = isDeadlinePassed(currentGroup.group_deadline)
   const koDeadlinePassed = isDeadlinePassed(currentGroup.knockout_deadline)
-  const bonusDeadlinePassed = isDeadlinePassed(currentGroup.bonus_deadline)
   const teamOptions = useMemo(() => getUniqueTeamsFromMatches(groupMatches, knockoutMatches), [groupMatches, knockoutMatches])
   const adminBadges = isAdmin ? getAdminTaskBadges(currentGroup) : []
 
@@ -146,12 +145,15 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
   }
 
   const navTabs = [
-    { id: 'group', label: 'Grupo' },
+    { id: 'group', label: 'Ranking' },
     { id: 'predictions', label: 'Porra' },
-    { id: 'leaderboard', label: 'Ranking' },
     { id: 'live', label: 'En Vivo', navLabel: 'Vivo' },
     ...(isAdmin ? [{ id: 'admin', label: 'Organización', navLabel: 'Org.' }] : []),
   ]
+
+  function tabNavLabel(t, compact = false) {
+    return compact && t.navLabel ? t.navLabel : t.label
+  }
 
   function handleProfileSaved(updatedUser) {
     setCurrentUser(updatedUser)
@@ -168,7 +170,10 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
     <div className="dashboard-app">
       <header className="dash-header dash-header--compact" style={{ paddingTop: 'max(8px, var(--safe-top))' }}>
         <div className="dash-header-bar">
-          <h1 className="dash-group-name" title={currentGroup.name}>{currentGroup.name}</h1>
+          <div className="dash-header-title">
+            <LeagueLogo src={currentGroup.league_logo} name={currentGroup.name} size={32} />
+            <h1 className="dash-group-name" title={currentGroup.name}>{currentGroup.name}</h1>
+          </div>
           <nav className="tab-bar-desktop dash-tabs" aria-label="Secciones">
             {navTabs.map(t => (
               <button
@@ -181,22 +186,36 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
                 onClick={() => changeTab(t.id)}
               >
                 <span className="dash-tab-icon" aria-hidden="true"><Icon name={TAB_ICONS[t.id]} /></span>
+                <span className="dash-tab-label" aria-hidden="true">{tabNavLabel(t)}</span>
                 {t.id === 'admin' && adminBadges.some(b => b.type === 'warn') && (
                   <span className="dash-tab-dot" aria-hidden="true" />
                 )}
               </button>
             ))}
           </nav>
-          <button
-            type="button"
-            className={`dash-profile-btn tab-btn-touch${tab === 'profile' ? ' dash-profile-btn--active' : ''}`}
-            title="Mi perfil"
-            aria-label="Mi perfil"
-            aria-selected={tab === 'profile'}
-            onClick={() => changeTab('profile')}
-          >
-            <ParticipantAvatar participant={user} size={36} />
-          </button>
+          <div className="dash-header-end">
+            <Link
+              href="/guia"
+              className="header-action-btn header-action-btn--header"
+              title="Guía de uso"
+              aria-label="Guía de uso"
+            >
+              <Icon name="academicCap" size="sm" />
+              <span className="header-action-btn__text">Guía</span>
+            </Link>
+            <InviteButton group={currentGroup} userId={user.id} isAdmin={isAdmin} notify={notify} />
+            <InstallAppButton variant="header" notify={notify} />
+            <button
+              type="button"
+              className={`dash-profile-btn tab-btn-touch${tab === 'profile' ? ' dash-profile-btn--active' : ''}`}
+              title="Mi perfil"
+              aria-label="Mi perfil"
+              aria-selected={tab === 'profile'}
+              onClick={() => changeTab('profile')}
+            >
+              <ParticipantAvatar participant={user} size={36} />
+            </button>
+          </div>
         </div>
       </header>
       <main className="dashboard-content dash-content app-container app-container--wide">
@@ -212,15 +231,16 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
         )}
         {tab === 'predictions' && (
           <PredictionsTab predPhase={predPhase} setPredPhase={setPredPhase} groupPreds={groupPreds} setGroupPreds={setGroupPreds}
-            koPreds={koPreds} setKoPreds={setKoPreds} bonusPreds={bonusPreds} setBonusPreds={setBonusPreds}
+            koPreds={koPreds} setKoPreds={setKoPreds}
+            inicioKoPreds={inicioKoPreds} setInicioKoPreds={setInicioKoPreds}
+            bonusPreds={bonusPreds} setBonusPreds={setBonusPreds}
             saving={saving} saveStatus={saveStatus} onSave={savePredictions}
-            groupDeadlinePassed={groupDeadlinePassed} koDeadlinePassed={koDeadlinePassed} bonusDeadlinePassed={bonusDeadlinePassed}
+            groupDeadlinePassed={groupDeadlinePassed} koDeadlinePassed={koDeadlinePassed}
             groupMatches={groupMatches} knockoutMatches={knockoutMatches} teamOptions={teamOptions.length ? teamOptions : ALL_TEAMS}
             wcLoading={wcLoading} groupPhase={currentGroup.phase}
             orphanGroupKeys={orphanGroupKeys} matchRefs={matchRefs}
-            deadlines={{ group: currentGroup.group_deadline, knockout: currentGroup.knockout_deadline, bonus: currentGroup.bonus_deadline }} />
+            deadlines={{ group: currentGroup.group_deadline, knockout: currentGroup.knockout_deadline }} />
         )}
-        {tab === 'leaderboard' && <LeaderboardTab leaderboard={leaderboard} user={user} group={currentGroup} groupMatches={groupMatches} knockoutMatches={knockoutMatches} onRefresh={handleRefresh} />}
         {tab === 'profile' && (
           <ProfileTab
             user={user}
@@ -229,7 +249,20 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
             notify={notify}
           />
         )}
-        {tab === 'live' && <LiveTab liveData={liveData} apiStatus={apiStatus} apiError={apiError} onFetch={fetchLive} wcLoading={wcLoading} group={currentGroup} groupMatches={groupMatches} userPreds={user.predictions} onGoToPrediction={goToPrediction} />}
+        {tab === 'live' && (
+          <LiveTab
+            liveData={liveData}
+            apiStatus={apiStatus}
+            apiError={apiError}
+            onFetch={fetchLive}
+            wcLoading={wcLoading}
+            group={currentGroup}
+            groupMatches={groupMatches}
+            knockoutMatches={knockoutMatches}
+            userPreds={user.predictions}
+            onGoToPrediction={goToPrediction}
+          />
+        )}
         {tab === 'admin' && isAdmin && (
           <AdminTab
             group={currentGroup}
@@ -253,6 +286,7 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
             onClick={() => changeTab(t.id)}
           >
             <span className="bottom-nav-icon" aria-hidden="true"><Icon name={TAB_ICONS[t.id]} /></span>
+            <span className="bottom-nav-label" aria-hidden="true">{tabNavLabel(t, true)}</span>
             {t.id === 'admin' && adminBadges.some(b => b.type === 'warn') && (
               <span className="bottom-nav-dot" aria-hidden="true" />
             )}
@@ -302,29 +336,29 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
         </>
       ) : (
         <>
-      <SectionTitle>Participantes · {leaderboard.length}</SectionTitle>
-      {leaderboard.map((p, i) => (
-        <div
-          key={p.id}
-          className={`dash-player-row${p.id === currentUserId ? ' dash-player-row--you' : ''}${i === 0 ? ' dash-player-row--leader' : ''}`}
-        >
-          <div className={`dash-rank${i > 2 ? ' dash-rank--num' : ''}`}>
-            <RankDisplay index={i} />
-          </div>
-          <ParticipantAvatar participant={p} size={40} />
-          <div className="dash-player-info">
-            <ParticipantDisplay
-              participant={p}
-              isYou={p.id === currentUserId}
-              showAdmin
-            />
-          </div>
-          <div className="dash-points">
-            {p.total}
-            <span className="dash-points-unit"> pts</span>
-          </div>
-        </div>
-      ))}
+          <SectionTitle>Participantes · {leaderboard.length}</SectionTitle>
+          {leaderboard.map((p, i) => (
+            <div
+              key={p.id}
+              className={`dash-player-row${p.id === currentUserId ? ' dash-player-row--you' : ''}${i === 0 ? ' dash-player-row--leader' : ''}`}
+            >
+              <div className={`dash-rank${i > 2 ? ' dash-rank--num' : ''}`}>
+                <RankDisplay index={i} />
+              </div>
+              <ParticipantAvatar participant={p} size={40} />
+              <div className="dash-player-info">
+                <ParticipantDisplay
+                  participant={p}
+                  isYou={p.id === currentUserId}
+                  showAdmin
+                />
+              </div>
+              <div className="dash-points">
+                {p.total}
+                <span className="dash-points-unit"> pts</span>
+              </div>
+            </div>
+          ))}
         </>
       )}
 
@@ -347,38 +381,51 @@ function SaveStatusBar({ status }) {
 
 function PredictionsTab({
   predPhase, setPredPhase, groupPreds, setGroupPreds, koPreds, setKoPreds,
+  inicioKoPreds, setInicioKoPreds,
   bonusPreds, setBonusPreds, saving, saveStatus, onSave,
-  groupDeadlinePassed, koDeadlinePassed, bonusDeadlinePassed,
+  groupDeadlinePassed, koDeadlinePassed,
   groupMatches, knockoutMatches, teamOptions, wcLoading, groupPhase, deadlines,
   orphanGroupKeys, matchRefs,
 }) {
-  const [fullScheduleView, setFullScheduleView] = useState(readFullScheduleView)
+  const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
 
-  function toggleFullScheduleView() {
-    setFullScheduleView(prev => {
-      const next = !prev
-      writeFullScheduleView(next)
-      return next
-    })
+  function handleScheduleViewMode(mode) {
+    setScheduleViewMode(mode)
+    writeScheduleViewMode(mode)
   }
 
+  const effectiveViewMode = predPhase === 'knockout' && scheduleViewMode === 'groups'
+    ? 'daily'
+    : scheduleViewMode
+
   const phaseLocked = isPhaseLocked(groupPhase, predPhase, false, false)
-  const deadlineKey = predPhase === 'group' ? 'group' : predPhase === 'knockout' ? 'knockout' : 'bonus'
-  const countdown = formatCountdown(msUntilDeadline(deadlines[deadlineKey]))
 
   const phases = [
-    { id: 'group', label: 'Grupos', sub: '3+5', locked: groupDeadlinePassed },
-    { id: 'knockout', label: 'Eliminatorias', sub: '3+5', locked: koDeadlinePassed },
-    { id: 'bonuses', label: 'Especiales', sub: 'Esp.', locked: bonusDeadlinePassed },
+    {
+      id: 'group',
+      label: 'Inicio',
+      sub: 'Grupos + previa KO · 60%',
+      locked: groupDeadlinePassed,
+      countdown: formatCountdown(msUntilDeadline(deadlines.group)),
+    },
+    {
+      id: 'knockout',
+      label: 'Eliminatorias',
+      sub: 'Calendario real · 40%',
+      locked: koDeadlinePassed,
+      countdown: formatCountdown(msUntilDeadline(deadlines.knockout)),
+    },
+    {
+      id: 'bonuses',
+      label: 'Especiales',
+      sub: 'Esp.',
+      locked: groupDeadlinePassed,
+      countdown: formatCountdown(msUntilDeadline(deadlines.group)),
+    },
   ]
 
   return (
     <div className="dash-tab-panel">
-      <DeadlineBanner deadlines={deadlines} groupPhase={groupPhase} />
-
-      {countdown && (
-        <div className="dash-banner dash-banner--info">Cierra en: {countdown}</div>
-      )}
       {orphanGroupKeys > 0 && (
         <div className="dash-banner dash-banner--info">
           {orphanGroupKeys} predicción(es) con formato antiguo — se reindexan al guardar.
@@ -396,7 +443,12 @@ function PredictionsTab({
             onClick={() => setPredPhase(p.id)}
           >
             <span className="dash-phase-icon"><Icon name={PHASE_ICONS[p.id]} /></span>
-            <span className="dash-phase-label">{p.label}</span>
+            <span className="dash-phase-label-row">
+              <span className="dash-phase-label">{p.label}</span>
+              {!p.locked && p.countdown && p.countdown !== 'Plazo cerrado' && (
+                <span className="dash-phase-deadline-tag">{p.countdown}</span>
+              )}
+            </span>
             <span className="dash-phase-sub" style={{ color: p.locked ? 'var(--dash-red)' : 'var(--dash-accent)' }}>
               {p.locked ? 'Cerrado' : p.sub}
             </span>
@@ -407,15 +459,11 @@ function PredictionsTab({
       <SaveStatusBar status={saveStatus} />
 
       {(predPhase === 'group' || predPhase === 'knockout') && (
-        <label className="porra-full-view-toggle">
-          <input
-            type="checkbox"
-            checked={fullScheduleView}
-            onChange={toggleFullScheduleView}
-          />
-          <span>Vista completa</span>
-          <span className="porra-full-view-hint">Todos los partidos en una lista</span>
-        </label>
+        <ScheduleViewTabs
+          value={effectiveViewMode}
+          onChange={handleScheduleViewMode}
+          showGroups={predPhase === 'group'}
+        />
       )}
 
       {wcLoading && predPhase === 'group' && (
@@ -424,13 +472,29 @@ function PredictionsTab({
         </div>
       )}
       {predPhase === 'group' && (
-        <GroupPhasePreds preds={groupPreds} setPreds={setGroupPreds} locked={groupDeadlinePassed || phaseLocked} matches={groupMatches} matchRefs={matchRefs} fullView={fullScheduleView} />
+        <GroupPhasePreds
+          preds={groupPreds}
+          setPreds={setGroupPreds}
+          inicioKoPreds={inicioKoPreds}
+          setInicioKoPreds={setInicioKoPreds}
+          locked={groupDeadlinePassed || phaseLocked}
+          matches={groupMatches}
+          matchRefs={matchRefs}
+          viewMode={effectiveViewMode}
+        />
       )}
       {predPhase === 'knockout' && (
-        <KnockoutPreds preds={koPreds} setPreds={setKoPreds} locked={koDeadlinePassed || phaseLocked} matches={knockoutMatches} teamOptions={teamOptions} matchRefs={matchRefs} fullView={fullScheduleView} />
+        <>
+          {knockoutMatches.length > 0 && (
+            <p className="dash-phase-hint">
+              Partidos reales del Mundial (API). Independiente de tu porra de Inicio.
+            </p>
+          )}
+          <KnockoutPreds preds={koPreds} setPreds={setKoPreds} locked={koDeadlinePassed || phaseLocked} matches={knockoutMatches} teamOptions={teamOptions} matchRefs={matchRefs} viewMode={effectiveViewMode} />
+        </>
       )}
       {predPhase === 'bonuses' && (
-        <BonusPreds preds={bonusPreds} setPreds={setBonusPreds} locked={bonusDeadlinePassed || phaseLocked} />
+        <BonusPreds preds={bonusPreds} setPreds={setBonusPreds} locked={groupDeadlinePassed || phaseLocked} />
       )}
 
       <button type="button" className="dash-save-manual" style={s.saveBtn} onClick={onSave}>
@@ -440,25 +504,10 @@ function PredictionsTab({
   )
 }
 
-function DeadlineBanner({ deadlines, groupPhase }) {
-  const items = []
-  if (deadlines.group) items.push({ label: 'Grupos', d: deadlines.group })
-  if (deadlines.knockout) items.push({ label: 'Eliminatorias', d: deadlines.knockout })
-  if (deadlines.bonus) items.push({ label: 'Especiales', d: deadlines.bonus })
-  if (!items.length) return null
-  return (
-    <div style={s.deadlineBanner}>
-      <span>Fase torneo: <strong>{groupPhase === 'knockout' ? 'Eliminatorias' : groupPhase === 'finished' ? 'Finalizado' : 'Grupos'}</strong></span>
-      {items.map(i => (
-        <span key={i.label} style={{ fontSize: 11 }}>
-          {i.label}: {formatMadridDateTime(i.d, { month: 'short' })}
-        </span>
-      ))}
-    </div>
-  )
-}
-
-function GroupPhasePreds({ preds, setPreds, locked, matches = [], matchRefs, fullView = false }) {
+function GroupPhasePreds({
+  preds, setPreds, inicioKoPreds, setInicioKoPreds,
+  locked, matches = [], matchRefs, viewMode = 'daily',
+}) {
   function setScore(id, side, val) {
     if (val === '' || val === undefined) {
       setPreds(p => {
@@ -500,16 +549,36 @@ function GroupPhasePreds({ preds, setPreds, locked, matches = [], matchRefs, ful
         <span className="dash-progress-text">{filled}/{total} partidos</span>
       </div>
 
-      <MatchDaySchedule
-        matches={matches}
-        preds={preds}
+      {viewMode === 'groups' ? (
+        <GroupStandingsView
+          matches={matches}
+          preds={preds}
+          locked={locked}
+          matchRefs={matchRefs}
+          onScore={setScore}
+        />
+      ) : (
+        <MatchDaySchedule
+          matches={matches}
+          preds={preds}
+          locked={locked}
+          matchRefs={matchRefs}
+          onScore={setScore}
+          schedulePhase="group"
+          viewMode={viewMode}
+          getSectionKey={m => m.group || '—'}
+          getSectionLabel={m => `Grupo ${m.group}`}
+        />
+      )}
+
+      <PredictedKnockoutSection
+        groupMatches={matches}
+        groupPreds={preds}
+        inicioKoPreds={inicioKoPreds}
+        setInicioKoPreds={setInicioKoPreds}
         locked={locked}
         matchRefs={matchRefs}
-        onScore={setScore}
-        schedulePhase="group"
-        fullView={fullView}
-        getSectionKey={m => m.group || '—'}
-        getSectionLabel={m => `Grupo ${m.group}`}
+        viewMode={viewMode}
       />
     </div>
   )
@@ -531,7 +600,7 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
   )
 }
 
-function KnockoutPreds({ preds, setPreds, locked, matches = [], teamOptions = [], matchRefs, fullView = false }) {
+function KnockoutPreds({ preds, setPreds, locked, matches = [], teamOptions = [], matchRefs, viewMode = 'daily' }) {
   function setVal(id, key, val) {
     const v = key === 'home' || key === 'away' ? parseInt(val, 10) : val
     if ((key === 'home' || key === 'away') && (isNaN(v) || v < 0)) return
@@ -565,7 +634,7 @@ function KnockoutPreds({ preds, setPreds, locked, matches = [], teamOptions = []
           matchRefs={matchRefs}
           onScore={setScore}
           schedulePhase="knockout"
-          fullView={fullView}
+          viewMode={viewMode}
           getSectionKey={m => m.roundId}
           getSectionLabel={m => m.roundLabel}
         />
@@ -649,85 +718,6 @@ function BonusPreds({ preds, setPreds, locked }) {
   )
 }
 
-// ─── LEADERBOARD TAB ──────────────────────────────────────────────────────────
-function LeaderboardTab({ leaderboard, user, group, groupMatches, knockoutMatches, onRefresh }) {
-  const [showPoints, setShowPoints] = useState(false)
-  const breakdown = buildPointsBreakdown(user, group, groupMatches, knockoutMatches)
-  const leader = leaderboard[0]
-  const me = leaderboard.find(p => p.id === user.id)
-  const gap = leader && me ? Math.round((leader.total - me.total) * 10) / 10 : 0
-  const hasResults = hasAnyPublishedResults(group)
-
-  return (
-    <div style={s.tabContent}>
-      <div style={s.lbHeader}>
-        <SectionTitle icon="trophy">Clasificación</SectionTitle>
-        <button type="button" style={s.refreshBtn} onClick={onRefresh} aria-label="Actualizar ranking">
-          <Icon name="arrowPath" size="md" />
-        </button>
-      </div>
-      <div style={s.lbNote}>G/E/P 3 pts · Resultado +5 · Especial · MVP</div>
-
-      {!hasResults && (
-        <div style={s.apiCard}>
-          <div style={s.apiMsg}>El ranking se activará cuando el organizador publique resultados.</div>
-        </div>
-      )}
-
-      {me && leader && me.id !== leader.id && hasResults && (
-        <div style={s.gapBanner}>Estás a <strong>{gap} pts</strong> del líder ({participantPrimaryLabel(leader)})</div>
-      )}
-
-      {leaderboard.map((p, i) => (
-        <div
-          key={p.id}
-          style={{
-            ...s.lbRow,
-            ...(i === 0 ? s.lbFirst : {}),
-            ...(p.id === user.id ? { borderColor: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent-glow)' } : {}),
-          }}
-        >
-          <div style={s.lbRank}><RankDisplay index={i} prefix="#" /></div>
-          <ParticipantAvatar participant={p} size={40} />
-          <div style={s.lbInfo}>
-            <ParticipantDisplay participant={p} isYou={p.id === user.id} compact />
-            <div style={s.lbBreak}>
-              G/E/P: {p.gepPts ?? 0} · Res: {p.resultadoPts ?? 0} · Esp: {p.especialPts ?? 0} · MVP: {p.mvpPts ?? 0}
-            </div>
-          </div>
-          <div style={s.lbTotal}>
-            {p.total}
-            <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--muted)' }}> pts</span>
-          </div>
-        </div>
-      ))}
-      {leaderboard.length === 0 && <EmptyState text="Sin participantes todavía" />}
-
-      <button type="button" style={s.pointsToggle} onClick={() => setShowPoints(v => !v)}>
-        {showPoints ? 'Ocultar' : 'Ver'} mis puntos ({breakdown.length})
-      </button>
-      {showPoints && (
-        <div style={s.pointsList}>
-          {breakdown.length === 0 ? (
-            <EmptyState text="Aún no hay puntos — espera a que se publiquen resultados" />
-          ) : (
-            breakdown.filter(Boolean).map(item => (
-              <div key={`${item.phase}-${item.id}`} style={{ ...s.pointsRow, ...(!item.hit ? s.pointsRowMiss : {}) }}>
-                <div style={s.pointsLabel}>{item.label}</div>
-                <div style={s.pointsDetail}>
-                  Tu: {item.pred} · Real: {item.real} ·{' '}
-                  <strong>{item.hit ? `+${item.weightedPts ?? item.pts}` : '0'} pts</strong>
-                  {item.detail ? ` — ${item.detail}` : !item.hit ? ' — Sin puntos' : ''}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ─── LIVE TAB ─────────────────────────────────────────────────────────────────
 function AdminResultsFallback({ group, groupMatches, userPreds }) {
   const withResults = groupMatches.filter(m => {
@@ -760,56 +750,49 @@ function AdminResultsFallback({ group, groupMatches, userPreds }) {
   )
 }
 
-function LiveTab({ liveData, apiStatus, apiError, onFetch, wcLoading, group, groupMatches, userPreds, onGoToPrediction }) {
-  const days = useMemo(() => buildDayTabs(liveData, { phase: 'group' }), [liveData])
-  const today = todayDateKey()
-  const anchor = scheduleAnchorDateKey()
-  const [selectedDay, setSelectedDay] = useState(null)
+function LiveTab({
+  liveData, apiStatus, apiError, onFetch, wcLoading,
+  group, groupMatches, knockoutMatches, userPreds, onGoToPrediction,
+}) {
+  const [livePhase, setLivePhase] = useState('group')
+  const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
 
-  useEffect(() => {
-    if (!days.length) {
-      setSelectedDay(null)
-      return
-    }
-    setSelectedDay(prev => {
-      if (prev && days.some(d => d.key === prev)) return prev
-      const todayTab = days.find(d => d.key === today)
-      const anchorTab = days.find(d => d.key === anchor)
-      return todayTab?.key ?? anchorTab?.key ?? days[0].key
-    })
-  }, [days, today, anchor])
+  function handleScheduleViewMode(mode) {
+    setScheduleViewMode(mode)
+    writeScheduleViewMode(mode)
+  }
 
-  const dayMatches = useMemo(() => {
-    if (!selectedDay) return []
-    return liveData
-      .filter(m => matchDateKey(m.utcDate) === selectedDay)
-      .sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate))
-  }, [liveData, selectedDay])
+  const effectiveViewMode =
+    livePhase === 'knockout' && scheduleViewMode === 'groups' ? 'daily' : scheduleViewMode
 
-  const live = dayMatches.filter(m => LIVE_STATUSES.has(m.status))
-  const finished = dayMatches.filter(m => m.status === 'FINISHED')
-  const upcoming = dayMatches.filter(m => UPCOMING_STATUSES.has(m.status))
-  const other = dayMatches.filter(m =>
-    !LIVE_STATUSES.has(m.status) &&
-    m.status !== 'FINISHED' &&
-    !UPCOMING_STATUSES.has(m.status)
-  )
+  const phaseMatches = livePhase === 'group' ? groupMatches : knockoutMatches
+  const phasePreds = livePhase === 'group' ? (userPreds?.group || {}) : (userPreds?.knockout || {})
   const showFallback = apiStatus === 'unavailable' || (apiStatus === 'idle' && !wcLoading && liveData.length === 0)
   const hasSchedule = liveData.length > 0 && !showFallback
 
+  const livePhases = [
+    { id: 'group', label: 'Fase de grupos', icon: PHASE_ICONS.group },
+    { id: 'knockout', label: 'Eliminatorias', icon: PHASE_ICONS.knockout },
+  ]
+
   return (
-    <div style={s.tabContent}>
+    <div className="dash-tab-panel">
       <div style={s.liveHeader}>
         <SectionTitle icon="signal">Resultados en Vivo</SectionTitle>
-        <button style={s.fetchBtn} onClick={onFetch} disabled={apiStatus === 'loading'}>
+        <button
+          type="button"
+          style={s.fetchBtn}
+          onClick={onFetch}
+          disabled={apiStatus === 'loading'}
+          aria-label="Actualizar resultados"
+        >
           <RefreshButtonLabel loading={apiStatus === 'loading'} />
         </button>
       </div>
 
       {apiStatus === 'idle' && !wcLoading && liveData.length === 0 && (
         <div style={s.apiCard}>
-          <div style={s.apiMsg}>Pulsa "Actualizar" para cargar el calendario FIFA 2026</div>
-          <div style={s.apiSub}>Datos oficiales vía football-data.org (competición WC)</div>
+          <div style={s.apiMsg}>Pulsa el botón superior para cargar el calendario FIFA 2026</div>
         </div>
       )}
       {wcLoading && apiStatus !== 'loading' && (
@@ -822,7 +805,9 @@ function LiveTab({ liveData, apiStatus, apiError, onFetch, wcLoading, group, gro
           <div style={{ color: 'var(--yellow)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Icon name="exclamationTriangle" size="sm" /> API en vivo no disponible
           </div>
-          <div style={s.apiSub}>{apiError || 'Configura FOOTBALL_DATA_API_KEY. Mostrando resultados del organizador si existen.'}</div>
+          <div style={s.apiSub}>
+            {apiError || 'Configura FOOTBALL_DATA_API_KEY. Mostrando resultados del organizador si existen.'}
+          </div>
         </div>
       )}
       {showFallback && (
@@ -830,100 +815,53 @@ function LiveTab({ liveData, apiStatus, apiError, onFetch, wcLoading, group, gro
       )}
 
       {hasSchedule && (
-        <div className="schedule-panel" style={{ marginTop: 8 }}>
-          <div className="schedule-day-picker">
-            <DayTabs
-              days={days}
-              selectedKey={selectedDay}
-              onSelect={setSelectedDay}
-              centerKey={anchor}
+        <>
+          <div className="dash-phase-picker" role="tablist" style={{ marginBottom: 12 }}>
+            {livePhases.map(p => (
+              <button
+                key={p.id}
+                type="button"
+                role="tab"
+                aria-pressed={livePhase === p.id}
+                className="dash-phase-btn"
+                onClick={() => setLivePhase(p.id)}
+              >
+                <span className="dash-phase-icon"><Icon name={p.icon} /></span>
+                <span className="dash-phase-label">{p.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <ScheduleViewTabs
+            value={effectiveViewMode}
+            onChange={handleScheduleViewMode}
+            showGroups={livePhase === 'group'}
+          />
+
+          {!phaseMatches.length ? (
+            <div style={s.apiCard}>
+              <div style={s.apiMsg}>No hay partidos en esta fase.</div>
+            </div>
+          ) : effectiveViewMode === 'groups' ? (
+            <LiveGroupStandingsView
+              matches={phaseMatches}
+              apiMatches={liveData}
+              userPreds={phasePreds}
+              onGoToPrediction={onGoToPrediction}
             />
-          </div>
-          <div className="schedule-matches-panel schedule-matches-panel--live">
-            {dayMatches.length === 0 ? (
-              <p className="schedule-empty-day">No hay partidos este día</p>
-            ) : (
-              <>
-                {live.length > 0 && (
-                  <>
-                    <SectionTitle icon="bolt">En juego ahora</SectionTitle>
-                    {live.map(m => <LiveMatchCard key={m.id} match={m} highlight onGoToPrediction={onGoToPrediction} />)}
-                  </>
-                )}
-                {finished.length > 0 && (
-                  <>
-                    <SectionTitle icon="checkCircle">Resultados</SectionTitle>
-                    {finished.map(m => <LiveMatchCard key={m.id} match={m} onGoToPrediction={onGoToPrediction} />)}
-                  </>
-                )}
-                {upcoming.map(m => (
-                  <LiveMatchCard key={m.id} match={m} upcoming />
-                ))}
-                {other.length > 0 && (
-                  <>
-                    <SectionTitle icon="clock">Otros</SectionTitle>
-                    {other.map(m => <LiveMatchCard key={m.id} match={m} onGoToPrediction={onGoToPrediction} />)}
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function LiveMatchCard({ match: m, highlight, upcoming, onGoToPrediction }) {
-  const isUpcoming = upcoming || UPCOMING_STATUSES.has(m.status)
-  const home = m.homeTeam?.shortName || m.homeTeam?.name
-  const away = m.awayTeam?.shortName || m.awayTeam?.name
-  const groupInfo = m.group ? formatGroupLabel(m.group) : formatStageLabel(m.stage)
-
-  return (
-    <div style={{
-      ...s.liveCard,
-      ...(highlight ? { borderColor: 'var(--accent)', animation: 'glow 2s ease infinite' } : {})
-    }}>
-      <div style={s.liveTeams}>
-        <div style={s.liveTeamSide}>
-          <TeamCrest src={m.homeTeam?.crest} alt={home} size={28} />
-          <span style={s.liveTeam}>{home}</span>
-        </div>
-        <div style={s.liveCenter}>
-          <span style={s.liveScore}>
-            {isUpcoming
-              ? formatMatchDateTime(m.utcDate)
-              : `${m.score?.fullTime?.home ?? '-'} - ${m.score?.fullTime?.away ?? '-'}`
-            }
-          </span>
-          {!isUpcoming && m.utcDate && (
-            <span style={s.liveTimeSub}>{formatMatchDateTime(m.utcDate)}</span>
+          ) : (
+            <LiveMatchDaySchedule
+              matches={phaseMatches}
+              apiMatches={liveData}
+              userPreds={phasePreds}
+              onGoToPrediction={onGoToPrediction}
+              schedulePhase={livePhase === 'group' ? 'group' : 'knockout'}
+              viewMode={effectiveViewMode}
+              getSectionKey={m => (livePhase === 'group' ? m.group || '—' : m.roundId)}
+              getSectionLabel={m => (livePhase === 'group' ? `Grupo ${m.group}` : m.roundLabel)}
+            />
           )}
-        </div>
-        <div style={{ ...s.liveTeamSide, justifyContent: 'flex-end' }}>
-          <span style={{ ...s.liveTeam, textAlign: 'right' }}>{away}</span>
-          <TeamCrest src={m.awayTeam?.crest} alt={away} size={28} />
-        </div>
-      </div>
-      <div style={s.liveMeta}>
-        {groupInfo}
-        {m.matchday ? ` · J${m.matchday}` : ''}
-        {m.venue && (
-          <>
-            {' · '}
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <Icon name="mapPin" size={14} /> {m.venue}
-            </span>
-          </>
-        )}
-        {' · '}
-        <MatchStatus status={m.status} highlight={highlight} upcoming={isUpcoming} />
-      </div>
-      {onGoToPrediction && (
-        <button type="button" style={s.goPredBtn} onClick={() => onGoToPrediction(m.id)}>
-          Ver mi predicción →
-        </button>
+        </>
       )}
     </div>
   )
@@ -931,22 +869,6 @@ function LiveMatchCard({ match: m, highlight, upcoming, onGoToPrediction }) {
 
 // ─── ADMIN TAB ────────────────────────────────────────────────────────────────
 function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userId }) {
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  const shareUrl = `${origin}?join=${group.id}`
-  const personalUrl = `${origin}?join=${group.id}&user=${userId}`
-
-  function copyLink(text, msg = 'Enlace copiado') {
-    navigator.clipboard.writeText(text).then(() => notify(msg))
-  }
-
-  async function shareInvite() {
-    const text = `¡Únete a la porra "${group.name}" del Mundial 2026!\n${shareUrl}`
-    if (navigator.share) {
-      try { await navigator.share({ title: 'Porra Mundial 2026', text, url: shareUrl }); return } catch (e) { if (e.name === 'AbortError') return }
-    }
-    copyLink(text)
-  }
-
   async function saveGroupSecure(updates) {
     const token = getStoredWriteToken(group.id, userId)
     if (token) {
@@ -960,16 +882,16 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
     return !error
   }
 
-  const [adminTab, setAdminTab] = useState('invite')
+  const [adminTab, setAdminTab] = useState('settings')
+  const [leagueLogo, setLeagueLogo] = useState(group.league_logo || '')
   const [groupDeadline, setGroupDeadline] = useState(() => toMadridDatetimeLocalValue(group.group_deadline))
   const [koDeadline, setKoDeadline] = useState(() => toMadridDatetimeLocalValue(group.knockout_deadline))
-  const [bonusDeadline, setBonusDeadline] = useState(() => toMadridDatetimeLocalValue(group.bonus_deadline))
 
   useEffect(() => {
+    setLeagueLogo(group.league_logo || '')
     setGroupDeadline(toMadridDatetimeLocalValue(group.group_deadline))
     setKoDeadline(toMadridDatetimeLocalValue(group.knockout_deadline))
-    setBonusDeadline(toMadridDatetimeLocalValue(group.bonus_deadline))
-  }, [group.group_deadline, group.knockout_deadline, group.bonus_deadline])
+  }, [group.league_logo, group.group_deadline, group.knockout_deadline])
   const [tournamentPhase, setTournamentPhase] = useState(group.phase || 'group')
   const [actuals, setActuals] = useState(group.actuals || {})
   const [saving, setSaving] = useState(false)
@@ -980,10 +902,11 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
 
   async function saveDeadlines() {
     setSaving(true)
+    const groupDeadlineValue = fromMadridDatetimeLocal(groupDeadline)
     await saveGroupSecure({
-      group_deadline: fromMadridDatetimeLocal(groupDeadline),
+      group_deadline: groupDeadlineValue,
       knockout_deadline: fromMadridDatetimeLocal(koDeadline),
-      bonus_deadline: fromMadridDatetimeLocal(bonusDeadline),
+      bonus_deadline: groupDeadlineValue,
       phase: tournamentPhase,
     })
     setSaving(false)
@@ -992,6 +915,24 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
   async function saveActuals() {
     setSaving(true)
     await saveGroupSecure({ actuals })
+    setSaving(false)
+  }
+
+  async function handleLeagueLogoChange(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      const dataUrl = await resizeLogoFile(file, { maxPx: 160 })
+      setLeagueLogo(dataUrl)
+    } catch (err) {
+      notify(err.message || 'Error al procesar la imagen', 'error')
+    }
+  }
+
+  async function saveLeagueLogo() {
+    setSaving(true)
+    await saveGroupSecure({ league_logo: leagueLogo || null })
     setSaving(false)
   }
 
@@ -1011,7 +952,7 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
 
       <div style={s.adminTabs}>
         {[
-          { id: 'invite', icon: 'link', label: 'Invitar' },
+          { id: 'settings', icon: 'cog6Tooth', label: 'Configuración' },
           { id: 'deadlines', icon: 'clock', label: 'Plazos' },
           { id: 'actuals', icon: 'trophy', label: 'Ganadores' },
         ].map(t => (
@@ -1034,28 +975,42 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
         </p>
       </div>
 
-      {adminTab === 'invite' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="dash-card dash-card--accent">
-            <div className="dash-card-title">Enlace del grupo</div>
-            <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8 }}>
-              Código <strong>#{group.id}</strong> — comparte el enlace para que se unan.
-            </p>
-            <div className="dash-share-url">{shareUrl}</div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-              <button type="button" className="dash-btn-primary" onClick={shareInvite}>Compartir</button>
-              <button type="button" className="dash-btn-ghost" onClick={() => copyLink(shareUrl)}>Copiar</button>
+      {adminTab === 'settings' && (
+        <div className="dash-card profile-form">
+          <div className="dash-card-title">Logo de la liga</div>
+          <p className="profile-field-hint" style={{ marginTop: 0 }}>
+            Aparece junto al nombre del grupo en la cabecera para todos los participantes.
+          </p>
+          <div className="profile-preview" style={{ marginTop: 12 }}>
+            {leagueLogo ? (
+              <LeagueLogo src={leagueLogo} name={group.name} size={72} className="dash-league-logo--preview" />
+            ) : (
+              <div className="dash-league-logo-placeholder" aria-hidden="true">
+                {group.name[0]?.toUpperCase() || '?'}
+              </div>
+            )}
+            <div className="profile-preview-text">
+              <strong>{group.name}</strong>
+              <span>Código #{group.id}</span>
             </div>
-            <InviteQr url={shareUrl} />
           </div>
-          <div className="dash-card">
-            <div className="dash-card-title">Tu enlace personal</div>
-            <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8 }}>Para recuperar la sesión en otro dispositivo.</p>
-            <div className="dash-share-url">{personalUrl}</div>
-            <button type="button" className="dash-btn-ghost" style={{ marginTop: 12 }} onClick={() => copyLink(personalUrl)}>
-              Copiar enlace personal
-            </button>
+          <div className="profile-field">
+            <div className="profile-logo-actions">
+              <label className="profile-upload-btn">
+                <input type="file" accept="image/*" onChange={handleLeagueLogoChange} hidden />
+                {leagueLogo ? 'Cambiar logo' : 'Subir logo'}
+              </label>
+              {leagueLogo && (
+                <button type="button" className="profile-remove-logo" onClick={() => setLeagueLogo('')}>
+                  Quitar logo
+                </button>
+              )}
+            </div>
+            <p className="profile-field-hint">JPG o PNG, máx. 2 MB.</p>
           </div>
+          <button type="button" className="profile-save-btn" onClick={saveLeagueLogo} disabled={saving}>
+            <SaveButtonLabel saving={saving}>Guardar configuración</SaveButtonLabel>
+          </button>
         </div>
       )}
 
@@ -1065,16 +1020,12 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
             Fechas tope en hora de Madrid (España). Pasado el plazo, la porra se bloquea sola.
           </p>
           <div>
-            <label className="dash-field-label"><IconLabel icon="clock" iconSize="sm">Grupos</IconLabel></label>
+            <label className="dash-field-label"><IconLabel icon="clock" iconSize="sm">Inicio (grupos + especiales)</IconLabel></label>
             <input type="datetime-local" className="dash-field-input" value={groupDeadline} onChange={e => setGroupDeadline(e.target.value)} />
           </div>
           <div>
             <label className="dash-field-label" htmlFor="admin-ko-deadline"><IconLabel icon="clock" iconSize="sm">Eliminatorias</IconLabel></label>
             <input id="admin-ko-deadline" type="datetime-local" className="dash-field-input" value={koDeadline} onChange={e => setKoDeadline(e.target.value)} />
-          </div>
-          <div>
-            <label className="dash-field-label" htmlFor="admin-bonus-deadline"><IconLabel icon="clock" iconSize="sm">Especiales</IconLabel></label>
-            <input id="admin-bonus-deadline" type="datetime-local" className="dash-field-input" value={bonusDeadline} onChange={e => setBonusDeadline(e.target.value)} />
           </div>
           <div>
             <label className="dash-field-label" htmlFor="admin-phase">Fase visible en la porra</label>
@@ -1444,9 +1395,27 @@ const s = {
     background: 'var(--card)', border: '1px solid var(--border)',
     borderRadius: 12, padding: 12
   },
-  liveTeams: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  liveTeamSide: { flex: 1, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 },
-  liveTeam: { fontSize: 12, fontWeight: 600, minWidth: 0 },
+  liveTeams: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
+  liveTeamSide: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    minWidth: 0,
+    textAlign: 'center',
+  },
+  liveTeam: {
+    fontSize: 12,
+    fontWeight: 600,
+    lineHeight: 1.25,
+    textAlign: 'center',
+    wordBreak: 'break-word',
+    overflowWrap: 'anywhere',
+    whiteSpace: 'normal',
+    width: '100%',
+  },
   liveCenter: { display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, gap: 2 },
   liveScore: {
     fontSize: 15, fontWeight: 800, color: 'var(--accent-dark)', textAlign: 'center',

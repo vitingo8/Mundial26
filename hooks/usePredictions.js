@@ -22,6 +22,7 @@ export function usePredictions({
 }) {
   const [groupPreds, setGroupPreds] = useState(user.predictions?.group || {})
   const [koPreds, setKoPreds] = useState(user.predictions?.knockout || {})
+  const [inicioKoPreds, setInicioKoPreds] = useState(user.predictions?.inicioKnockout || {})
   const [bonusPreds, setBonusPreds] = useState(
     user.predictions?.bonuses || { topScorer: '', topKeeper: '', topAssists: '', mvp: '' }
   )
@@ -32,9 +33,19 @@ export function usePredictions({
   const pendingRef = useRef(false)
   const saveInFlight = useRef(false)
   const debounceTimer = useRef(null)
-  const predsRef = useRef({ group: groupPreds, knockout: koPreds, bonuses: bonusPreds })
+  const predsRef = useRef({
+    group: groupPreds,
+    knockout: koPreds,
+    inicioKnockout: inicioKoPreds,
+    bonuses: bonusPreds,
+  })
 
-  predsRef.current = { group: groupPreds, knockout: koPreds, bonuses: bonusPreds }
+  predsRef.current = {
+    group: groupPreds,
+    knockout: koPreds,
+    inicioKnockout: inicioKoPreds,
+    bonuses: bonusPreds,
+  }
 
   useEffect(() => {
     if (skipUserSync.current) {
@@ -44,6 +55,7 @@ export function usePredictions({
     if (pendingRef.current || saveInFlight.current) return
     setGroupPreds(user.predictions?.group || {})
     setKoPreds(user.predictions?.knockout || {})
+    setInicioKoPreds(user.predictions?.inicioKnockout || {})
     setBonusPreds(user.predictions?.bonuses || {
       topScorer: '', topKeeper: '', topAssists: '', mvp: '',
     })
@@ -171,7 +183,7 @@ export function usePredictions({
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current)
     }
-  }, [groupPreds, koPreds, bonusPreds, tab, scheduleAutoSave])
+  }, [groupPreds, koPreds, inicioKoPreds, bonusPreds, tab, scheduleAutoSave])
 
   useEffect(() => {
     function onVisibility() {
@@ -196,6 +208,8 @@ export function usePredictions({
     setGroupPreds,
     koPreds,
     setKoPreds,
+    inicioKoPreds,
+    setInicioKoPreds,
     bonusPreds,
     setBonusPreds,
     saving: savingManual,

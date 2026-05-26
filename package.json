@@ -3,10 +3,20 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "predev": "npm run build:knockout",
     "dev": "next dev",
+    "prebuild": "npm run build:knockout",
     "build": "next build",
+    "postinstall": "npm run build:knockout",
     "start": "next start",
-    "test": "node --test lib/gameData.test.mjs"
+    "build:knockout": "tsc -p lib/knockout/tsconfig.build.json",
+    "test": "npm run build:knockout && node --test lib/knockout/knockout.test.mjs",
+    "test:all": "node --test lib/gameData.test.mjs lib/groupStandings.test.mjs lib/madridTime.test.mjs && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "25.9.1",
+    "@types/react": "19.2.15",
+    "typescript": "5.8.3"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

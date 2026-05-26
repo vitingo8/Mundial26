@@ -12,10 +12,14 @@
 }
 
 .dash-tab-icon .ui-icon,
-.dash-phase-icon .ui-icon,
-.bottom-nav-icon .ui-icon {
+.dash-phase-icon .ui-icon {
   width: 1.2rem;
   height: 1.2rem;
+}
+
+.bottom-nav-icon .ui-icon {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .dash-icon-btn .ui-icon {

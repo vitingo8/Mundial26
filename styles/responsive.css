@@ -49,7 +49,7 @@
     display: flex;
     justify-content: space-around;
     align-items: stretch;
-    min-height: calc(52px + var(--safe-bottom));
+    min-height: calc(64px + var(--safe-bottom));
   }
 
   .tab-bar-desktop,
@@ -59,24 +59,24 @@
 
   .dashboard-content,
   .dash-content {
-    padding-bottom: calc(60px + var(--safe-bottom)) !important;
+    padding-bottom: calc(72px + var(--safe-bottom)) !important;
   }
 }
 
 .bottom-nav-btn {
   flex: 1 1 0;
   min-width: 0;
-  min-height: 52px;
+  min-height: 64px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0;
+  justify-content: flex-start;
+  gap: 3px;
   background: var(--white);
   border: none;
   color: var(--muted);
   cursor: pointer;
-  padding: 8px 2px;
+  padding: 8px 2px 10px;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -248,4 +248,168 @@
 .tab-btn-touch {
   min-height: var(--touch-min);
   min-width: 56px;
+}
+
+/* Acciones de cabecera (invitar, descargar app) */
+.header-action-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+}
+
+.header-action-btn--default {
+  width: 100%;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: 2px solid var(--wc-lime);
+  background: var(--white);
+  color: var(--accent-dark);
+  font-size: 16px;
+  font-weight: 800;
+  box-shadow: var(--card-shadow);
+}
+
+.header-action-btn--header {
+  flex-direction: column;
+  gap: 1px;
+  width: auto;
+  min-width: 36px;
+  height: 40px;
+  padding: 4px 6px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.header-action-btn--header:active {
+  background: var(--green-dim);
+  color: var(--accent-dark);
+}
+
+.header-action-btn--header.header-action-btn--ready {
+  color: var(--accent-dark);
+}
+
+.header-action-btn__text {
+  display: block;
+}
+
+@media (max-width: 767px) {
+  .header-action-btn--header {
+    display: inline-flex;
+  }
+}
+
+.invite-header-btn {
+  display: inline-flex;
+}
+
+.install-header-btn {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .install-header-btn {
+    display: inline-flex;
+  }
+}
+
+.invite-sheet {
+  text-align: left;
+}
+
+.invite-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.install-app-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(29, 49, 38, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(16px, var(--safe-top)) 16px max(16px, var(--safe-bottom));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.install-app-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  max-height: min(88vh, 520px);
+  margin: auto;
+  flex-shrink: 0;
+  overflow-y: auto;
+  background: var(--white);
+  border-radius: 20px;
+  padding: 24px 20px 20px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.install-app-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.install-app-logo {
+  display: block;
+  margin: 0 auto 12px;
+  border-radius: 16px;
+}
+
+.install-app-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent-dark);
+  margin-bottom: 12px;
+}
+
+.install-app-steps {
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 16px 1.1rem;
+  padding: 0;
+}
+
+.install-app-steps li + li {
+  margin-top: 8px;
+}
+
+.install-app-ok {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+  color: var(--white);
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
 }

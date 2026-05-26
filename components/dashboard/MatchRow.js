@@ -21,11 +21,14 @@ export default function MatchRow({
 }) {
   const awayInputRef = useRef(null)
   const kickoff = formatMatchKickoff(utcDate)
+  const crestSize = compact ? 22 : 28
 
   return (
     <div className={`schedule-match-row${compact ? ' schedule-match-row--compact' : ''}`} ref={matchRef}>
-      <span className="schedule-match-home">{home}</span>
-      <TeamCrest src={homeCrest} alt={home} size={24} />
+      <div className="schedule-match-team schedule-match-team--home">
+        <TeamCrest src={homeCrest} alt={home} size={crestSize} />
+        <span className="schedule-match-team-name">{home}</span>
+      </div>
       <div className="schedule-match-center">
         {readOnly ? (
           <span className="schedule-match-time">{kickoff}</span>
@@ -51,8 +54,10 @@ export default function MatchRow({
           </>
         )}
       </div>
-      <TeamCrest src={awayCrest} alt={away} size={24} />
-      <span className="schedule-match-away">{away}</span>
+      <div className="schedule-match-team schedule-match-team--away">
+        <TeamCrest src={awayCrest} alt={away} size={crestSize} />
+        <span className="schedule-match-team-name">{away}</span>
+      </div>
     </div>
   )
 }

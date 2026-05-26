@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyWriteToken } from '../../../lib/sessionToken'
+import { normalizeLogoDataUrl } from '../../../lib/participantProfile'
 
 function getAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -28,7 +29,16 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Solo el organizador puede actualizar el grupo' }, { status: 403 })
     }
 
-    const { error } = await supabase.from('porra_groups').update(updates).eq('id', groupId)
+    const patch = { ...updates }
+    if (patch.league_logo !== undefined) {
+      try {
+        patch.league_logo = normalizeLogoDataUrl(patch.league_logo)
+      } catch (e) {
+        return NextResponse.json({ error: e.message }, { status: 400 })
+      }
+    }
+
+    const { error } = await supabase.from('porra_groups').update(patch).eq('id', groupId)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })
   } catch (e) {
