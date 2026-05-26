@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1440" preserveAspectRatio="none">
+  <!-- Reproduction of FIFA WC26 logo background (organic 2×2 color blocks) -->
+  <!-- Base: lime (bottom-left quadrant feel) -->
+  <rect width="1440" height="1440" fill="#d6df23"/>
+  <!-- Grass green: bottom-right + sweeping curve -->
+  <path fill="#49a942" d="M0,820 C420,620 720,540 1440,480 L1440,1440 L0,1440 Z"/>
+  <!-- Grass green: top-left -->
+  <path fill="#49a942" d="M0,0 L1440,0 L1440,480 C980,360 620,400 0,820 Z"/>
+  <!-- Forest green: top-right (curved seam into other blocks) -->
+  <path fill="#1d3126" d="M1440,0 L1440,1440 L620,1440 C880,980 1050,620 1440,480 L1440,0 Z"/>
+  <!-- Lime accent along bottom-left inner curve -->
+  <path fill="#d6df23" d="M0,1440 L0,680 C180,920 320,1080 0,1440 Z"/>
+</svg>

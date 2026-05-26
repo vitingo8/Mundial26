@@ -1,0 +1,206 @@
+'use client'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { supabase } from '../lib/supabase'
+import { getStoredWriteToken } from '../lib/sessionToken'
+import { isPredPhaseEditable } from '../lib/phaseLock'
+
+const AUTOSAVE_MS = 2000
+
+function predictionsEqual(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
+export function usePredictions({
+  user,
+  group,
+  predPhase,
+  tab,
+  notify,
+  setCurrentUser,
+  isAdmin,
+  adminOverride = false,
+}) {
+  const [groupPreds, setGroupPreds] = useState(user.predictions?.group || {})
+  const [koPreds, setKoPreds] = useState(user.predictions?.knockout || {})
+  const [bonusPreds, setBonusPreds] = useState(
+    user.predictions?.bonuses || { topScorer: '', topKeeper: '', topAssists: '', mvp: '' }
+  )
+  const [savingManual, setSavingManual] = useState(false)
+  const [saveStatus, setSaveStatus] = useState('saved')
+  const skipAutoSave = useRef(true)
+  const skipUserSync = useRef(false)
+  const pendingRef = useRef(false)
+  const saveInFlight = useRef(false)
+  const debounceTimer = useRef(null)
+  const predsRef = useRef({ group: groupPreds, knockout: koPreds, bonuses: bonusPreds })
+
+  predsRef.current = { group: groupPreds, knockout: koPreds, bonuses: bonusPreds }
+
+  useEffect(() => {
+    if (skipUserSync.current) {
+      skipUserSync.current = false
+      return
+    }
+    if (pendingRef.current || saveInFlight.current) return
+    setGroupPreds(user.predictions?.group || {})
+    setKoPreds(user.predictions?.knockout || {})
+    setBonusPreds(user.predictions?.bonuses || {
+      topScorer: '', topKeeper: '', topAssists: '', mvp: '',
+    })
+    skipAutoSave.current = true
+  }, [user.id, user.updated_at])
+
+  const runSave = useCallback(async (manual = false) => {
+    if (saveInFlight.current) {
+      pendingRef.current = true
+      return false
+    }
+    if (!isPredPhaseEditable(predPhase, group, isAdmin, adminOverride)) {
+      if (manual) notify('Esta fase no se puede editar', 'warning')
+      return false
+    }
+
+    const predictions = predsRef.current
+    saveInFlight.current = true
+    if (manual) {
+      setSavingManual(true)
+      setSaveStatus('saving')
+    } else {
+      setSaveStatus('saving')
+    }
+
+    const token = getStoredWriteToken(group.id, user.id)
+    let error = null
+    if (token) {
+      const res = await fetch('/api/predictions', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          groupId: group.id,
+          userId: user.id,
+          token,
+          predictions,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        error = { message: data.error || 'Error API' }
+      }
+    } else {
+      const result = await supabase
+        .from('porra_participants')
+        .update({ predictions, updated_at: new Date().toISOString() })
+        .eq('id', user.id)
+      error = result.error
+    }
+
+    saveInFlight.current = false
+
+    if (error) {
+      setSaveStatus('error')
+      if (manual) notify('No se pudo guardar. Revisa tu conexión.', 'error')
+      if (manual) setSavingManual(false)
+      return false
+    }
+
+    const stillDirty = !predictionsEqual(predsRef.current, predictions)
+    pendingRef.current = stillDirty
+
+    skipUserSync.current = true
+    setCurrentUser({ ...user, predictions, updated_at: new Date().toISOString() })
+
+    if (stillDirty) {
+      setSaveStatus('pending')
+      debounceTimer.current = setTimeout(() => {
+        debounceTimer.current = null
+        void runSaveRef.current(false)
+      }, 400)
+    } else {
+      setSaveStatus('saved')
+      pendingRef.current = false
+    }
+
+    if (manual) {
+      notify('Predicciones guardadas')
+      setSavingManual(false)
+    }
+    return true
+  }, [user, group, predPhase, isAdmin, adminOverride, notify, setCurrentUser])
+
+  const runSaveRef = useRef(runSave)
+  runSaveRef.current = runSave
+
+  const scheduleAutoSave = useCallback(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    debounceTimer.current = setTimeout(() => {
+      debounceTimer.current = null
+      void runSaveRef.current(false)
+    }, AUTOSAVE_MS)
+  }, [])
+
+  const persistPredictions = useCallback(
+    (manual = false) => runSave(manual),
+    [runSave]
+  )
+
+  const flushSave = useCallback(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current)
+      debounceTimer.current = null
+    }
+    if (
+      debounceTimer.current ||
+      pendingRef.current ||
+      saveStatus === 'pending' ||
+      saveStatus === 'saving'
+    ) {
+      return runSaveRef.current(false)
+    }
+    return Promise.resolve(true)
+  }, [saveStatus])
+
+  useEffect(() => {
+    if (skipAutoSave.current) {
+      skipAutoSave.current = false
+      return
+    }
+    if (tab !== 'predictions') return
+    pendingRef.current = true
+    setSaveStatus(prev => (prev === 'saving' ? 'saving' : 'pending'))
+    scheduleAutoSave()
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    }
+  }, [groupPreds, koPreds, bonusPreds, tab, scheduleAutoSave])
+
+  useEffect(() => {
+    function onVisibility() {
+      if (document.visibilityState === 'hidden') flushSave()
+    }
+    function onBeforeUnload(e) {
+      if (pendingRef.current && saveStatus !== 'saved') {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('beforeunload', onBeforeUnload)
+    }
+  }, [flushSave, saveStatus])
+
+  return {
+    groupPreds,
+    setGroupPreds,
+    koPreds,
+    setKoPreds,
+    bonusPreds,
+    setBonusPreds,
+    saving: savingManual,
+    saveStatus,
+    persistPredictions,
+    flushSave,
+  }
+}

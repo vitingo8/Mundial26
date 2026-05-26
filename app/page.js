@@ -1,77 +1,111 @@
 'use client'
 import { useEffect, useState } from 'react'
 import HomeScreen from '../components/HomeScreen'
-import CreateScreen from '../components/CreateScreen'
-import JoinScreen from '../components/JoinScreen'
+import { CreateScreen, JoinScreen } from '../components/CreateScreen'
 import GroupDashboard from '../components/GroupDashboard'
 import { supabase } from '../lib/supabase'
+import { createWriteToken } from '../lib/sessionToken'
+import { Icon } from '../components/icons'
 
 export default function Page() {
   const [screen, setScreen] = useState('loading')
   const [joinCode, setJoinCode] = useState('')
+  const [joinEmail, setJoinEmail] = useState('')
+  const [joinNewUser, setJoinNewUser] = useState(false)
+  const [resumeUserId, setResumeUserId] = useState(null)
+  const [resumeCandidates, setResumeCandidates] = useState(null)
   const [currentGroup, setCurrentGroup] = useState(null)
   const [currentUser, setCurrentUser] = useState(null)
   const [notification, setNotification] = useState(null)
 
   useEffect(() => {
-    // Check URL for join code
     const hash = window.location.hash.replace('#', '')
     const params = new URLSearchParams(window.location.search)
     const code = params.get('join') || (hash.startsWith('join-') ? hash.replace('join-', '') : '')
+    const userParam = params.get('user')
+    const screenParam = params.get('screen')
 
-    // Check localStorage for saved session
-    const savedSession = localStorage.getItem('porra_session')
-    if (savedSession) {
-      try {
-        const { groupId, userId } = JSON.parse(savedSession)
-        if (code && code !== groupId) {
-          // Different group - go to join
+    async function init() {
+      const savedSession = localStorage.getItem('porra_session')
+      if (savedSession) {
+        try {
+          const { groupId, userId } = JSON.parse(savedSession)
+          if (code && code !== groupId) {
+            setJoinCode(code)
+            setJoinEmail('')
+            setJoinNewUser(false)
+            setResumeUserId(userParam || null)
+            setScreen('join')
+            return
+          }
+          if (userParam && userParam !== userId) {
+            const ok = await restoreSession(groupId, userParam)
+            if (ok) return
+          }
+          const ok = await restoreSession(groupId, userId)
+          if (ok) return
+        } catch { /* ignore */ }
+      }
+
+      if (code && userParam) {
+        setJoinCode(code)
+        setJoinEmail('')
+        setJoinNewUser(false)
+        setResumeUserId(userParam)
+        setScreen('join')
+        return
+      }
+
+      if (code) {
+        const participants = await loadParticipants(code.toLowerCase().trim())
+        if (participants?.length) {
           setJoinCode(code)
-          setScreen('join')
-        } else {
-          // Restore session
-          restoreSession(groupId, userId)
+          setResumeCandidates({ groupId: code.toLowerCase().trim(), participants })
+          setScreen('resume')
           return
         }
-      } catch { }
+        setJoinCode(code)
+        setJoinEmail('')
+        setJoinNewUser(false)
+        setScreen('join')
+        return
+      }
+
+      if (screenParam === 'create') setScreen('create')
+      else if (screenParam === 'recover') setScreen('home')
+      else setScreen('home')
     }
 
-    if (code) {
-      setJoinCode(code)
-      setScreen('join')
-    } else {
-      setScreen('home')
-    }
+    init()
   }, [])
+
+  async function loadParticipants(groupId) {
+    const { data } = await supabase.from('porra_participants').select('id,name,is_admin').eq('group_id', groupId)
+    return data
+  }
 
   async function restoreSession(groupId, userId) {
     try {
-      const { data: group } = await supabase
-        .from('porra_groups')
-        .select('*')
-        .eq('id', groupId)
-        .single()
-
+      const { data: group } = await supabase.from('porra_groups').select('*').eq('id', groupId).single()
       const { data: participants } = await supabase
         .from('porra_participants')
         .select('*')
         .eq('group_id', groupId)
 
       if (group && participants) {
-        const groupWithParticipants = {
-          ...group,
-          participants: Object.fromEntries(participants.map(p => [p.id, p]))
-        }
         const user = participants.find(p => p.id === userId)
         if (user) {
-          setCurrentGroup(groupWithParticipants)
+          setCurrentGroup({
+            ...group,
+            participants: Object.fromEntries(participants.map(p => [p.id, p])),
+          })
           setCurrentUser(user)
           setScreen('dashboard')
-          return
+          return true
         }
       }
-    } catch { }
-    setScreen('home')
+    } catch { /* ignore */ }
+    return false
   }
 
   function notify(msg, type = 'success') {
@@ -84,6 +118,9 @@ export default function Page() {
   }
 
   function clearSession() {
+    if (typeof window !== 'undefined' && !window.confirm(
+      '¿Salir del grupo? Tu porra sigue guardada. Vuelve entrando tu email en inicio.'
+    )) return
     localStorage.removeItem('porra_session')
     setCurrentGroup(null)
     setCurrentUser(null)
@@ -91,12 +128,7 @@ export default function Page() {
   }
 
   async function refreshGroup(groupId) {
-    const { data: group } = await supabase
-      .from('porra_groups')
-      .select('*')
-      .eq('id', groupId)
-      .single()
-
+    const { data: group } = await supabase.from('porra_groups').select('*').eq('id', groupId).single()
     const { data: participants } = await supabase
       .from('porra_participants')
       .select('*')
@@ -105,7 +137,7 @@ export default function Page() {
     if (group && participants) {
       const full = {
         ...group,
-        participants: Object.fromEntries(participants.map(p => [p.id, p]))
+        participants: Object.fromEntries(participants.map(p => [p.id, p])),
       }
       setCurrentGroup(full)
       return full
@@ -116,37 +148,77 @@ export default function Page() {
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
-      <BgDecor />
       {notification && <Notification {...notification} />}
 
       {screen === 'home' && (
         <HomeScreen
           setScreen={setScreen}
           setJoinCode={setJoinCode}
+          setJoinEmail={setJoinEmail}
+          setJoinNewUser={setJoinNewUser}
           notify={notify}
+          onRecovered={async (groupId, userId) => {
+            saveSession(groupId, userId)
+            const ok = await restoreSession(groupId, userId)
+            if (ok) await createWriteToken(groupId, userId)
+            else notify('No se pudo entrar', 'error')
+          }}
         />
       )}
       {screen === 'create' && (
         <CreateScreen
           setScreen={setScreen}
           notify={notify}
-          onCreated={(group, user) => {
+          onCreated={async (group, user) => {
             setCurrentGroup(group)
             setCurrentUser(user)
             saveSession(group.id, user.id)
+            await createWriteToken(group.id, user.id)
             setScreen('dashboard')
           }}
+        />
+      )}
+      {screen === 'resume' && resumeCandidates && (
+        <ResumeScreen
+          groupId={resumeCandidates.groupId}
+          participants={resumeCandidates.participants}
+          onPick={async userId => {
+            saveSession(resumeCandidates.groupId, userId)
+            const ok = await restoreSession(resumeCandidates.groupId, userId)
+            if (ok) await createWriteToken(resumeCandidates.groupId, userId)
+            if (!ok) {
+              notify('No se pudo restaurar la sesión', 'error')
+              setJoinCode(resumeCandidates.groupId)
+              setJoinEmail('')
+              setJoinNewUser(false)
+              setScreen('join')
+            }
+          }}
+          onNew={() => {
+            setJoinCode(resumeCandidates.groupId)
+            setJoinEmail('')
+            setJoinNewUser(false)
+            setScreen('join')
+          }}
+          onBack={() => setScreen('home')}
         />
       )}
       {screen === 'join' && (
         <JoinScreen
           initialCode={joinCode}
+          initialEmail={joinEmail}
+          isNewParticipant={joinNewUser}
+          resumeUserId={resumeUserId}
           setScreen={setScreen}
           notify={notify}
-          onJoined={(group, user) => {
+          onJoined={async (group, user) => {
             setCurrentGroup(group)
             setCurrentUser(user)
             saveSession(group.id, user.id)
+            await createWriteToken(group.id, user.id)
+            setResumeUserId(null)
+            setJoinEmail('')
+            setJoinNewUser(false)
             setScreen('dashboard')
           }}
         />
@@ -165,59 +237,82 @@ export default function Page() {
   )
 }
 
+function ResumeScreen({ groupId, participants, onPick, onNew, onBack }) {
+  return (
+    <div style={{
+      maxWidth: 480, margin: '0 auto', padding: '40px 16px',
+      position: 'relative', zIndex: 1,
+    }}>
+      <div style={{
+        background: 'var(--card)', border: '1px solid var(--border)',
+        borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 14,
+      }}>
+        <button type="button" onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', textAlign: 'left' }}>← Volver</button>
+        <h2 style={{ fontSize: 22, fontWeight: 900, margin: 0 }}>¿Continuar como…?</h2>
+        <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
+          Elige tu nombre en el grupo <strong>#{groupId}</strong>
+        </p>
+        {participants.map(p => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => onPick(p.id)}
+            style={{
+              background: 'var(--white)', border: '1px solid var(--border)',
+              borderRadius: 12, padding: '12px 16px', cursor: 'pointer',
+              textAlign: 'left', fontWeight: 700, fontSize: 15,
+              boxShadow: 'var(--card-shadow)',
+            }}
+          >
+            {p.name}{p.is_admin ? ' · Organizador' : ''}
+          </button>
+        ))}
+        <button type="button" onClick={onNew} style={{
+          background: 'var(--white)', border: '1px solid var(--border)',
+          borderRadius: 12, padding: '12px 16px', cursor: 'pointer', color: 'var(--muted)',
+        }}>
+          Soy nuevo en este grupo →
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function LoadingScreen() {
   return (
     <div style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center',
       justifyContent: 'center', flexDirection: 'column', gap: 16,
-      background: 'var(--bg)'
+      position: 'relative', zIndex: 1,
     }}>
-      <BgDecor />
-      <div style={{ fontSize: 48 }}>⚽</div>
+      <img src="/logo-wc26.png" alt="" width={120} height={120} style={{ opacity: 0.95 }} aria-hidden="true" />
       <div style={{
         width: 32, height: 32, border: '3px solid var(--border)',
         borderTopColor: 'var(--accent)', borderRadius: '50%',
-        animation: 'spin 0.8s linear infinite'
+        animation: 'spin 0.8s linear infinite',
       }} />
+      <span className="sr-only">Cargando…</span>
     </div>
   )
 }
 
-function BgDecor() {
-  return (
-    <>
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
-        backgroundImage: `linear-gradient(rgba(27,143,66,0.06) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(27,143,66,0.06) 1px, transparent 1px)`,
-        backgroundSize: '48px 48px'
-      }} />
-      <div style={{
-        position: 'fixed', width: 700, height: 700, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(132,204,22,0.18) 0%, transparent 65%)',
-        top: -250, right: -250, zIndex: 0, pointerEvents: 'none'
-      }} />
-      <div style={{
-        position: 'fixed', width: 500, height: 500, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(27,143,66,0.12) 0%, transparent 65%)',
-        bottom: -150, left: -150, zIndex: 0, pointerEvents: 'none'
-      }} />
-    </>
-  )
-}
-
 function Notification({ msg, type }) {
+  const iconName = type === 'error' ? 'exclamationTriangle' : type === 'warning' ? 'clock' : 'checkCircle'
   return (
-    <div style={{
-      position: 'fixed', top: 20, right: 16, left: 16, zIndex: 9999,
-      maxWidth: 400, margin: '0 auto',
-      background: type === 'error' ? 'var(--red)' : type === 'warning' ? 'var(--warning)' : 'var(--green)',
-      color: 'white', padding: '14px 18px', borderRadius: 14,
-      fontWeight: 700, fontSize: 14, boxShadow: 'var(--shadow-soft)',
-      animation: 'slideDown 0.3s ease',
-      display: 'flex', alignItems: 'center', gap: 8
-    }}>
-      {type === 'error' ? '⚠️' : type === 'warning' ? '⏰' : '✅'} {msg}
+    <div
+      role="alert"
+      aria-live="polite"
+      style={{
+        position: 'fixed', top: 20, right: 16, left: 16, zIndex: 9999,
+        maxWidth: 400, margin: '0 auto',
+        background: type === 'error' ? 'var(--red)' : type === 'warning' ? 'var(--warning)' : 'var(--green)',
+        color: 'white', padding: '14px 18px', borderRadius: 14,
+        fontWeight: 700, fontSize: 14, boxShadow: 'var(--shadow-soft)',
+        animation: 'slideDown 0.3s ease',
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}
+    >
+      <Icon name={iconName} size="md" style={{ color: 'white' }} /> {msg}
     </div>
   )
 }

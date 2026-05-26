@@ -1,0 +1,17 @@
+{
+  "name": "Porra Mundial 2026",
+  "short_name": "Porra 2026",
+  "description": "Porra del Mundial 2026",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#49a942",
+  "theme_color": "#49a942",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

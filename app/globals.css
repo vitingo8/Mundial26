@@ -1,4 +1,34 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter';
+}
+
+.ui-icon {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.dash-tab-icon .ui-icon,
+.dash-phase-icon .ui-icon,
+.bottom-nav-icon .ui-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.dash-icon-btn .ui-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.form-card-title .ui-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-right: 8px;
+  vertical-align: -0.2em;
+}
 
 @font-face {
   font-family: 'Inter';
@@ -17,51 +47,104 @@
 }
 
 :root {
-  --bg: #e8f5e9;
-  --bg-soft: #f4fbf4;
+  /* FIFA World Cup 2026 logo palette */
+  --wc-dark: #1d3126;
+  --wc-mid: #49a942;
+  --wc-lime: #d6df23;
+  --wc-light: #6ed456;
+
+  --bg: var(--wc-mid);
+  --bg-soft: #ffffff;
   --card: #ffffff;
-  --card2: #f0faf1;
-  --border: #c8e6c9;
-  --border-strong: #a5d6a7;
-  --accent: #1b8f42;
-  --accent2: #4ecb71;
-  --accent-dark: #146633;
-  --accent-lime: #84cc16;
-  --accent-glow: rgba(27, 143, 66, 0.22);
-  --accent-dim: rgba(27, 143, 66, 0.1);
-  --text: #174633;
-  --text-soft: #2d5f47;
-  --muted: #5f8a6e;
-  --green: #16a34a;
-  --green-dim: rgba(22, 163, 74, 0.12);
-  --green-border: rgba(22, 163, 74, 0.35);
-  --red: #dc4c4c;
-  --red-dim: rgba(220, 76, 76, 0.12);
-  --red-border: rgba(220, 76, 76, 0.35);
-  --yellow: #ca9a00;
-  --yellow-dim: rgba(202, 154, 0, 0.12);
-  --yellow-border: rgba(202, 154, 0, 0.35);
-  --warning: #b45309;
+  --card2: #ffffff;
+  --border: rgba(29, 49, 38, 0.14);
+  --border-strong: rgba(29, 49, 38, 0.28);
+  --accent: var(--wc-mid);
+  --accent2: var(--wc-light);
+  --accent-dark: var(--wc-dark);
+  --accent-lime: var(--wc-lime);
+  --accent-glow: rgba(73, 169, 66, 0.45);
+  --accent-dim: rgba(29, 49, 38, 0.08);
+  --text: var(--wc-dark);
+  --text-soft: #2d4a3a;
+  --muted: #3f5c4a;
+  --green: var(--wc-mid);
+  --green-dim: rgba(73, 169, 66, 0.18);
+  --green-border: rgba(73, 169, 66, 0.45);
+  --red: #c73e3e;
+  --red-dim: rgba(199, 62, 62, 0.12);
+  --red-border: rgba(199, 62, 62, 0.35);
+  --yellow: #8a6f00;
+  --yellow-dim: rgba(138, 111, 0, 0.12);
+  --yellow-border: rgba(138, 111, 0, 0.35);
+  --warning: #9a5b00;
   --white: #ffffff;
-  --glass: rgba(255, 255, 255, 0.9);
-  --card-shadow: 0 4px 24px rgba(23, 70, 51, 0.07);
-  --shadow-soft: 0 8px 32px rgba(23, 70, 51, 0.12);
+  --glass: #ffffff;
+  --card-shadow: 0 4px 28px rgba(29, 49, 38, 0.14);
+  --shadow-soft: 0 10px 36px rgba(29, 49, 38, 0.18);
+  --on-pattern: #ffffff;
+  --on-pattern-muted: rgba(255, 255, 255, 0.88);
 }
 
 html { font-size: 16px; -webkit-text-size-adjust: 100%; }
 
 body {
-  background: linear-gradient(165deg, var(--bg-soft) 0%, var(--bg) 50%, #dff0df 100%);
-  background-attachment: fixed;
+  position: relative;
+  background-color: var(--wc-mid);
   color: var(--text);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter';
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+/* WC26 organic color-block pattern (logo background) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-color: var(--wc-lime);
+  background-image: url('/wc26-pattern.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* Soft vignette so cards & text stay readable over the pattern */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgba(255, 255, 255, 0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(29, 49, 38, 0.12) 0%, transparent 50%);
 }
 
 input, button, select, textarea {
   font-family: inherit;
   font-size: inherit;
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']),
+textarea,
+select {
+  color: var(--text);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  box-shadow: 0 0 0 1000px #ffffff inset;
 }
 
 input:focus, textarea:focus, select:focus {
@@ -74,8 +157,18 @@ input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
 
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-soft); }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.4); }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+/* Hero / titles sitting directly on the pattern */
+.on-pattern {
+  color: var(--on-pattern);
+  text-shadow: 0 2px 16px rgba(29, 49, 38, 0.35);
+}
+.on-pattern-muted {
+  color: var(--on-pattern-muted);
+  text-shadow: 0 1px 8px rgba(29, 49, 38, 0.25);
+}
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(12px); }
@@ -94,8 +187,29 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
 }
 @keyframes glow {
   0%, 100% { box-shadow: 0 0 16px var(--accent-glow); }
-  50% { box-shadow: 0 0 28px rgba(27, 143, 66, 0.35); }
+  50% { box-shadow: 0 0 28px rgba(73, 169, 66, 0.5); }
 }
 
 .animate-in { animation: fadeIn 0.4s ease both; }
 .spin { animation: spin 1s linear infinite; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-in,
+  .spin,
+  [style*="animation: glow"],
+  [style*="animation:glow"] {
+    animation: none !important;
+  }
+}
