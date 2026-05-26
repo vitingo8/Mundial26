@@ -274,6 +274,7 @@
 }
 
 .header-action-btn--header {
+  display: inline-flex;
   flex-direction: column;
   gap: 1px;
   width: auto;
@@ -289,6 +290,12 @@
   letter-spacing: 0.02em;
   line-height: 1;
   box-shadow: none;
+  text-decoration: none;
+}
+
+.header-action-btn--header:hover {
+  background: var(--green-dim);
+  color: var(--accent-dark);
 }
 
 .header-action-btn--header:active {
@@ -304,24 +311,12 @@
   display: block;
 }
 
-@media (max-width: 767px) {
-  .header-action-btn--header {
-    display: inline-flex;
-  }
-}
-
 .invite-header-btn {
   display: inline-flex;
 }
 
 .install-header-btn {
-  display: none;
-}
-
-@media (max-width: 767px) {
-  .install-header-btn {
-    display: inline-flex;
-  }
+  display: inline-flex;
 }
 
 .invite-sheet {

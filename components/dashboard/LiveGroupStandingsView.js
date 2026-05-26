@@ -73,6 +73,7 @@ export default function LiveGroupStandingsView({
                   status={raw?.status}
                   userPred={userPreds[m.id]}
                   compact
+                  showMatchDate
                   onGoToPrediction={onGoToPrediction ? () => onGoToPrediction(m.id) : undefined}
                 />
               )

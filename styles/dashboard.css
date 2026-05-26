@@ -1499,6 +1499,22 @@
   color: var(--dash-muted);
 }
 
+.schedule-match-datetime {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1.15;
+}
+
+.schedule-match-date {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--dash-muted);
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
 .schedule-match-result-score {
   font-size: 1.25rem;
   font-weight: 800;
@@ -2037,6 +2053,15 @@
   box-shadow: var(--dash-shadow);
 }
 
+.predicted-knockout-section--embedded {
+  margin-top: 0;
+  margin-bottom: 12px;
+  padding: 0 0 4px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
 .predicted-knockout-header {
   margin-bottom: 12px;
 }
@@ -2079,6 +2104,110 @@
   font-weight: 500;
   font-size: 0.8rem;
   color: var(--dash-text-soft, #2d4a3a);
+}
+
+/* Mejores terceros (vista clasificación) */
+.best-thirds-section {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+  padding: 16px;
+  background: var(--white, #fff);
+  border: 1px solid var(--dash-border, rgba(29, 49, 38, 0.14));
+  border-radius: var(--dash-radius, 16px);
+  box-shadow: var(--dash-shadow, 0 4px 28px rgba(29, 49, 38, 0.14));
+}
+
+.best-thirds-header {
+  margin-bottom: 12px;
+}
+
+.best-thirds-title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--dash-accent-deep, #1d3126);
+  letter-spacing: -0.02em;
+}
+
+.best-thirds-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--dash-muted, #3f5c4a);
+}
+
+.best-thirds-key {
+  font-weight: 700;
+  color: var(--dash-accent, #49a942);
+}
+
+.best-thirds-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.best-thirds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.best-thirds-table th,
+.best-thirds-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--dash-border, rgba(29, 49, 38, 0.14));
+}
+
+.best-thirds-table th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dash-muted, #3f5c4a);
+}
+
+.best-thirds-rank {
+  width: 2rem;
+  font-weight: 800;
+  color: var(--dash-accent-deep, #1d3126);
+}
+
+.best-thirds-group {
+  width: 2.5rem;
+  font-weight: 700;
+}
+
+.best-thirds-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.best-thirds-team span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.best-thirds-row--in {
+  background: rgba(73, 169, 66, 0.1);
+}
+
+.best-thirds-row--in .best-thirds-rank {
+  color: var(--dash-accent, #49a942);
+}
+
+.best-thirds-row--out {
+  opacity: 0.72;
+}
+
+.best-thirds-legend {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+  color: var(--dash-muted, #3f5c4a);
 }
 
 .schedule-panel--full .schedule-matches-panel {

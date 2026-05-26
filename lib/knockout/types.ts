@@ -50,6 +50,8 @@ export interface BracketMatch {
   home: string
   away: string
   venue?: string
+  /** Fecha/hora del partido (ISO UTC), para calendario diario */
+  utcDate?: string
 }
 
 /** matchNumber → grupo del tercer clasificado asignado */
@@ -69,6 +71,7 @@ export interface GeneratedKnockoutMatch {
   awayResolvedGroup?: GroupLetter
   homeResolvedGroup?: GroupLetter
   venue?: string
+  utcDate?: string
 }
 
 export interface GeneratedRoundOf32 {

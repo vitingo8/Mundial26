@@ -1,7 +1,8 @@
 'use client'
 import { useRef } from 'react'
 import TeamCrest from '../TeamCrest'
-import { formatMatchKickoff } from '../../lib/matchSchedule'
+import { formatMatchKickoff, formatMatchShortDate } from '../../lib/matchSchedule'
+import { focusAwayInRow, focusNextMatchHomeScore } from '../../lib/scheduleScoreFocus'
 import ScoreInput from './ScoreInput'
 
 export default function MatchRow({
@@ -18,13 +19,23 @@ export default function MatchRow({
   matchRef,
   readOnly = false,
   compact = false,
+  showMatchDate = false,
 }) {
-  const awayInputRef = useRef(null)
+  const rowRef = useRef(null)
   const kickoff = formatMatchKickoff(utcDate)
+  const matchDate = formatMatchShortDate(utcDate)
   const crestSize = compact ? 22 : 28
 
+  function setRowRef(el) {
+    rowRef.current = el
+    if (matchRef) matchRef(el)
+  }
+
   return (
-    <div className={`schedule-match-row${compact ? ' schedule-match-row--compact' : ''}`} ref={matchRef}>
+    <div
+      className={`schedule-match-row${compact ? ' schedule-match-row--compact' : ''}`}
+      ref={setRowRef}
+    >
       <div className="schedule-match-team schedule-match-team--home">
         <TeamCrest src={homeCrest} alt={home} size={crestSize} />
         <span className="schedule-match-team-name">{home}</span>
@@ -40,17 +51,26 @@ export default function MatchRow({
                 onChange={onHome}
                 disabled={locked}
                 ariaLabel={`Goles ${home}`}
-                onFilled={() => awayInputRef.current?.focus()}
+                scoreSide="home"
+                onFilled={() => focusAwayInRow(rowRef.current)}
               />
               <ScoreInput
-                ref={awayInputRef}
                 value={awayVal}
                 onChange={onAway}
                 disabled={locked}
                 ariaLabel={`Goles ${away}`}
+                scoreSide="away"
+                onFilled={() => focusNextMatchHomeScore(rowRef.current)}
               />
             </div>
-            <span className="schedule-match-kickoff">{kickoff}</span>
+            {showMatchDate ? (
+              <span className="schedule-match-datetime">
+                <span className="schedule-match-date">{matchDate}</span>
+                <span className="schedule-match-kickoff">{kickoff}</span>
+              </span>
+            ) : (
+              <span className="schedule-match-kickoff">{kickoff}</span>
+            )}
           </>
         )}
       </div>

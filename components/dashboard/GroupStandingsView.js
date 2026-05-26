@@ -2,8 +2,10 @@
 
 import { useMemo } from 'react'
 import { computeGroupStandings } from '../../lib/groupStandings'
+import { computeBestThirdPlacesRanking } from '../../lib/bestThirdPlaces'
 import TeamCrest from '../TeamCrest'
 import MatchRow from './MatchRow'
+import BestThirdPlacesTable from './BestThirdPlacesTable'
 
 export default function GroupStandingsView({
   matches,
@@ -14,6 +16,11 @@ export default function GroupStandingsView({
 }) {
   const groups = useMemo(
     () => computeGroupStandings(matches, preds),
+    [matches, preds],
+  )
+
+  const bestThirds = useMemo(
+    () => computeBestThirdPlacesRanking(matches, preds),
     [matches, preds],
   )
 
@@ -69,11 +76,17 @@ export default function GroupStandingsView({
                 onAway={v => onScore(m.id, 'away', v)}
                 locked={locked}
                 compact
+                showMatchDate
               />
             ))}
           </div>
         </section>
       ))}
+
+      <BestThirdPlacesTable
+        rows={bestThirds.rows}
+        combinationKey={bestThirds.combinationKey}
+      />
     </div>
   )
 }

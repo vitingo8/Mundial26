@@ -1,7 +1,7 @@
 'use client'
 
 import TeamCrest from '../TeamCrest'
-import { formatMatchKickoff } from '../../lib/matchSchedule'
+import { formatMatchKickoff, formatMatchShortDate } from '../../lib/matchSchedule'
 import { MatchStatus } from '../icons'
 
 const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
@@ -19,11 +19,25 @@ export default function LiveResultRow({
   compact = false,
   onGoToPrediction,
   matchRef,
+  showMatchDate = false,
 }) {
   const isLive = LIVE_STATUSES.has(status)
   const isUpcoming = UPCOMING_STATUSES.has(status)
   const hasScore = score?.home != null && score?.away != null
   const kickoff = formatMatchKickoff(utcDate)
+  const matchDate = formatMatchShortDate(utcDate)
+
+  function renderKickoff() {
+    if (!showMatchDate) {
+      return <span className="schedule-match-kickoff">{kickoff}</span>
+    }
+    return (
+      <span className="schedule-match-datetime">
+        <span className="schedule-match-date">{matchDate}</span>
+        <span className="schedule-match-kickoff">{kickoff}</span>
+      </span>
+    )
+  }
   const crestSize = compact ? 22 : 28
 
   const hasFooter = userPred || onGoToPrediction
@@ -47,10 +61,10 @@ export default function LiveResultRow({
             <div className="schedule-match-result">
               <span className="schedule-match-result-score">{score.home} - {score.away}</span>
             </div>
-            <span className="schedule-match-kickoff">{kickoff}</span>
+            {renderKickoff()}
           </>
         ) : (
-          <span className="schedule-match-time">{kickoff}</span>
+          showMatchDate ? renderKickoff() : <span className="schedule-match-time">{kickoff}</span>
         )}
         {status && (
           <MatchStatus

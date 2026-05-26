@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { getStoredWriteToken } from '../lib/sessionToken'
 import { isPredPhaseEditable } from '../lib/phaseLock'
+import { normalizeInicioKoPreds } from '../lib/knockoutBridge'
 
 const AUTOSAVE_MS = 2000
 
@@ -22,7 +23,9 @@ export function usePredictions({
 }) {
   const [groupPreds, setGroupPreds] = useState(user.predictions?.group || {})
   const [koPreds, setKoPreds] = useState(user.predictions?.knockout || {})
-  const [inicioKoPreds, setInicioKoPreds] = useState(user.predictions?.inicioKnockout || {})
+  const [inicioKoPreds, setInicioKoPreds] = useState(() =>
+    normalizeInicioKoPreds(user.predictions?.inicioKnockout || {}),
+  )
   const [bonusPreds, setBonusPreds] = useState(
     user.predictions?.bonuses || { topScorer: '', topKeeper: '', topAssists: '', mvp: '' }
   )
@@ -55,7 +58,7 @@ export function usePredictions({
     if (pendingRef.current || saveInFlight.current) return
     setGroupPreds(user.predictions?.group || {})
     setKoPreds(user.predictions?.knockout || {})
-    setInicioKoPreds(user.predictions?.inicioKnockout || {})
+    setInicioKoPreds(normalizeInicioKoPreds(user.predictions?.inicioKnockout || {}))
     setBonusPreds(user.predictions?.bonuses || {
       topScorer: '', topKeeper: '', topAssists: '', mvp: '',
     })

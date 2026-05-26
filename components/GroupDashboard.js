@@ -38,6 +38,7 @@ import ScheduleViewTabs from './dashboard/ScheduleViewTabs'
 import LiveMatchDaySchedule from './dashboard/LiveMatchDaySchedule'
 import LiveGroupStandingsView from './dashboard/LiveGroupStandingsView'
 import PredictedKnockoutSection from './dashboard/PredictedKnockoutSection'
+import { buildInicioKnockoutSchedule } from '../lib/knockoutBridge'
 import {
   toMadridDatetimeLocalValue,
   fromMadridDatetimeLocal,
@@ -88,9 +89,9 @@ export default function GroupDashboard({ group, user, refreshGroup, setCurrentUs
   })
 
   useEffect(() => {
-    if (!isAdmin) return
-    if (tab === 'admin') reloadWc()
-    const t = setInterval(() => reloadWc(), 5 * 60 * 1000)
+    if (!isAdmin || tab !== 'admin') return
+    reloadWc()
+    const t = setInterval(reloadWc, 5 * 60 * 1000)
     return () => clearInterval(t)
   }, [isAdmin, tab, reloadWc])
 
@@ -530,6 +531,57 @@ function GroupPhasePreds({
   const filled = countFilledMatches(preds, matches)
   const total = matches.length || 1
 
+  const inicioKo = useMemo(
+    () => buildInicioKnockoutSchedule(matches, preds, inicioKoPreds),
+    [matches, preds, inicioKoPreds],
+  )
+
+  const dailyAllMatches = useMemo(() => {
+    if (viewMode !== 'daily') return matches
+    return [...matches, ...inicioKo.schedule]
+  }, [viewMode, matches, inicioKo.schedule])
+
+  const combinedPreds = useMemo(
+    () => ({ ...preds, ...inicioKoPreds }),
+    [preds, inicioKoPreds],
+  )
+
+  function handleScore(id, side, val) {
+    if (String(id).startsWith('inicio-ko-') || String(id).startsWith('inicio-r32-')) {
+      if (val === '' || val === undefined) {
+        setInicioKoPreds(p => {
+          const next = { ...p[id] }
+          delete next[side]
+          if (!Object.keys(next).length) {
+            const { [id]: _, ...rest } = p
+            return rest
+          }
+          return { ...p, [id]: next }
+        })
+        return
+      }
+      const v = parseInt(val, 10)
+      if (Number.isNaN(v) || v < 0 || v > 20) return
+      setInicioKoPreds(p => ({ ...p, [id]: { ...p[id], [side]: v } }))
+      return
+    }
+    setScore(id, side, val)
+  }
+
+  function sectionKey(m) {
+    if (m.isPredictedBracket || String(m.id).startsWith('inicio-ko-') || String(m.id).startsWith('inicio-r32-')) {
+      return m.roundId || 'r32'
+    }
+    return m.group || '—'
+  }
+
+  function sectionLabel(m) {
+    if (m.isPredictedBracket || String(m.id).startsWith('inicio-ko-') || String(m.id).startsWith('inicio-r32-')) {
+      return m.roundLabel || 'Dieciseisavos (previstos)'
+    }
+    return `Grupo ${m.group}`
+  }
+
   if (!matches.length) {
     return (
       <div style={s.apiCard}>
@@ -557,29 +609,56 @@ function GroupPhasePreds({
           matchRefs={matchRefs}
           onScore={setScore}
         />
+      ) : viewMode === 'daily' ? (
+        <>
+          {inicioKo.error && (
+            <PredictedKnockoutSection
+              groupMatches={matches}
+              groupPreds={preds}
+              inicioKoPreds={inicioKoPreds}
+              setInicioKoPreds={setInicioKoPreds}
+              locked={locked}
+              matchRefs={matchRefs}
+              viewMode={viewMode}
+              hideSchedule
+            />
+          )}
+          <MatchDaySchedule
+            matches={dailyAllMatches}
+            preds={combinedPreds}
+            locked={locked}
+            matchRefs={matchRefs}
+            onScore={handleScore}
+            schedulePhase="group"
+            viewMode="daily"
+            getSectionKey={sectionKey}
+            getSectionLabel={sectionLabel}
+          />
+        </>
       ) : (
-        <MatchDaySchedule
-          matches={matches}
-          preds={preds}
-          locked={locked}
-          matchRefs={matchRefs}
-          onScore={setScore}
-          schedulePhase="group"
-          viewMode={viewMode}
-          getSectionKey={m => m.group || '—'}
-          getSectionLabel={m => `Grupo ${m.group}`}
-        />
+        <>
+          <MatchDaySchedule
+            matches={matches}
+            preds={preds}
+            locked={locked}
+            matchRefs={matchRefs}
+            onScore={setScore}
+            schedulePhase="group"
+            viewMode={viewMode}
+            getSectionKey={m => m.group || '—'}
+            getSectionLabel={m => `Grupo ${m.group}`}
+          />
+          <PredictedKnockoutSection
+            groupMatches={matches}
+            groupPreds={preds}
+            inicioKoPreds={inicioKoPreds}
+            setInicioKoPreds={setInicioKoPreds}
+            locked={locked}
+            matchRefs={matchRefs}
+            viewMode={viewMode}
+          />
+        </>
       )}
-
-      <PredictedKnockoutSection
-        groupMatches={matches}
-        groupPreds={preds}
-        inicioKoPreds={inicioKoPreds}
-        setInicioKoPreds={setInicioKoPreds}
-        locked={locked}
-        matchRefs={matchRefs}
-        viewMode={viewMode}
-      />
     </div>
   )
 }

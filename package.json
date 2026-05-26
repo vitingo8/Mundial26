@@ -9,6 +9,7 @@
     "build": "next build",
     "postinstall": "npm run build:knockout",
     "start": "next start",
+    "build:third-place-map": "node scripts/build-third-place-map.mjs data/fifa-2026-third-place-combinations.txt",
     "build:knockout": "tsc -p lib/knockout/tsconfig.build.json",
     "test": "npm run build:knockout && node --test lib/knockout/knockout.test.mjs",
     "test:all": "node --test lib/gameData.test.mjs lib/groupStandings.test.mjs lib/madridTime.test.mjs && npm test"

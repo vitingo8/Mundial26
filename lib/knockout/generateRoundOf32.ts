@@ -103,6 +103,7 @@ export function generateRoundOf32(
       homeResolvedGroup: homeResolved.resolvedGroup,
       awayResolvedGroup: awayResolved.resolvedGroup,
       venue: slot.venue,
+      utcDate: slot.utcDate,
     }
   })
 

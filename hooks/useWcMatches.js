@@ -54,9 +54,11 @@ export function useWcMatches() {
     }
   }, [])
 
+  const reload = useCallback(() => load(true), [load])
+
   useEffect(() => {
     load(false)
   }, [load])
 
-  return { wcMatches, setWcMatches, wcLoading, apiError, reload: () => load(true) }
+  return { wcMatches, setWcMatches, wcLoading, apiError, reload }
 }

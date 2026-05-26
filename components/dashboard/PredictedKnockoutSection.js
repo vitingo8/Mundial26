@@ -16,10 +16,12 @@ export default function PredictedKnockoutSection({
   locked,
   matchRefs,
   viewMode = 'daily',
+  /** En vista diaria el calendario unificado va en GroupPhasePreds */
+  hideSchedule = false,
 }) {
-  const { schedule, error, combinationKey } = useMemo(
-    () => buildInicioKnockoutSchedule(groupMatches, groupPreds),
-    [groupMatches, groupPreds],
+  const { schedule, error } = useMemo(
+    () => buildInicioKnockoutSchedule(groupMatches, groupPreds, inicioKoPreds),
+    [groupMatches, groupPreds, inicioKoPreds],
   )
 
   function setScore(id, side, val) {
@@ -41,19 +43,12 @@ export default function PredictedKnockoutSection({
   }
 
   if (!groupMatches.length) return null
+  if (hideSchedule && !error) return null
 
   return (
-    <section className="predicted-knockout-section">
-      <header className="predicted-knockout-header">
-        <h3 className="predicted-knockout-title">Eliminatorias previstas (60%)</h3>
-        <p className="predicted-knockout-hint">
-          Cruces calculados con tus resultados de grupos y la tabla oficial de mejores terceros.
-          {combinationKey && (
-            <span className="predicted-knockout-key"> Combinación: {combinationKey}</span>
-          )}
-        </p>
-      </header>
-
+    <section
+      className={`predicted-knockout-section${hideSchedule ? ' predicted-knockout-section--embedded' : ''}`}
+    >
       {error && (
         <div className="predicted-knockout-alert" role="status">
           {formatKnockoutErrorForUi(error)}
@@ -63,7 +58,7 @@ export default function PredictedKnockoutSection({
         </div>
       )}
 
-      {schedule.length > 0 && (
+      {schedule.length > 0 && !hideSchedule && (
         <MatchDaySchedule
           matches={schedule}
           preds={inicioKoPreds}
