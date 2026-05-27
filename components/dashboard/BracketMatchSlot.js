@@ -1,5 +1,6 @@
 'use client'
 
+import { isMatchKickoffPassed } from '../../lib/deadlines'
 import TeamCrest from '../TeamCrest'
 import ScoreInput from './ScoreInput'
 import { needsKnockoutAdvancePick } from '../../lib/knockoutAdvances'
@@ -55,6 +56,7 @@ export default function BracketMatchSlot({
   onScore,
   onAdvance,
   locked = false,
+  getMatchLocked,
   readOnly = false,
   apiRaw = null,
   userPred,
@@ -62,6 +64,8 @@ export default function BracketMatchSlot({
   matchRef,
 }) {
   if (!match) return <div className="bracket-slot bracket-slot--empty" />
+
+  const matchLocked = locked || (getMatchLocked ? getMatchLocked(match) : isMatchKickoffPassed(match.utcDate))
 
   const score = readOnly ? getApiMatchDisplayScore(apiRaw) : null
   const hasScore = score?.home != null && score?.away != null
@@ -71,7 +75,7 @@ export default function BracketMatchSlot({
     advances: pred.advances,
   }
   const pickAdvance =
-    !readOnly && !locked && needsKnockoutAdvancePick(predRow) && onAdvance
+    !readOnly && !matchLocked && needsKnockoutAdvancePick(predRow) && onAdvance
 
   return (
     <div
@@ -92,7 +96,7 @@ export default function BracketMatchSlot({
         side="home"
         onScore={(side, v) => onScore?.(match.id, side, v)}
         onAdvance={() => onAdvance?.(match.id, 'home')}
-        locked={locked}
+        locked={matchLocked}
         readOnly={readOnly}
         pickable={!!pickAdvance}
         eliminated={pickAdvance && pred.advances === 'away'}
@@ -106,7 +110,7 @@ export default function BracketMatchSlot({
         side="away"
         onScore={(side, v) => onScore?.(match.id, side, v)}
         onAdvance={() => onAdvance?.(match.id, 'away')}
-        locked={locked}
+        locked={matchLocked}
         readOnly={readOnly}
         pickable={!!pickAdvance}
         eliminated={pickAdvance && pred.advances === 'home'}

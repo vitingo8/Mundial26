@@ -5,12 +5,13 @@ import { supabase } from '../lib/supabase'
 import { SCORING } from '../lib/gameData'
 import { isValidEmail, normalizeEmail } from '../lib/emailUtils'
 import { findParticipantsByEmail } from '../lib/participantLookup'
+import { getSavedEmail, saveEmail } from '../lib/savedEmail'
 import { InputActionRow } from './InputRow'
 import { Icon, IconLabel } from './icons'
 import LeagueLogo from './LeagueLogo'
 
 export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJoinNewUser, notify, onRecovered }) {
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(() => getSavedEmail())
   const [loading, setLoading] = useState(false)
   const [pickList, setPickList] = useState(null)
 
@@ -23,10 +24,12 @@ export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJo
       notify('Introduce un email válido', 'error')
       return
     }
+    const norm = normalizeEmail(email)
+    saveEmail(norm)
     setLoading(true)
     setPickList(null)
     try {
-      const matches = await findParticipantsByEmail(supabase, email)
+      const matches = await findParticipantsByEmail(supabase, norm)
       if (matches.length === 1) {
         await onRecovered(matches[0].group_id, matches[0].id)
         setLoading(false)
@@ -37,7 +40,7 @@ export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJo
         setLoading(false)
         return
       }
-      setJoinEmail(normalizeEmail(email))
+      setJoinEmail(norm)
       setJoinNewUser(true)
       setJoinCode('')
       setScreen('join')
@@ -73,7 +76,12 @@ export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJo
               />
               <div style={s.pickBtnText}>
                 <strong>{p.groupName}</strong>
-                <span style={s.pickSub}>como {p.name}</span>
+                <span style={s.pickSub}>
+                  como {p.name}
+                  {p.participantCount > 0 && (
+                    <> · {p.participantCount} {p.participantCount === 1 ? 'participante' : 'participantes'}</>
+                  )}
+                </span>
               </div>
             </button>
           ))}

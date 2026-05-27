@@ -21,6 +21,7 @@ export function usePredictions({
   setCurrentUser,
   isAdmin,
   adminOverride = false,
+  knockoutMatches = [],
 }) {
   const [groupPreds, setGroupPreds] = useState(user.predictions?.group || {})
   const [koPreds, setKoPreds] = useState(user.predictions?.knockout || {})
@@ -71,7 +72,7 @@ export function usePredictions({
       pendingRef.current = true
       return false
     }
-    if (!isPredPhaseEditable(predPhase, group, isAdmin, adminOverride)) {
+    if (!isPredPhaseEditable(predPhase, group, isAdmin, adminOverride, { knockoutMatches })) {
       if (manual) notify('Esta fase no se puede editar', 'warning')
       return false
     }

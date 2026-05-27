@@ -24,7 +24,8 @@ export default function MatchDaySchedule({
   preds,
   onScore,
   onAdvance,
-  locked,
+  locked = false,
+  getMatchLocked,
   matchRefs,
   getSectionLabel,
   getSectionKey,
@@ -135,7 +136,7 @@ export default function MatchDaySchedule({
         advancesVal={preds[m.id]?.advances}
         onAdvance={side => onAdvance?.(m.id, side)}
         knockoutAdvance={showAdvancePicker(m)}
-        locked={locked}
+        locked={locked || (getMatchLocked ? getMatchLocked(m) : false)}
         compact={compact}
       />
     )

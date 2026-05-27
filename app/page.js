@@ -5,6 +5,7 @@ import { CreateScreen, JoinScreen } from '../components/CreateScreen'
 import GroupDashboard from '../components/GroupDashboard'
 import { supabase } from '../lib/supabase'
 import { createWriteToken } from '../lib/sessionToken'
+import { getSavedEmail } from '../lib/savedEmail'
 import { Icon } from '../components/icons'
 
 export default function Page() {
@@ -12,8 +13,6 @@ export default function Page() {
   const [joinCode, setJoinCode] = useState('')
   const [joinEmail, setJoinEmail] = useState('')
   const [joinNewUser, setJoinNewUser] = useState(false)
-  const [resumeUserId, setResumeUserId] = useState(null)
-  const [resumeCandidates, setResumeCandidates] = useState(null)
   const [currentGroup, setCurrentGroup] = useState(null)
   const [currentUser, setCurrentUser] = useState(null)
   const [notification, setNotification] = useState(null)
@@ -22,7 +21,6 @@ export default function Page() {
     const hash = window.location.hash.replace('#', '')
     const params = new URLSearchParams(window.location.search)
     const code = params.get('join') || (hash.startsWith('join-') ? hash.replace('join-', '') : '')
-    const userParam = params.get('user')
     const screenParam = params.get('screen')
 
     async function init() {
@@ -33,40 +31,19 @@ export default function Page() {
           const { groupId, userId } = JSON.parse(savedSession)
           if (code && code !== groupId) {
             setJoinCode(code)
-            setJoinEmail('')
+            setJoinEmail(getSavedEmail())
             setJoinNewUser(false)
-            setResumeUserId(userParam || null)
             setScreen('join')
             return
-          }
-          if (userParam && userParam !== userId) {
-            const ok = await restoreSession(groupId, userParam)
-            if (ok) return
           }
           const ok = await restoreSession(groupId, userId)
           if (ok) return
         } catch { /* ignore */ }
       }
 
-      if (code && userParam) {
-        setJoinCode(code)
-        setJoinEmail('')
-        setJoinNewUser(false)
-        setResumeUserId(userParam)
-        setScreen('join')
-        return
-      }
-
       if (code) {
-        const participants = await loadParticipants(code.toLowerCase().trim())
-        if (participants?.length) {
-          setJoinCode(code)
-          setResumeCandidates({ groupId: code.toLowerCase().trim(), participants })
-          setScreen('resume')
-          return
-        }
         setJoinCode(code)
-        setJoinEmail('')
+        setJoinEmail(getSavedEmail())
         setJoinNewUser(false)
         setScreen('join')
         return
@@ -79,11 +56,6 @@ export default function Page() {
 
     init()
   }, [])
-
-  async function loadParticipants(groupId) {
-    const { data } = await supabase.from('porra_participants').select('id,name,is_admin').eq('group_id', groupId)
-    return data
-  }
 
   async function restoreSession(groupId, userId) {
     try {
@@ -206,43 +178,16 @@ export default function Page() {
           }}
         />
       )}
-      {screen === 'resume' && resumeCandidates && (
-        <ResumeScreen
-          groupId={resumeCandidates.groupId}
-          participants={resumeCandidates.participants}
-          onPick={async userId => {
-            saveSession(resumeCandidates.groupId, userId)
-            const ok = await restoreSession(resumeCandidates.groupId, userId)
-            if (ok) await createWriteToken(resumeCandidates.groupId, userId)
-            if (!ok) {
-              notify('No se pudo restaurar la sesión', 'error')
-              setJoinCode(resumeCandidates.groupId)
-              setJoinEmail('')
-              setJoinNewUser(false)
-              setScreen('join')
-            }
-          }}
-          onNew={() => {
-            setJoinCode(resumeCandidates.groupId)
-            setJoinEmail('')
-            setJoinNewUser(false)
-            setScreen('join')
-          }}
-          onBack={() => setScreen('home')}
-        />
-      )}
       {screen === 'join' && (
         <JoinScreen
           initialCode={joinCode}
           initialEmail={joinEmail}
           isNewParticipant={joinNewUser}
-          resumeUserId={resumeUserId}
           setScreen={setScreen}
           notify={notify}
           onJoined={async (group, user) => {
             saveSession(group.id, user.id)
             await createWriteToken(group.id, user.id)
-            setResumeUserId(null)
             setJoinEmail('')
             setJoinNewUser(false)
             enterDashboard(group, user)
@@ -261,47 +206,6 @@ export default function Page() {
           onSwitchGroup={switchGroup}
         />
       )}
-    </div>
-  )
-}
-
-function ResumeScreen({ groupId, participants, onPick, onNew, onBack }) {
-  return (
-    <div style={{
-      maxWidth: 480, margin: '0 auto', padding: '40px 16px',
-      position: 'relative', zIndex: 1,
-    }}>
-      <div style={{
-        background: 'var(--card)', border: '1px solid var(--border)',
-        borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 14,
-      }}>
-        <button type="button" onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', textAlign: 'left' }}>← Volver</button>
-        <h2 style={{ fontSize: 22, fontWeight: 900, margin: 0 }}>¿Continuar como…?</h2>
-        <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
-          Elige tu nombre en el grupo <strong>#{groupId}</strong>
-        </p>
-        {participants.map(p => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => onPick(p.id)}
-            style={{
-              background: 'var(--white)', border: '1px solid var(--border)',
-              borderRadius: 12, padding: '12px 16px', cursor: 'pointer',
-              textAlign: 'left', fontWeight: 700, fontSize: 15,
-              boxShadow: 'var(--card-shadow)',
-            }}
-          >
-            {p.name}{p.is_admin ? ' · Organizador' : ''}
-          </button>
-        ))}
-        <button type="button" onClick={onNew} style={{
-          background: 'var(--white)', border: '1px solid var(--border)',
-          borderRadius: 12, padding: '12px 16px', cursor: 'pointer', color: 'var(--muted)',
-        }}>
-          Soy nuevo en este grupo →
-        </button>
-      </div>
     </div>
   )
 }

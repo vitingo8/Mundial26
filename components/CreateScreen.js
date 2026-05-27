@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase'
 import { uid } from '../lib/gameData'
 import { hashPin, normalizeName } from '../lib/pinUtils'
 import { normalizeEmail, isValidEmail } from '../lib/emailUtils'
+import { getSavedEmail, saveEmail } from '../lib/savedEmail'
+import { getDefaultGroupDeadline } from '../lib/deadlines'
 import { InputRow, InputActionRow, inputRowStyles } from './InputRow'
 import { Icon } from './icons'
 
@@ -57,7 +59,7 @@ export function Btn({ children, loading, ...props }) {
 export function CreateScreen({ setScreen, notify, onCreated }) {
   const [groupName, setGroupName] = useState('')
   const [userName, setUserName] = useState('')
-  const [userEmail, setUserEmail] = useState('')
+  const [userEmail, setUserEmail] = useState(() => getSavedEmail())
   const [pin, setPin] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -68,17 +70,22 @@ export function CreateScreen({ setScreen, notify, onCreated }) {
     if (!isValidEmail(userEmail)) { notify('Introduce un email válido', 'error'); return }
     if (pin && pin.length < 4) { notify('El PIN debe tener al menos 4 dígitos', 'error'); return }
     const email = normalizeEmail(userEmail)
+    saveEmail(email)
     setLoading(true)
     try {
       const groupId = uid()
       const adminId = uid()
       const pin_hash = await hashPin(pin)
 
+      const defaultGroupDeadline = getDefaultGroupDeadline()
       const { error: gErr } = await supabase.from('porra_groups').insert({
         id: groupId,
         name: groupName.trim(),
         admin_id: adminId,
         phase: 'group',
+        group_deadline: defaultGroupDeadline,
+        knockout_deadline: null,
+        bonus_deadline: defaultGroupDeadline,
         actuals: {},
         results: { group: {}, knockout: {} },
       })
@@ -102,9 +109,9 @@ export function CreateScreen({ setScreen, notify, onCreated }) {
         phase: 'group',
         actuals: {},
         results: { group: {}, knockout: {} },
-        group_deadline: null,
+        group_deadline: defaultGroupDeadline,
         knockout_deadline: null,
-        bonus_deadline: null,
+        bonus_deadline: defaultGroupDeadline,
         participants: {
           [adminId]: {
             id: adminId,
@@ -155,12 +162,11 @@ export function JoinScreen({
   setScreen,
   notify,
   onJoined,
-  resumeUserId = null,
 }) {
   const lockedEmail = initialEmail ? normalizeEmail(initialEmail) : ''
   const [code, setCode] = useState(initialCode.toUpperCase())
   const [userName, setUserName] = useState('')
-  const [userEmail, setUserEmail] = useState(lockedEmail)
+  const [userEmail, setUserEmail] = useState(lockedEmail || getSavedEmail())
   const [pin, setPin] = useState('')
   const [loading, setLoading] = useState(false)
   const [groupPreview, setGroupPreview] = useState(null)
@@ -221,27 +227,11 @@ export function JoinScreen({
     if (lockedEmail) setUserEmail(lockedEmail)
   }, [lockedEmail])
 
-  useEffect(() => {
-    if (!resumeUserId || !initialCode) return
-    let cancelled = false
-    ;(async () => {
-      setLoading(true)
-      const groupId = initialCode.toLowerCase().trim()
-      const full = await loadGroupWithParticipants(groupId)
-      const user = full?.participants?.[resumeUserId]
-      if (!cancelled && user) {
-        notify(`Sesión restaurada: ${user.name}`)
-        onJoined(full, user)
-      }
-      if (!cancelled) setLoading(false)
-    })()
-    return () => { cancelled = true }
-  }, [resumeUserId, initialCode])
-
   async function handleEmailStep() {
     if (!userEmail.trim()) { notify('Introduce tu email', 'error'); return }
     if (!isValidEmail(userEmail)) { notify('Introduce un email válido', 'error'); return }
     const email = normalizeEmail(userEmail)
+    saveEmail(email)
     const groupId = (initialCode || code).toLowerCase().trim()
     if (!groupId) {
       setStep('profile')
@@ -282,6 +272,7 @@ export function JoinScreen({
   async function handleJoin() {
     if (!code.trim()) { notify('Introduce el código', 'error'); return }
     const email = lockedEmail || normalizeEmail(userEmail)
+    saveEmail(email)
     if (!email) { notify('Introduce tu email', 'error'); return }
     if (!userName.trim()) { notify('Introduce tu nombre', 'error'); return }
     setLoading(true)
@@ -350,14 +341,6 @@ export function JoinScreen({
     setLoading(true)
     await finishJoin(existingMatch)
     setLoading(false)
-  }
-
-  if (resumeUserId && loading) {
-    return (
-      <FormCard icon="link" title="Restaurando sesión" onBack={() => setScreen('home')}>
-        <p style={s.hint}>Cargando tu porra…</p>
-      </FormCard>
-    )
   }
 
   if (step === 'pin' && existingMatch) {

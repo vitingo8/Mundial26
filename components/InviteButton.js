@@ -4,11 +4,10 @@ import { useEffect, useState } from 'react'
 import { Icon } from './icons'
 import InviteQr from './InviteQr'
 
-export default function InviteButton({ group, userId, isAdmin = false, notify }) {
+export default function InviteButton({ group, notify }) {
   const [open, setOpen] = useState(false)
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   const shareUrl = `${origin}?join=${group.id}`
-  const personalUrl = userId ? `${origin}?join=${group.id}&user=${userId}` : shareUrl
 
   useEffect(() => {
     if (!open) return
@@ -82,23 +81,12 @@ export default function InviteButton({ group, userId, isAdmin = false, notify })
                 <InviteQr url={shareUrl} />
               </div>
 
-              {isAdmin && userId && (
-                <div className="dash-card">
-                  <div className="dash-card-title">Tu enlace personal</div>
-                  <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8 }}>
-                    Para recuperar la sesión en otro dispositivo.
-                  </p>
-                  <div className="dash-share-url">{personalUrl}</div>
-                  <button
-                    type="button"
-                    className="dash-btn-ghost"
-                    style={{ marginTop: 12 }}
-                    onClick={() => copyLink(personalUrl, 'Enlace personal copiado')}
-                  >
-                    Copiar enlace personal
-                  </button>
-                </div>
-              )}
+              <div className="dash-card">
+                <div className="dash-card-title">Recuperar en otro dispositivo</div>
+                <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 0 }}>
+                  En la pantalla de inicio, entra con el mismo email que usaste al unirte al grupo.
+                </p>
+              </div>
             </div>
           </div>
         </div>

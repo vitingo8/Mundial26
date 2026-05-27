@@ -11,8 +11,16 @@ import { useAutoSyncResults } from '../hooks/useAutoSyncResults'
 
 import {
   KNOCKOUT_ROUNDS, SCORING, ALL_TEAMS, PROVISIONAL_TEAMS_NOTE,
-  calcLeaderboard, isDeadlinePassed,
+  calcLeaderboard,
 } from '../lib/gameData'
+import {
+  getDefaultGroupDeadline,
+  getEffectiveGroupDeadline,
+  isGroupDeadlinePassed,
+  isKnockoutPhaseFullyLocked,
+  isMatchKickoffPassed,
+  getNextKnockoutLockKickoff,
+} from '../lib/deadlines'
 import {
   countFilledMatches, getUniqueTeamsFromMatches,
   getDefaultPredPhase, getAdminTaskBadges,
@@ -90,13 +98,14 @@ export default function GroupDashboard({
     inicioKoPreds, setInicioKoPreds, bonusPreds, setBonusPreds,
     saving, saveStatus, persistPredictions, flushSave, importPredictions,
   } = usePredictions({
-    user, group: currentGroup, predPhase, tab, notify, setCurrentUser, isAdmin,
+    user, group: currentGroup, predPhase, tab, notify, setCurrentUser, isAdmin, knockoutMatches,
   })
 
   const orphanGroupKeys = useMemo(() => countOrphanPredKeys(groupPreds, groupMatches), [groupPreds, groupMatches])
   const leaderboard = calcLeaderboard(currentGroup)
-  const groupDeadlinePassed = isDeadlinePassed(currentGroup.group_deadline)
-  const koDeadlinePassed = isDeadlinePassed(currentGroup.knockout_deadline)
+  const groupDeadlinePassed = isGroupDeadlinePassed(currentGroup)
+  const koPhaseFullyLocked = isKnockoutPhaseFullyLocked(knockoutMatches, currentGroup)
+  const effectiveGroupDeadline = getEffectiveGroupDeadline(currentGroup)
   const teamOptions = useMemo(() => getUniqueTeamsFromMatches(groupMatches, knockoutMatches), [groupMatches, knockoutMatches])
   const adminBadges = isAdmin ? getAdminTaskBadges(currentGroup) : []
 
@@ -240,7 +249,7 @@ export default function GroupDashboard({
               <Icon name="academicCap" size="sm" />
               <span className="header-action-btn__text">Guía</span>
             </Link>
-            <InviteButton group={currentGroup} userId={user.id} isAdmin={isAdmin} notify={notify} />
+            <InviteButton group={currentGroup} notify={notify} />
             <InstallAppButton variant="header" notify={notify} />
             <button
               type="button"
@@ -272,11 +281,12 @@ export default function GroupDashboard({
             inicioKoPreds={inicioKoPreds} setInicioKoPreds={setInicioKoPreds}
             bonusPreds={bonusPreds} setBonusPreds={setBonusPreds}
             saving={saving} saveStatus={saveStatus} onSave={savePredictions}
-            groupDeadlinePassed={groupDeadlinePassed} koDeadlinePassed={koDeadlinePassed}
+            groupDeadlinePassed={groupDeadlinePassed} koPhaseFullyLocked={koPhaseFullyLocked}
             groupMatches={groupMatches} knockoutMatches={knockoutMatches} teamOptions={teamOptions.length ? teamOptions : ALL_TEAMS}
             wcLoading={wcLoading} groupPhase={currentGroup.phase}
             orphanGroupKeys={orphanGroupKeys} matchRefs={matchRefs}
-            deadlines={{ group: currentGroup.group_deadline, knockout: currentGroup.knockout_deadline }}
+            deadlines={{ group: effectiveGroupDeadline }}
+            group={currentGroup}
             user={user}
             groupId={currentGroup.id}
             onApplyMirror={importPredictions}
@@ -465,10 +475,10 @@ function PredictionsTab({
   predPhase, setPredPhase, groupPreds, setGroupPreds, koPreds, setKoPreds,
   inicioKoPreds, setInicioKoPreds,
   bonusPreds, setBonusPreds, saving, saveStatus, onSave,
-  groupDeadlinePassed, koDeadlinePassed,
+  groupDeadlinePassed, koPhaseFullyLocked,
   groupMatches, knockoutMatches, teamOptions, wcLoading, groupPhase, deadlines,
   orphanGroupKeys, matchRefs,
-  user, groupId, onApplyMirror, onSwitchGroup, notify,
+  user, groupId, group, onApplyMirror, onSwitchGroup, notify,
 }) {
   const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
 
@@ -482,6 +492,7 @@ function PredictionsTab({
     : scheduleViewMode
 
   const phaseLocked = isPhaseLocked(groupPhase, predPhase, false, false)
+  const nextKoLock = getNextKnockoutLockKickoff(knockoutMatches)
 
   const phases = [
     {
@@ -494,9 +505,9 @@ function PredictionsTab({
     {
       id: 'knockout',
       label: 'Eliminatorias',
-      sub: 'KO Real · 40%',
-      locked: koDeadlinePassed,
-      countdown: formatCountdown(msUntilDeadline(deadlines.knockout)),
+      sub: koPhaseFullyLocked ? 'KO Real · 40%' : 'Se bloquea al pitido',
+      locked: koPhaseFullyLocked,
+      countdown: koPhaseFullyLocked ? null : formatCountdown(msUntilDeadline(nextKoLock)),
     },
     {
       id: 'bonuses',
@@ -590,7 +601,16 @@ function PredictionsTab({
               Partidos reales del Mundial (API). Independiente de tu porra de Inicio.
             </p>
           )}
-          <KnockoutPreds preds={koPreds} setPreds={setKoPreds} locked={koDeadlinePassed || phaseLocked} matches={knockoutMatches} teamOptions={teamOptions} matchRefs={matchRefs} viewMode={effectiveViewMode} />
+          <KnockoutPreds
+            preds={koPreds}
+            setPreds={setKoPreds}
+            phaseLocked={phaseLocked}
+            group={group}
+            matches={knockoutMatches}
+            teamOptions={teamOptions}
+            matchRefs={matchRefs}
+            viewMode={effectiveViewMode}
+          />
         </>
       )}
       {predPhase === 'bonuses' && (
@@ -782,8 +802,13 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
   )
 }
 
-function KnockoutPreds({ preds, setPreds, locked, matches = [], teamOptions = [], matchRefs, viewMode = 'daily' }) {
+function KnockoutPreds({ preds, setPreds, phaseLocked, group, matches = [], teamOptions = [], matchRefs, viewMode = 'daily' }) {
   const scheduleMatches = useMemo(() => flattenKnockoutSchedule(matches), [matches])
+  const koPhaseFullyLocked = isKnockoutPhaseFullyLocked(scheduleMatches, group)
+
+  function isKoMatchLocked(m) {
+    return phaseLocked || isMatchKickoffPassed(m?.utcDate)
+  }
 
   function setVal(id, key, val) {
     const v = key === 'home' || key === 'away' ? parseInt(val, 10) : val
@@ -802,13 +827,16 @@ function KnockoutPreds({ preds, setPreds, locked, matches = [], teamOptions = []
   if (viewMode === 'bracket') {
     return (
       <>
-        {locked && <div className="dash-banner dash-banner--lock">Plazo cerrado · Solo lectura</div>}
+        {koPhaseFullyLocked && <div className="dash-banner dash-banner--lock">Todos los partidos de eliminatorias han empezado · Solo lectura</div>}
+        {!koPhaseFullyLocked && (
+          <p className="dash-phase-hint">Cada partido se bloquea en su pitido. Los ya jugados no se pueden editar.</p>
+        )}
         <KnockoutBracketView
           matches={scheduleMatches}
           preds={preds}
           onScore={setScore}
           onAdvance={setAdvance}
-          locked={locked}
+          getMatchLocked={isKoMatchLocked}
           matchRefs={matchRefs}
         />
       </>
@@ -818,11 +846,14 @@ function KnockoutPreds({ preds, setPreds, locked, matches = [], teamOptions = []
   if (scheduleMatches.length > 0) {
     return (
       <>
-        {locked && <div className="dash-banner dash-banner--lock">Plazo cerrado · Solo lectura</div>}
+        {koPhaseFullyLocked && <div className="dash-banner dash-banner--lock">Todos los partidos de eliminatorias han empezado · Solo lectura</div>}
+        {!koPhaseFullyLocked && (
+          <p className="dash-phase-hint">Cada partido se bloquea en su pitido. Los ya jugados no se pueden editar.</p>
+        )}
         <MatchDaySchedule
           matches={scheduleMatches}
           preds={preds}
-          locked={locked}
+          getMatchLocked={isKoMatchLocked}
           matchRefs={matchRefs}
           onScore={setScore}
           onAdvance={setAdvance}
@@ -835,10 +866,11 @@ function KnockoutPreds({ preds, setPreds, locked, matches = [], teamOptions = []
   }
 
   const opts = teamOptions.length ? teamOptions : ALL_TEAMS
+  const legacyLocked = phaseLocked || koPhaseFullyLocked
 
   return (
     <div>
-      {locked && <div style={s.lockedBanner}><LockedBanner>Plazo cerrado · Solo lectura</LockedBanner></div>}
+      {legacyLocked && <div style={s.lockedBanner}><LockedBanner>Plazo cerrado · Solo lectura</LockedBanner></div>}
       <div style={s.koNote}>
         Calendario no disponible. Elige equipos de la lista y marca resultado.
       </div>
@@ -853,19 +885,19 @@ function KnockoutPreds({ preds, setPreds, locked, matches = [], teamOptions = []
                   value={preds[id]?.homeTeam || ''}
                   onChange={v => setVal(id, 'homeTeam', v)}
                   options={opts}
-                  disabled={locked}
+                  disabled={legacyLocked}
                   placeholder="Local"
                 />
                 <div style={s.scoreBox}>
-                  <input type="number" style={s.scoreIn} value={preds[id]?.home ?? ''} onChange={e => setVal(id, 'home', e.target.value)} placeholder="0" disabled={locked} />
+                  <input type="number" style={s.scoreIn} value={preds[id]?.home ?? ''} onChange={e => setVal(id, 'home', e.target.value)} placeholder="0" disabled={legacyLocked} />
                   <span style={s.dash}>-</span>
-                  <input type="number" style={s.scoreIn} value={preds[id]?.away ?? ''} onChange={e => setVal(id, 'away', e.target.value)} placeholder="0" disabled={locked} />
+                  <input type="number" style={s.scoreIn} value={preds[id]?.away ?? ''} onChange={e => setVal(id, 'away', e.target.value)} placeholder="0" disabled={legacyLocked} />
                 </div>
                 <TeamSelect
                   value={preds[id]?.awayTeam || ''}
                   onChange={v => setVal(id, 'awayTeam', v)}
                   options={opts}
-                  disabled={locked}
+                  disabled={legacyLocked}
                   placeholder="Visitante"
                 />
               </div>
@@ -1118,14 +1150,14 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
 
   const [adminTab, setAdminTab] = useState('settings')
   const [leagueLogo, setLeagueLogo] = useState(group.league_logo || '')
-  const [groupDeadline, setGroupDeadline] = useState(() => toMadridDatetimeLocalValue(group.group_deadline))
-  const [koDeadline, setKoDeadline] = useState(() => toMadridDatetimeLocalValue(group.knockout_deadline))
+  const [groupDeadline, setGroupDeadline] = useState(() =>
+    toMadridDatetimeLocalValue(group.group_deadline || getDefaultGroupDeadline()),
+  )
 
   useEffect(() => {
     setLeagueLogo(group.league_logo || '')
-    setGroupDeadline(toMadridDatetimeLocalValue(group.group_deadline))
-    setKoDeadline(toMadridDatetimeLocalValue(group.knockout_deadline))
-  }, [group.league_logo, group.group_deadline, group.knockout_deadline])
+    setGroupDeadline(toMadridDatetimeLocalValue(group.group_deadline || getDefaultGroupDeadline()))
+  }, [group.league_logo, group.group_deadline])
   const [tournamentPhase, setTournamentPhase] = useState(group.phase || 'group')
   const [actuals, setActuals] = useState(group.actuals || {})
   const [saving, setSaving] = useState(false)
@@ -1139,7 +1171,7 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
     const groupDeadlineValue = fromMadridDatetimeLocal(groupDeadline)
     await saveGroupSecure({
       group_deadline: groupDeadlineValue,
-      knockout_deadline: fromMadridDatetimeLocal(koDeadline),
+      knockout_deadline: null,
       bonus_deadline: groupDeadlineValue,
       phase: tournamentPhase,
     })
@@ -1247,15 +1279,15 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
       {adminTab === 'deadlines' && (
         <div className="dash-admin-deadlines">
           <p className="dash-admin-note">
-            Fechas tope en hora de Madrid (España). Pasado el plazo, la porra se bloquea sola.
+            <strong>Inicio:</strong> fecha tope en hora de Madrid. Por defecto, el pitido del primer partido de grupos.
+            Pasado ese momento, se bloquean grupos, especiales y el cuadro previsto de eliminatorias.
+          </p>
+          <p className="dash-admin-note">
+            <strong>Eliminatorias (porra real):</strong> cada partido se puede editar hasta su pitido; al empezar, ese partido queda bloqueado.
           </p>
           <div>
             <label className="dash-field-label"><IconLabel icon="clock" iconSize="sm">Inicio (grupos + especiales)</IconLabel></label>
             <input type="datetime-local" className="dash-field-input" value={groupDeadline} onChange={e => setGroupDeadline(e.target.value)} />
-          </div>
-          <div>
-            <label className="dash-field-label" htmlFor="admin-ko-deadline"><IconLabel icon="clock" iconSize="sm">Eliminatorias</IconLabel></label>
-            <input id="admin-ko-deadline" type="datetime-local" className="dash-field-input" value={koDeadline} onChange={e => setKoDeadline(e.target.value)} />
           </div>
           <div>
             <label className="dash-field-label" htmlFor="admin-phase">Fase visible en la porra</label>
