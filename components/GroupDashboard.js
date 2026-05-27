@@ -60,6 +60,10 @@ import KnockoutBracketView from './dashboard/KnockoutBracketView'
 import PredictedKnockoutSection from './dashboard/PredictedKnockoutSection'
 import { buildInicioKnockoutSchedule } from '../lib/knockoutBridge'
 import { flattenKnockoutSchedule } from '../lib/knockoutBracketDisplay'
+import {
+  filterRealKnockoutPorraSchedule,
+  shouldIncludeR32InRealPorra,
+} from '../lib/realKnockoutPorra'
 import { patchKnockoutScore, patchKnockoutAdvance } from '../lib/knockoutAdvances'
 
 function isInicioKoMatchId(id) {
@@ -640,6 +644,7 @@ function PredictionsTab({
             phaseLocked={phaseLocked}
             koDeadlinePassed={koDeadlinePassed}
             group={group}
+            groupMatches={groupMatches}
             matches={knockoutMatches}
             teamOptions={teamOptions}
             matchRefs={matchRefs}
@@ -755,15 +760,22 @@ function GroupPhasePreds({
           onScore={setScore}
         />
       ) : viewMode === 'bracket' ? (
-        <KnockoutBracketView
-          matches={inicioKo.schedule}
-          preds={inicioKoPreds}
-          onScore={handleScore}
-          onAdvance={handleAdvance}
-          locked={locked}
-          matchRefs={matchRefs}
-          error={inicioKo.error}
-        />
+        <>
+          {filled === 0 && inicioKo.schedule.length === 0 && !inicioKo.error && (
+            <p className="predicted-knockout-hint" role="status">
+              Rellena al menos un partido de grupos para calcular dieciseisavos y el cuadro previsto.
+            </p>
+          )}
+          <KnockoutBracketView
+            matches={inicioKo.schedule}
+            preds={inicioKoPreds}
+            onScore={handleScore}
+            onAdvance={handleAdvance}
+            locked={locked}
+            matchRefs={matchRefs}
+            error={inicioKo.error}
+          />
+        </>
       ) : viewMode === 'daily' ? (
         <>
           {inicioKo.error && (
