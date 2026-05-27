@@ -245,7 +245,7 @@ export default function GuidePage() {
             <FeatureCard
               icon="bolt"
               title="Eliminatorias (40%)"
-              text="Partidos reales del Mundial desde dieciseisavos hasta la final. Si predices empate (p. ej. 1-1), elige quién pasa: +1 pt extra si aciertas el clasificado (da igual prórroga o penaltis)."
+              text="Partidos reales del Mundial desde dieciseisavos hasta la final. Puedes rellenarlos todos hasta el 28 jun 2026, 21:00 (Madrid), cuando empieza la primera eliminatoria. Si predices empate, elige quién pasa: +1 pt extra si aciertas el clasificado."
             />
             <FeatureCard
               icon="star"

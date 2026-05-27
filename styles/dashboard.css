@@ -3089,6 +3089,35 @@ button.schedule-match-row:focus-visible {
   box-shadow: none;
 }
 
+/* Vista Todo (Inicio): un solo contenedor; los bloques por ronda van dentro sin caja duplicada */
+.predicted-knockout-section--full {
+  margin-top: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.predicted-knockout-section--full .schedule-panel--knockout {
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-radius);
+  overflow: hidden;
+  background: var(--white);
+  box-shadow: var(--dash-shadow);
+}
+
+.predicted-knockout-section--full .schedule-panel--knockout .schedule-block {
+  margin-bottom: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.predicted-knockout-section--full .schedule-panel--knockout .schedule-block + .schedule-block {
+  border-top: 1px solid var(--dash-border);
+}
+
 .predicted-knockout-header {
   margin-bottom: 12px;
 }

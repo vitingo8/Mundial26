@@ -36,10 +36,16 @@ export default function PredictedKnockoutSection({
   if (!groupMatches.length) return null
   if (hideSchedule && !error) return null
 
+  const sectionClass = [
+    'predicted-knockout-section',
+    hideSchedule ? 'predicted-knockout-section--embedded' : '',
+    viewMode === 'full' ? 'predicted-knockout-section--full' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <section
-      className={`predicted-knockout-section${hideSchedule ? ' predicted-knockout-section--embedded' : ''}`}
-    >
+    <section className={sectionClass}>
       {error && (
         <div className="predicted-knockout-alert" role="status">
           {formatKnockoutErrorForUi(error)}

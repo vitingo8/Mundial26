@@ -15,13 +15,13 @@ import {
 } from '../lib/gameData'
 import {
   getDefaultGroupDeadline,
+  getDefaultKnockoutDeadline,
   getEffectiveGroupDeadline,
   getEffectiveBonusDeadline,
+  getEffectiveKnockoutDeadline,
   isGroupDeadlinePassed,
   isBonusDeadlinePassed,
-  isKnockoutPhaseFullyLocked,
-  isMatchKickoffPassed,
-  getNextKnockoutLockKickoff,
+  isKnockoutDeadlinePassed,
 } from '../lib/deadlines'
 import {
   countFilledMatches, getUniqueTeamsFromMatches,
@@ -111,9 +111,10 @@ export default function GroupDashboard({
   const leaderboard = calcLeaderboard(currentGroup)
   const groupDeadlinePassed = isGroupDeadlinePassed(currentGroup)
   const bonusDeadlinePassed = isBonusDeadlinePassed(currentGroup)
-  const koPhaseFullyLocked = isKnockoutPhaseFullyLocked(knockoutMatches)
+  const koDeadlinePassed = isKnockoutDeadlinePassed(currentGroup)
   const effectiveGroupDeadline = getEffectiveGroupDeadline(currentGroup)
   const effectiveBonusDeadline = getEffectiveBonusDeadline(currentGroup)
+  const effectiveKnockoutDeadline = getEffectiveKnockoutDeadline(currentGroup)
   const teamOptions = useMemo(() => getUniqueTeamsFromMatches(groupMatches, knockoutMatches), [groupMatches, knockoutMatches])
   const adminBadges = isAdmin ? getAdminTaskBadges(currentGroup) : []
 
@@ -310,11 +311,15 @@ export default function GroupDashboard({
             saving={saving} saveStatus={saveStatus} onSave={savePredictions}
             groupDeadlinePassed={groupDeadlinePassed}
             bonusDeadlinePassed={bonusDeadlinePassed}
-            koPhaseFullyLocked={koPhaseFullyLocked}
+            koDeadlinePassed={koDeadlinePassed}
             groupMatches={groupMatches} knockoutMatches={knockoutMatches} teamOptions={teamOptions.length ? teamOptions : ALL_TEAMS}
             wcLoading={wcLoading} groupPhase={currentGroup.phase}
             orphanGroupKeys={orphanGroupKeys} matchRefs={matchRefs}
-            deadlines={{ group: effectiveGroupDeadline, bonus: effectiveBonusDeadline }}
+            deadlines={{
+              group: effectiveGroupDeadline,
+              bonus: effectiveBonusDeadline,
+              knockout: effectiveKnockoutDeadline,
+            }}
             group={currentGroup}
             user={user}
             groupId={currentGroup.id}
@@ -504,7 +509,7 @@ function PredictionsTab({
   predPhase, setPredPhase, groupPreds, setGroupPreds, koPreds, setKoPreds,
   inicioKoPreds, setInicioKoPreds,
   bonusPreds, setBonusPreds, saving, saveStatus, onSave,
-  groupDeadlinePassed, bonusDeadlinePassed, koPhaseFullyLocked,
+  groupDeadlinePassed, bonusDeadlinePassed, koDeadlinePassed,
   groupMatches, knockoutMatches, teamOptions, wcLoading, groupPhase, deadlines,
   orphanGroupKeys, matchRefs,
   user, groupId, group, onApplyMirror, onSwitchGroup, notify,
@@ -521,7 +526,6 @@ function PredictionsTab({
     : scheduleViewMode
 
   const phaseLocked = isPhaseLocked(groupPhase, predPhase, false, false)
-  const nextKoLock = getNextKnockoutLockKickoff(knockoutMatches)
 
   const phases = [
     {
@@ -534,9 +538,9 @@ function PredictionsTab({
     {
       id: 'knockout',
       label: 'Eliminatorias',
-      sub: koPhaseFullyLocked ? 'KO Real · 40%' : 'Se bloquea al pitido',
-      locked: koPhaseFullyLocked,
-      countdown: koPhaseFullyLocked ? null : formatCountdown(msUntilDeadline(nextKoLock)),
+      sub: 'KO real · 40%',
+      locked: koDeadlinePassed,
+      countdown: formatCountdown(msUntilDeadline(deadlines.knockout)),
     },
     {
       id: 'bonuses',
@@ -634,6 +638,7 @@ function PredictionsTab({
             preds={koPreds}
             setPreds={setKoPreds}
             phaseLocked={phaseLocked}
+            koDeadlinePassed={koDeadlinePassed}
             group={group}
             matches={knockoutMatches}
             teamOptions={teamOptions}
@@ -831,12 +836,12 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
   )
 }
 
-function KnockoutPreds({ preds, setPreds, phaseLocked, group, matches = [], teamOptions = [], matchRefs, viewMode = 'daily' }) {
+function KnockoutPreds({ preds, setPreds, phaseLocked, koDeadlinePassed, group, matches = [], teamOptions = [], matchRefs, viewMode = 'daily' }) {
   const scheduleMatches = useMemo(() => flattenKnockoutSchedule(matches), [matches])
-  const koPhaseFullyLocked = isKnockoutPhaseFullyLocked(scheduleMatches)
+  const koLocked = phaseLocked || koDeadlinePassed
 
-  function isKoMatchLocked(m) {
-    return phaseLocked || isMatchKickoffPassed(m?.utcDate)
+  function isKoMatchLocked() {
+    return koLocked
   }
 
   function setVal(id, key, val) {
@@ -856,9 +861,9 @@ function KnockoutPreds({ preds, setPreds, phaseLocked, group, matches = [], team
   if (viewMode === 'bracket') {
     return (
       <>
-        {koPhaseFullyLocked && <div className="dash-banner dash-banner--lock">Todos los partidos de eliminatorias han empezado · Solo lectura</div>}
-        {!koPhaseFullyLocked && (
-          <p className="dash-phase-hint">Cada partido se bloquea en su pitido. Los ya jugados no se pueden editar.</p>
+        {koLocked && <div className="dash-banner dash-banner--lock">Plazo de eliminatorias cerrado · Solo lectura</div>}
+        {!koLocked && (
+          <p className="dash-phase-hint">Puedes rellenar todos los partidos hasta el 28 jun 2026, 21:00 (hora de Madrid), pitido del primer partido de eliminatorias.</p>
         )}
         <KnockoutBracketView
           matches={scheduleMatches}
@@ -875,9 +880,9 @@ function KnockoutPreds({ preds, setPreds, phaseLocked, group, matches = [], team
   if (scheduleMatches.length > 0) {
     return (
       <>
-        {koPhaseFullyLocked && <div className="dash-banner dash-banner--lock">Todos los partidos de eliminatorias han empezado · Solo lectura</div>}
-        {!koPhaseFullyLocked && (
-          <p className="dash-phase-hint">Cada partido se bloquea en su pitido. Los ya jugados no se pueden editar.</p>
+        {koLocked && <div className="dash-banner dash-banner--lock">Plazo de eliminatorias cerrado · Solo lectura</div>}
+        {!koLocked && (
+          <p className="dash-phase-hint">Puedes rellenar todos los partidos hasta el 28 jun 2026, 21:00 (hora de Madrid), pitido del primer partido de eliminatorias.</p>
         )}
         <MatchDaySchedule
           matches={scheduleMatches}
@@ -895,7 +900,7 @@ function KnockoutPreds({ preds, setPreds, phaseLocked, group, matches = [], team
   }
 
   const opts = teamOptions.length ? teamOptions : ALL_TEAMS
-  const legacyLocked = phaseLocked || koPhaseFullyLocked
+  const legacyLocked = koLocked
 
   return (
     <div>
@@ -1182,11 +1187,15 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
   const [groupDeadline, setGroupDeadline] = useState(() =>
     toMadridDatetimeLocalValue(group.group_deadline || getDefaultGroupDeadline()),
   )
+  const [knockoutDeadline, setKnockoutDeadline] = useState(() =>
+    toMadridDatetimeLocalValue(group.knockout_deadline || getDefaultKnockoutDeadline()),
+  )
 
   useEffect(() => {
     setLeagueLogo(group.league_logo || '')
     setGroupDeadline(toMadridDatetimeLocalValue(group.group_deadline || getDefaultGroupDeadline()))
-  }, [group.league_logo, group.group_deadline])
+    setKnockoutDeadline(toMadridDatetimeLocalValue(group.knockout_deadline || getDefaultKnockoutDeadline()))
+  }, [group.league_logo, group.group_deadline, group.knockout_deadline])
   const [tournamentPhase, setTournamentPhase] = useState(group.phase || 'group')
   const [actuals, setActuals] = useState(group.actuals || {})
   const [saving, setSaving] = useState(false)
@@ -1200,7 +1209,7 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
     const groupDeadlineValue = fromMadridDatetimeLocal(groupDeadline)
     await saveGroupSecure({
       group_deadline: groupDeadlineValue,
-      knockout_deadline: null,
+      knockout_deadline: fromMadridDatetimeLocal(knockoutDeadline),
       bonus_deadline: groupDeadlineValue,
       phase: tournamentPhase,
     })
@@ -1312,11 +1321,16 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
             antes del primer partido. Incluye grupos, cuadro previsto de KO y goleador/MVP/etc.
           </p>
           <p className="dash-admin-note">
-            <strong>Eliminatorias (porra real):</strong> sin fecha global; cada partido se bloquea en su pitido.
+            <strong>Eliminatorias (porra real, 40%):</strong> por defecto 28 jun 2026, 21:00 Madrid
+            (pitido del primer partido de eliminatorias). Hasta entonces se puede rellenar todo el cuadro.
           </p>
           <div>
             <label className="dash-field-label"><IconLabel icon="clock" iconSize="sm">Cierre Inicio + Especiales (Madrid)</IconLabel></label>
             <input type="datetime-local" className="dash-field-input" value={groupDeadline} onChange={e => setGroupDeadline(e.target.value)} />
+          </div>
+          <div>
+            <label className="dash-field-label"><IconLabel icon="bolt" iconSize="sm">Cierre Eliminatorias reales (Madrid)</IconLabel></label>
+            <input type="datetime-local" className="dash-field-input" value={knockoutDeadline} onChange={e => setKnockoutDeadline(e.target.value)} />
           </div>
           <div>
             <label className="dash-field-label" htmlFor="admin-phase">Fase visible en la porra</label>
