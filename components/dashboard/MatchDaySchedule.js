@@ -13,6 +13,7 @@ import { groupMatchesByKnockoutRound } from '../../lib/knockoutBracketDisplay'
 
 import DayTabs from './DayTabs'
 import MatchRow from './MatchRow'
+import { resolveKnockoutTeamsForScoring } from '../../lib/knockoutMatchScoring'
 
 /**
  * Calendario por días o vista Todo (todos los partidos en una lista).
@@ -36,6 +37,8 @@ export default function MatchDaySchedule({
   flatMatchesPanel = false,
   /** Si no se define, en fase knockout todos los partidos muestran selector en empate */
   advancePickerForMatch,
+  publishedResults = {},
+  knockoutScoringCtx = null,
 }) {
   const knockoutAdvanceDefault = schedulePhase === 'knockout'
   function showAdvancePicker(m) {
@@ -117,6 +120,10 @@ export default function MatchDaySchedule({
     .join(' ')
 
   function renderMatchRow(m, compact = false) {
+    const publishedResult = publishedResults[m.id]
+    const scoringTeams = knockoutScoringCtx
+      ? resolveKnockoutTeamsForScoring(m.id, publishedResult, knockoutScoringCtx)
+      : {}
     return (
       <MatchRow
         key={m.id}
@@ -139,6 +146,8 @@ export default function MatchDaySchedule({
         locked={locked || (getMatchLocked ? getMatchLocked(m) : false)}
         compact={compact}
         showMatchDate={schedulePhase === 'knockout'}
+        publishedResult={publishedResult}
+        knockoutScoringTeams={scoringTeams}
       />
     )
   }

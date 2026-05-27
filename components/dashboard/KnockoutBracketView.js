@@ -10,6 +10,7 @@ import {
   BRACKET_CENTER,
 } from '../../lib/knockoutBracketTreeLayout'
 import { formatKnockoutErrorForUi, getKnockoutErrorHint } from '../../lib/knockoutBridge'
+import { resolveKnockoutTeamsForScoring } from '../../lib/knockoutMatchScoring'
 import { indexApiMatches } from '../../lib/apiMatchScores'
 import { useIsMobileBracket } from '../../hooks/useIsMobileBracket'
 import { BracketCenterOut } from './BracketCenterOut'
@@ -28,6 +29,8 @@ export default function KnockoutBracketView({
   apiMatches = [],
   userPreds = {},
   onGoToPrediction,
+  publishedResults = {},
+  knockoutScoringCtx = null,
 }) {
   const isMobile = useIsMobileBracket()
 
@@ -56,6 +59,8 @@ export default function KnockoutBracketView({
     userPreds,
     onGoToPrediction,
     rawById,
+    publishedResults,
+    knockoutScoringCtx,
   }
 
   if (isMobile) {

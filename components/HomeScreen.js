@@ -163,7 +163,8 @@ function ScoringCard() {
       <div style={s.scoreGrid}>
         <ScoreRow icon="checkCircle" label="Resultado correcto (G/E/P)" pts={`+${SCORING.correctOutcome}`} />
         <ScoreRow icon="viewfinderCircle" label="Marcador exacto (bonus)" pts={`+${SCORING.exactScore}`} />
-        <ScoreRow icon="bolt" label="Eliminatorias: acierto quién pasa (empate)" pts={`+${SCORING.knockoutAdvance}`} />
+        <ScoreRow icon="bolt" label="Eliminatorias: G/E/P y exacto si el cruce cuadra" pts={`+${SCORING.correctOutcome} / +${SCORING.exactScore}`} />
+        <ScoreRow icon="bolt" label="Eliminatorias: acierto quién pasa" pts={`+${SCORING.knockoutAdvance}`} />
         <ScoreRow icon="user" label="Máximo goleador" pts={`+${SCORING.topScorer}`} />
         <ScoreRow icon="shieldCheck" label="Portero menos goleado" pts={`+${SCORING.topKeeper}`} />
         <ScoreRow icon="arrowTrendingUp" label="Máximo asistente" pts={`+${SCORING.topAssists}`} />

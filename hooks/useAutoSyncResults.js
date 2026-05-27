@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getStoredWriteToken } from '../lib/sessionToken'
 import { buildMergedResults, resultsNeedSync } from '../lib/syncResultsFromApi'
+import { isTestPorraGroup } from '../lib/testPorraGroups'
 
 /**
  * Cuando la API tiene partidos finalizados, los persiste en porra_groups.results
@@ -20,7 +21,7 @@ export function useAutoSyncResults({
   const lastSavedKey = useRef('')
 
   useEffect(() => {
-    if (!enabled || !group?.id || !wcMatches?.length) return
+    if (!enabled || !group?.id || isTestPorraGroup(group.id) || !wcMatches?.length) return
 
     const merged = buildMergedResults(wcMatches, group.results)
     const key = JSON.stringify(merged)

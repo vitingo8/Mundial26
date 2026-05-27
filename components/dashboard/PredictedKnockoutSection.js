@@ -20,6 +20,7 @@ export default function PredictedKnockoutSection({
   viewMode = 'daily',
   /** En vista Día el calendario unificado va en GroupPhasePreds */
   hideSchedule = false,
+  publishedResults = {},
 }) {
   const { schedule, error } = useMemo(
     () => buildInicioKnockoutSchedule(groupMatches, groupPreds, inicioKoPreds),
@@ -76,6 +77,7 @@ export default function PredictedKnockoutSection({
           schedulePhase="knockout"
           viewMode={viewMode}
           flatMatchesPanel
+          publishedResults={publishedResults}
         />
       )}
     </section>

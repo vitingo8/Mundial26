@@ -66,7 +66,7 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
         </table>
       </div>
       <p className="stats-table-legend">
-        G/E/P = 1X2 (3 pts) · Resultado = exacto (+5 pts) · Especial y MVP = predicciones especiales
+        G/E/P y Resultado ya incluyen ×0,6 (Inicio) o ×0,4 (eliminatorias reales). Especiales y MVP al 100%.
       </p>
     </div>
   )

@@ -14,6 +14,7 @@ export default function GroupStandingsView({
   locked,
   matchRefs,
   gridClassName = '',
+  publishedResults = {},
 }) {
   const groups = useMemo(
     () => computeGroupStandings(matches, preds),
@@ -63,7 +64,11 @@ export default function GroupStandingsView({
             </table>
           </div>
 
-          <div className={`group-standings-matches${denseMatches ? ' group-standings-matches--table' : ''}`}>
+          <div
+            className={`group-standings-matches${
+              denseMatches ? ' group-standings-matches--table' : ' group-standings-matches--porra'
+            }`}
+          >
             {group.matches.map(m => (
               <MatchRow
                 key={m.id}
@@ -84,6 +89,7 @@ export default function GroupStandingsView({
                 compact
                 denseTable={denseMatches}
                 showMatchDate={!denseMatches}
+                publishedResult={publishedResults[m.id]}
               />
             ))}
           </div>

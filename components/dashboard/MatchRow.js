@@ -1,10 +1,10 @@
 'use client'
 
-
-
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 
 import TeamCrest from '../TeamCrest'
+import { summarizeMatchPoints } from '../../lib/matchPointsDisplay'
+import MatchPointsBubble from './MatchPointsBubble'
 
 import { formatMatchKickoff, formatMatchShortDate } from '../../lib/matchSchedule'
 
@@ -144,6 +144,12 @@ export default function MatchRow({
 
   knockoutAdvance = false,
 
+  /** Resultado publicado (organizador / fixture de prueba). */
+  publishedResult = null,
+
+  /** { predictedTeams, actualTeams } para puntuar eliminatorias */
+  knockoutScoringTeams = null,
+
 }) {
 
   const rowRef = useRef(null)
@@ -173,7 +179,15 @@ export default function MatchRow({
 
     knockoutAdvance && !readOnly && needsKnockoutAdvancePick(predRow) && onAdvance
 
-
+  const pointsSummary = useMemo(() => {
+    if (!publishedResult) return null
+    const { predictedTeams, actualTeams } = knockoutScoringTeams || {}
+    return summarizeMatchPoints(predRow, publishedResult, {
+      knockout: knockoutAdvance,
+      predictedTeams,
+      actualTeams,
+    })
+  }, [publishedResult, homeVal, awayVal, advancesVal, knockoutAdvance, knockoutScoringTeams])
 
   function setRowRef(el) {
 
@@ -185,8 +199,22 @@ export default function MatchRow({
 
 
 
+  const pointsBubble =
+    publishedResult && pointsSummary?.pts > 0 ? (
+      <MatchPointsBubble
+        points={pointsSummary.pts}
+        detail={pointsSummary.detail}
+        publishedResult={publishedResult}
+        homeCrest={homeCrest}
+        awayCrest={awayCrest}
+        homeName={home}
+        awayName={away}
+      />
+    ) : null
+
   return (
 
+    <div className="schedule-match-wrap">
     <div
 
       className={`schedule-match-row${compact ? ' schedule-match-row--compact' : ''}${denseTable ? ' schedule-match-row--dense-table' : ''}${pickAdvance ? ' schedule-match-row--pick-advance' : ''}`}
@@ -241,19 +269,24 @@ export default function MatchRow({
 
         ) : showDenseScores ? (
 
-          <span
-            className="schedule-match-scoreline"
-            aria-label={`${home} ${homeVal === '' ? 'sin marcar' : homeVal}, ${away} ${awayVal === '' ? 'sin marcar' : awayVal}`}
-          >
-            <span>{homeVal === '' ? '–' : homeVal}</span>
-            <span className="schedule-match-score-sep" aria-hidden>:</span>
-            <span>{awayVal === '' ? '–' : awayVal}</span>
+          <span className="schedule-match-scores-wrap">
+            {pointsBubble}
+            <span
+              className="schedule-match-scoreline"
+              aria-label={`${home} ${homeVal === '' ? 'sin marcar' : homeVal}, ${away} ${awayVal === '' ? 'sin marcar' : awayVal}`}
+            >
+              <span>{homeVal === '' ? '–' : homeVal}</span>
+              <span className="schedule-match-score-sep" aria-hidden>:</span>
+              <span>{awayVal === '' ? '–' : awayVal}</span>
+            </span>
           </span>
 
         ) : (
 
           <>
 
+            <div className="schedule-match-scores-wrap">
+            {pointsBubble}
             <div className="schedule-match-scores">
 
               <ScoreInput
@@ -288,6 +321,7 @@ export default function MatchRow({
 
               />
 
+            </div>
             </div>
 
             {showMatchDate ? (
@@ -341,6 +375,8 @@ export default function MatchRow({
         locked={locked}
 
       />
+
+    </div>
 
     </div>
 

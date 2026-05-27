@@ -59,8 +59,11 @@ import MatchDetailSheet from './dashboard/MatchDetailSheet'
 import KnockoutBracketView from './dashboard/KnockoutBracketView'
 import PredictedKnockoutSection from './dashboard/PredictedKnockoutSection'
 import { buildInicioKnockoutSchedule } from '../lib/knockoutBridge'
-import { flattenKnockoutSchedule } from '../lib/knockoutBracketDisplay'
+import { buildEliminatoriasKnockoutSchedule } from '../lib/knockoutBridge'
 import { patchKnockoutScore, patchKnockoutAdvance } from '../lib/knockoutAdvances'
+import { buildKnockoutScoringContext } from '../lib/knockoutMatchScoring'
+import { buildPublishedResultsMap } from '../lib/matchPointsDisplay'
+import { SCORING as SCORING_RULES } from '../lib/gameData'
 
 function isInicioKoMatchId(id) {
   const s = String(id)
@@ -108,7 +111,14 @@ export default function GroupDashboard({
   })
 
   const orphanGroupKeys = useMemo(() => countOrphanPredKeys(groupPreds, groupMatches), [groupPreds, groupMatches])
-  const leaderboard = calcLeaderboard(currentGroup)
+  const scoringOpts = useMemo(
+    () => ({ groupMatches, knockoutMatches }),
+    [groupMatches, knockoutMatches],
+  )
+  const leaderboard = useMemo(
+    () => calcLeaderboard(currentGroup, scoringOpts),
+    [currentGroup, scoringOpts],
+  )
   const groupDeadlinePassed = isGroupDeadlinePassed(currentGroup)
   const bonusDeadlinePassed = isBonusDeadlinePassed(currentGroup)
   const koDeadlinePassed = isKnockoutDeadlinePassed(currentGroup)
@@ -406,9 +416,13 @@ export default function GroupDashboard({
 function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, currentUserId }) {
   const [view, setView] = useState('ranking')
   const [viewingParticipant, setViewingParticipant] = useState(null)
+  const scoringOpts = useMemo(
+    () => ({ groupMatches, knockoutMatches }),
+    [groupMatches, knockoutMatches],
+  )
   const tableRows = useMemo(
-    () => enrichLeaderboardWithStats(leaderboard, group),
-    [leaderboard, group],
+    () => enrichLeaderboardWithStats(leaderboard, group, scoringOpts),
+    [leaderboard, group, scoringOpts],
   )
   function openParticipantPreds(p) {
     setViewingParticipant(p)
@@ -471,8 +485,13 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
                 />
               </div>
               <div className="dash-points">
-                {p.total}
+                <span className="dash-points-total">{p.total}</span>
                 <span className="dash-points-unit"> pts</span>
+                {(p.inicioPts > 0 || p.knockoutPts > 0) && (
+                  <span className="dash-points-split">
+                    Inicio {p.inicioPts ?? 0} · KO {p.knockoutPts ?? 0}
+                  </span>
+                )}
               </div>
             </button>
           ))}
@@ -625,13 +644,14 @@ function PredictionsTab({
           matches={groupMatches}
           matchRefs={matchRefs}
           viewMode={effectiveViewMode}
+          group={group}
         />
       )}
       {predPhase === 'knockout' && (
         <>
           {knockoutMatches.length > 0 && (
             <p className="dash-phase-hint">
-              Partidos reales del Mundial (API). Independiente de tu porra de Inicio.
+              Partidos reales del Mundial. +3 y +5 solo si el cruce coincide con tu bracket de Inicio; siempre +1 si aciertas quién pasa.
             </p>
           )}
           <KnockoutPreds
@@ -643,11 +663,19 @@ function PredictionsTab({
             teamOptions={teamOptions}
             matchRefs={matchRefs}
             viewMode={effectiveViewMode}
+            group={group}
+            participant={user}
+            groupMatches={groupMatches}
           />
         </>
       )}
       {predPhase === 'bonuses' && (
-        <BonusPreds preds={bonusPreds} setPreds={setBonusPreds} locked={bonusDeadlinePassed || phaseLocked} />
+        <BonusPreds
+          preds={bonusPreds}
+          setPreds={setBonusPreds}
+          locked={bonusDeadlinePassed || phaseLocked}
+          actuals={group?.actuals}
+        />
       )}
 
       <button type="button" className="dash-save-manual" style={s.saveBtn} onClick={onSave}>
@@ -659,8 +687,12 @@ function PredictionsTab({
 
 function GroupPhasePreds({
   preds, setPreds, inicioKoPreds, setInicioKoPreds,
-  locked, matches = [], matchRefs, viewMode = 'daily',
+  locked, matches = [], matchRefs, viewMode = 'daily', group,
 }) {
+  const publishedResults = useMemo(
+    () => buildPublishedResultsMap(group?.results, 'group'),
+    [group?.results],
+  )
   function setScore(id, side, val) {
     if (val === '' || val === undefined) {
       setPreds(p => {
@@ -752,6 +784,7 @@ function GroupPhasePreds({
           locked={locked}
           matchRefs={matchRefs}
           onScore={setScore}
+          publishedResults={publishedResults}
         />
       ) : viewMode === 'bracket' ? (
         <>
@@ -768,6 +801,7 @@ function GroupPhasePreds({
             locked={locked}
             matchRefs={matchRefs}
             error={inicioKo.error}
+            publishedResults={publishedResults}
           />
         </>
       ) : viewMode === 'daily' ? (
@@ -782,6 +816,7 @@ function GroupPhasePreds({
               matchRefs={matchRefs}
               viewMode={viewMode}
               hideSchedule
+              publishedResults={publishedResults}
             />
           )}
           <MatchDaySchedule
@@ -796,6 +831,7 @@ function GroupPhasePreds({
             viewMode="daily"
             getSectionKey={sectionKey}
             getSectionLabel={sectionLabel}
+            publishedResults={publishedResults}
           />
         </>
       ) : (
@@ -810,6 +846,7 @@ function GroupPhasePreds({
             viewMode={viewMode}
             getSectionKey={m => m.group || '—'}
             getSectionLabel={m => `Grupo ${m.group}`}
+            publishedResults={publishedResults}
           />
           <PredictedKnockoutSection
             groupMatches={matches}
@@ -819,6 +856,7 @@ function GroupPhasePreds({
             locked={locked}
             matchRefs={matchRefs}
             viewMode={viewMode}
+            publishedResults={publishedResults}
           />
         </>
       )}
@@ -844,9 +882,25 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
 
 function KnockoutPreds({
   preds, setPreds, phaseLocked, koDeadlinePassed,
-  matches = [], teamOptions = [], matchRefs, viewMode = 'daily',
+  matches = [], teamOptions = [], matchRefs, viewMode = 'daily', group,
+  participant, groupMatches = [],
 }) {
-  const scheduleMatches = useMemo(() => flattenKnockoutSchedule(matches), [matches])
+  const scheduleMatches = useMemo(
+    () => buildEliminatoriasKnockoutSchedule(matches, preds),
+    [matches, preds],
+  )
+  const knockoutScoringCtx = useMemo(
+    () => buildKnockoutScoringContext(participant || { predictions: {} }, {
+      groupMatches,
+      knockoutMatches: matches,
+      koPreds: preds,
+    }),
+    [participant, groupMatches, matches, preds],
+  )
+  const publishedResults = useMemo(
+    () => buildPublishedResultsMap(group?.results, 'knockout'),
+    [group?.results],
+  )
   const koLocked = phaseLocked || koDeadlinePassed
 
   function isKoMatchLocked() {
@@ -872,7 +926,9 @@ function KnockoutPreds({
       <>
         {koLocked && <div className="dash-banner dash-banner--lock">Plazo de eliminatorias cerrado · Solo lectura</div>}
         {!koLocked && (
-          <p className="dash-phase-hint">Puedes rellenar todos los partidos hasta el 28 jun 2026, 21:00 (hora de Madrid), pitido del primer partido de eliminatorias.</p>
+          <p className="dash-phase-hint">
+            Dieciseisavos con equipos reales (API). Del octavo en adelante, el cuadro sale de tu porra: marcador y quién pasa.
+          </p>
         )}
         <KnockoutBracketView
           matches={scheduleMatches}
@@ -881,6 +937,8 @@ function KnockoutPreds({
           onAdvance={setAdvance}
           getMatchLocked={isKoMatchLocked}
           matchRefs={matchRefs}
+          publishedResults={publishedResults}
+          knockoutScoringCtx={knockoutScoringCtx}
         />
       </>
     )
@@ -891,7 +949,9 @@ function KnockoutPreds({
       <>
         {koLocked && <div className="dash-banner dash-banner--lock">Plazo de eliminatorias cerrado · Solo lectura</div>}
         {!koLocked && (
-          <p className="dash-phase-hint">Puedes rellenar todos los partidos hasta el 28 jun 2026, 21:00 (hora de Madrid), pitido del primer partido de eliminatorias.</p>
+          <p className="dash-phase-hint">
+            Dieciseisavos con equipos reales (API). Del octavo en adelante, el cuadro sale de tu porra: marcador y quién pasa.
+          </p>
         )}
         <MatchDaySchedule
           matches={scheduleMatches}
@@ -902,6 +962,8 @@ function KnockoutPreds({
           onAdvance={setAdvance}
           schedulePhase="knockout"
           viewMode={viewMode}
+          publishedResults={publishedResults}
+          knockoutScoringCtx={knockoutScoringCtx}
         />
       </>
     )
@@ -951,17 +1013,25 @@ function KnockoutPreds({
   )
 }
 
-function BonusPreds({ preds, setPreds, locked }) {
+function BonusPreds({ preds, setPreds, locked, actuals = {} }) {
   const fields = [
-    { id: 'topScorer', label: 'Máximo goleador', pts: 5 },
-    { id: 'topKeeper', label: 'Portero menos goleado', pts: 5 },
-    { id: 'topAssists', label: 'Máximo asistente', pts: 5 },
-    { id: 'mvp', label: 'MVP del torneo', pts: 10 },
+    { id: 'topScorer', label: 'Máximo goleador', pts: SCORING_RULES.topScorer },
+    { id: 'topKeeper', label: 'Portero menos goleado', pts: SCORING_RULES.topKeeper },
+    { id: 'topAssists', label: 'Máximo asistente', pts: SCORING_RULES.topAssists },
+    { id: 'mvp', label: 'MVP del torneo', pts: SCORING_RULES.mvp },
   ]
   return (
     <div className="dash-bonus-list">
       {locked && <div style={s.lockedBanner}><LockedBanner>Plazo cerrado · Solo lectura</LockedBanner></div>}
-      {fields.map(f => (
+      {fields.map(f => {
+        const actual = actuals[f.id]
+        const pred = preds[f.id]
+        const hit =
+          pred &&
+          actual &&
+          pred.trim().toLowerCase() === actual.trim().toLowerCase()
+        const earned = hit ? f.pts : 0
+        return (
         <div key={f.id} className="dash-bonus-field">
           <div className="dash-bonus-label">
             <IconLabel icon={BONUS_FIELD_ICONS[f.id]} iconSize="sm">{f.label}</IconLabel>
@@ -975,8 +1045,16 @@ function BonusPreds({ preds, setPreds, locked }) {
             onChange={e => setPreds(p => ({ ...p, [f.id]: e.target.value }))}
             disabled={locked}
           />
+          {actual && pred && (
+            <div className={`dash-bonus-result${hit ? ' dash-bonus-result--hit' : ''}`}>
+              <span>Real: <strong>{actual}</strong></span>
+              <span className="dash-bonus-result-pts">{hit ? `+${earned}` : '0'} pts</span>
+              <span className="dash-bonus-result-detail">{hit ? 'Acierto' : 'No coincide'}</span>
+            </div>
+          )}
         </div>
-      ))}
+        )
+      })}
       <datalist id="player-suggestions">
         {PLAYER_SUGGESTIONS.map(p => <option key={p} value={p} />)}
       </datalist>

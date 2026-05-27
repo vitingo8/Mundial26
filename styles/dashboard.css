@@ -532,6 +532,10 @@
 }
 
 .dash-points {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
   font-size: 1.5rem;
   font-weight: 800;
   color: var(--dash-accent-deep);
@@ -543,6 +547,14 @@
   font-size: 0.65rem;
   font-weight: 500;
   color: var(--dash-muted);
+}
+
+.dash-points-split {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--dash-muted);
+  line-height: 1.2;
 }
 
 .dash-tag {
@@ -1513,18 +1525,151 @@
   flex-direction: column;
 }
 
+.schedule-match-wrap {
+  border-bottom: 1px solid rgba(29, 49, 38, 0.08);
+}
+
+.schedule-match-wrap:last-child {
+  border-bottom: none;
+}
+
 .schedule-match-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 10px 12px;
   padding: 14px 12px;
-  border-bottom: 1px solid rgba(29, 49, 38, 0.08);
   min-height: 72px;
 }
 
-.schedule-match-row:last-child {
-  border-bottom: none;
+.schedule-match-scores-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.match-points-bubble-wrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.match-points-bubble-wrap .match-points-bubble {
+  pointer-events: auto;
+}
+
+.match-points-bubble {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.65rem;
+  height: 1.65rem;
+  padding: 0 0.35rem;
+  border: 2px solid var(--white, #fff);
+  border-radius: 999px;
+  background: var(--dash-accent, #1a7a42);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(26, 122, 66, 0.35);
+}
+
+.match-points-bubble:hover {
+  filter: brightness(1.06);
+}
+
+.match-points-bubble:focus-visible {
+  outline: 2px solid var(--dash-lime, #c8f542);
+  outline-offset: 2px;
+}
+
+.match-points-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(9.5rem, 62vw);
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--dash-text, #1d3126);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  white-space: normal;
+}
+
+.match-points-tooltip-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.match-points-tooltip-goals {
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.match-points-tooltip-detail {
+  margin: 0;
+  font-size: 0.6rem;
+  font-weight: 600;
+  line-height: 1.25;
+  opacity: 0.92;
+}
+
+.match-points-tooltip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--dash-text, #1d3126);
+}
+
+.dash-bonus-result {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  background: rgba(29, 49, 38, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid rgba(29, 49, 38, 0.15);
+}
+
+.dash-bonus-result--hit {
+  background: rgba(34, 120, 70, 0.08);
+  border-left-color: var(--dash-accent, #1a7a42);
+}
+
+.dash-bonus-result-pts {
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.dash-bonus-result-detail {
+  flex: 1 1 100%;
+  font-size: 0.72rem;
+  opacity: 0.85;
 }
 
 .schedule-match-row:hover {
@@ -2987,6 +3132,142 @@ button.schedule-match-row:focus-visible {
   white-space: nowrap;
 }
 
+/* Clasificación móvil (Porra + Vivo): stats estrechas, equipo con ellipsis */
+@media (max-width: 767px) {
+  .group-standings-grid .group-standings-card {
+    min-width: 0;
+  }
+
+  .group-standings-grid .group-standings-table-wrap,
+  .group-standings-grid .best-thirds-table-wrap {
+    overflow-x: visible;
+  }
+
+  .group-standings-grid .group-standings-table,
+  .group-standings-grid .best-thirds-table {
+    table-layout: fixed;
+    width: 100%;
+    font-size: 0.65rem;
+  }
+
+  .group-standings-grid .group-standings-table th,
+  .group-standings-grid .group-standings-table td,
+  .group-standings-grid .best-thirds-table th,
+  .group-standings-grid .best-thirds-table td {
+    padding: 3px 2px;
+  }
+
+  .group-standings-grid .group-standings-table th,
+  .group-standings-grid .best-thirds-table th {
+    font-size: 0.55rem;
+    letter-spacing: 0.02em;
+  }
+
+  .group-standings-grid .group-standings-table .gs-col-pj,
+  .group-standings-grid .best-thirds-table .bt-col-pj {
+    display: none;
+  }
+
+  .group-standings-grid .group-standings-table th:not(:first-child),
+  .group-standings-grid .group-standings-table td:not(:first-child) {
+    width: 1.85rem;
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+
+  .group-standings-grid .group-standings-table th:first-child,
+  .group-standings-grid .group-standings-table td.group-standings-team {
+    width: auto;
+    overflow: hidden;
+  }
+
+  .group-standings-grid .group-standings-team > :first-child,
+  .group-standings-grid .group-standings-team img {
+    width: 14px !important;
+    height: 14px !important;
+    flex-shrink: 0;
+  }
+
+  .group-standings-grid .group-standings-team span {
+    font-size: 0.62rem;
+  }
+
+  /* Porra: partidos bajo la tabla — fila horizontal, nombre con ellipsis */
+  .group-standings-matches--porra .schedule-match-row--compact {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 4px 6px;
+    padding: 6px 8px;
+    min-height: 0;
+  }
+
+  .group-standings-matches--porra .schedule-match-team {
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .group-standings-matches--porra .schedule-match-team--home {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .group-standings-matches--porra .schedule-match-team--away {
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    text-align: right;
+  }
+
+  .group-standings-matches--porra .schedule-match-team-name {
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+
+  .group-standings-matches--porra .schedule-match-center {
+    min-width: 4.5rem;
+    gap: 2px;
+    padding-bottom: 0;
+  }
+
+  .group-standings-matches--porra .schedule-match-center--knockout {
+    padding-bottom: 0;
+  }
+
+  .group-standings-matches--porra .schedule-match-number,
+  .group-standings-matches--porra .schedule-match-slots {
+    display: none;
+  }
+
+  .group-standings-matches--porra .schedule-match-datetime {
+    display: none;
+  }
+
+  .group-standings-matches--porra .schedule-match-kickoff {
+    font-size: 0.55rem;
+    line-height: 1.1;
+  }
+
+  .group-standings-matches--porra .schedule-match-scores {
+    gap: 4px;
+  }
+
+  .group-standings-matches--porra .schedule-score-input {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    font-size: 0.95rem !important;
+  }
+}
+
 .group-standings-matches {
   display: flex;
   flex-direction: column;
@@ -3061,6 +3342,13 @@ button.schedule-match-row:focus-visible {
 .group-standings-matches--table .schedule-match-score-sep {
   font-weight: 600;
   opacity: 0.45;
+}
+
+.schedule-match-row--dense-table .match-points-bubble {
+  min-width: 1.4rem;
+  height: 1.4rem;
+  font-size: 0.6rem;
+  border-width: 1.5px;
 }
 
 .dash-phase-hint {
@@ -3598,6 +3886,7 @@ button.schedule-match-team:disabled {
 }
 
 .bracket-slot {
+  position: relative;
   width: var(--bracket-card-w);
   min-width: var(--bracket-card-w);
   max-width: var(--bracket-card-w);
@@ -3614,6 +3903,15 @@ button.schedule-match-team:disabled {
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
+}
+
+.bracket-slot--has-points {
+  overflow: visible;
+  z-index: 2;
+}
+
+.bracket-slot .match-points-bubble-wrap--bracket {
+  top: 52%;
 }
 
 .bracket-slot--empty {

@@ -119,13 +119,17 @@ export default function Page() {
   }
 
   async function switchGroup(groupId, userId) {
-    saveSession(groupId, userId)
     const ok = await restoreSession(groupId, userId)
-    if (ok) {
-      await createWriteToken(groupId, userId)
-      notify('Grupo cambiado')
-    } else {
+    if (!ok) {
       notify('No se pudo cambiar de grupo', 'error')
+      return
+    }
+    saveSession(groupId, userId)
+    try {
+      await createWriteToken(groupId, userId)
+    } catch { /* reload aunque falle el token; init lo reintenta */ }
+    if (typeof window !== 'undefined') {
+      window.location.reload()
     }
   }
 

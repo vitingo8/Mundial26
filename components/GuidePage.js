@@ -245,7 +245,7 @@ export default function GuidePage() {
             <FeatureCard
               icon="bolt"
               title="Eliminatorias (40%)"
-              text="Partidos reales del Mundial desde dieciseisavos hasta la final. Puedes rellenarlos todos hasta el 28 jun 2026, 21:00 (Madrid), cuando empieza la primera eliminatoria. Si predices empate, elige quién pasa: +1 pt extra si aciertas el clasificado."
+              text="Partidos reales del Mundial desde dieciseisavos hasta la final. Puedes rellenarlos todos hasta el 28 jun 2026, 21:00 (Madrid). Los +3 y +5 del marcador solo cuentan si el cruce (equipos) coincide con tu bracket de Inicio; siempre +1 si aciertas qué selección pasa."
             />
             <FeatureCard
               icon="star"
@@ -375,6 +375,18 @@ export default function GuidePage() {
         >
           <div className="guia-score-grid">
             <div className="guia-score-row">
+              <span>Pestaña Inicio (grupos + KO previsto, antes del pitido)</span>
+              <span>×60 % al total</span>
+            </div>
+            <div className="guia-score-row">
+              <span>Eliminatorias reales (API)</span>
+              <span>×40 % al total</span>
+            </div>
+            <div className="guia-score-row">
+              <span>Especiales y MVP</span>
+              <span>100 % (sin ponderar)</span>
+            </div>
+            <div className="guia-score-row">
               <span>Acertar ganador, empate o perdedor (G/E/P)</span>
               <span>+{SCORING.correctOutcome} pts</span>
             </div>
@@ -383,7 +395,11 @@ export default function GuidePage() {
               <span>+{SCORING.exactScore} pts</span>
             </div>
             <div className="guia-score-row">
-              <span>Eliminatorias: acierto quién pasa (si predijiste empate)</span>
+              <span>Eliminatorias: G/E/P y exacto solo si el cruce coincide con tu bracket</span>
+              <span>+{SCORING.correctOutcome} / +{SCORING.exactScore}</span>
+            </div>
+            <div className="guia-score-row">
+              <span>Eliminatorias: acierto quién pasa (siempre)</span>
               <span>+{SCORING.knockoutAdvance} pt</span>
             </div>
             <div className="guia-score-row">

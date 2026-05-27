@@ -13,8 +13,9 @@
     "build:third-place-map": "node scripts/build-third-place-map.mjs data/fifa-2026-third-place-combinations.txt",
     "build:knockout": "tsc -p lib/knockout/tsconfig.build.json",
     "test": "npm run build:knockout && node --test lib/knockout/knockout.test.mjs",
-    "test:all": "npm run build:knockout && node --test lib/gameData.test.mjs lib/groupStandings.test.mjs lib/madridTime.test.mjs lib/fifaMatchNumbers.test.mjs lib/knockoutSchedule.official.test.mjs lib/matchSyncWindow.test.mjs && npm test",
-    "sync:wc": "node scripts/sync-wc-github.mjs"
+    "test:all": "npm run build:knockout && node --test lib/gameData.test.mjs lib/groupStandings.test.mjs lib/madridTime.test.mjs lib/fifaMatchNumbers.test.mjs lib/knockoutSchedule.official.test.mjs lib/matchSyncWindow.test.mjs lib/testScoringFixture.test.mjs lib/matchPointsDisplay.test.mjs && npm test",
+    "sync:wc": "node scripts/sync-wc-github.mjs",
+    "seed:test-scoring": "node --env-file=.env.local scripts/seed-test-scoring.mjs"
   },
   "devDependencies": {
     "@types/node": "25.9.1",

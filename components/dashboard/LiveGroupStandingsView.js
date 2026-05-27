@@ -37,9 +37,9 @@ export default function LiveGroupStandingsView({
                 <tr>
                   <th scope="col">Equipo</th>
                   <th scope="col" title="Puntos">Pts</th>
-                  <th scope="col" title="Diferencia de goles">DG</th>
-                  <th scope="col" title="Goles a favor">GF</th>
-                  <th scope="col" title="Partidos jugados">PJ</th>
+                  <th scope="col" className="gs-col-dg" title="Diferencia de goles">DG</th>
+                  <th scope="col" className="gs-col-gf" title="Goles a favor">GF</th>
+                  <th scope="col" className="gs-col-pj" title="Partidos jugados">PJ</th>
                 </tr>
               </thead>
               <tbody>
@@ -50,9 +50,9 @@ export default function LiveGroupStandingsView({
                       <span>{team.name}</span>
                     </td>
                     <td>{team.pts}</td>
-                    <td>{team.dg > 0 ? `+${team.dg}` : team.dg}</td>
-                    <td>{team.gf}</td>
-                    <td>{team.pj}</td>
+                    <td className="gs-col-dg">{team.dg > 0 ? `+${team.dg}` : team.dg}</td>
+                    <td className="gs-col-gf">{team.gf}</td>
+                    <td className="gs-col-pj">{team.pj}</td>
                   </tr>
                 ))}
               </tbody>
