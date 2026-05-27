@@ -5,7 +5,7 @@ import { uid } from '../lib/gameData'
 import { hashPin, normalizeName } from '../lib/pinUtils'
 import { normalizeEmail, isValidEmail } from '../lib/emailUtils'
 import { getSavedEmail, saveEmail } from '../lib/savedEmail'
-import { getDefaultGroupDeadline } from '../lib/deadlines'
+import { getDefaultGroupDeadline, getDefaultBonusDeadline } from '../lib/deadlines'
 import { InputRow, InputActionRow, inputRowStyles } from './InputRow'
 import { Icon } from './icons'
 
@@ -78,6 +78,7 @@ export function CreateScreen({ setScreen, notify, onCreated }) {
       const pin_hash = await hashPin(pin)
 
       const defaultGroupDeadline = getDefaultGroupDeadline()
+      const defaultBonusDeadline = getDefaultBonusDeadline()
       const { error: gErr } = await supabase.from('porra_groups').insert({
         id: groupId,
         name: groupName.trim(),
@@ -85,7 +86,7 @@ export function CreateScreen({ setScreen, notify, onCreated }) {
         phase: 'group',
         group_deadline: defaultGroupDeadline,
         knockout_deadline: null,
-        bonus_deadline: defaultGroupDeadline,
+        bonus_deadline: defaultBonusDeadline,
         actuals: {},
         results: { group: {}, knockout: {} },
       })
@@ -111,7 +112,7 @@ export function CreateScreen({ setScreen, notify, onCreated }) {
         results: { group: {}, knockout: {} },
         group_deadline: defaultGroupDeadline,
         knockout_deadline: null,
-        bonus_deadline: defaultGroupDeadline,
+        bonus_deadline: defaultBonusDeadline,
         participants: {
           [adminId]: {
             id: adminId,
