@@ -848,8 +848,17 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
   )
 }
 
-function KnockoutPreds({ preds, setPreds, phaseLocked, koDeadlinePassed, group, matches = [], teamOptions = [], matchRefs, viewMode = 'daily' }) {
-  const scheduleMatches = useMemo(() => flattenKnockoutSchedule(matches), [matches])
+function KnockoutPreds({
+  preds, setPreds, phaseLocked, koDeadlinePassed, group,
+  groupMatches = [], matches = [], teamOptions = [], matchRefs, viewMode = 'daily',
+}) {
+  const scheduleMatches = useMemo(() => {
+    const flat = flattenKnockoutSchedule(matches)
+    return filterRealKnockoutPorraSchedule(flat, {
+      groupMatches,
+      groupPhase: group?.phase,
+    })
+  }, [matches, groupMatches, group?.phase])
   const koLocked = phaseLocked || koDeadlinePassed
 
   function isKoMatchLocked() {
