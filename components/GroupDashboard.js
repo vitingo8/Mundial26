@@ -60,10 +60,6 @@ import KnockoutBracketView from './dashboard/KnockoutBracketView'
 import PredictedKnockoutSection from './dashboard/PredictedKnockoutSection'
 import { buildInicioKnockoutSchedule } from '../lib/knockoutBridge'
 import { flattenKnockoutSchedule } from '../lib/knockoutBracketDisplay'
-import {
-  filterRealKnockoutPorraSchedule,
-  shouldIncludeR32InRealPorra,
-} from '../lib/realKnockoutPorra'
 import { patchKnockoutScore, patchKnockoutAdvance } from '../lib/knockoutAdvances'
 
 function isInicioKoMatchId(id) {
@@ -643,8 +639,6 @@ function PredictionsTab({
             setPreds={setKoPreds}
             phaseLocked={phaseLocked}
             koDeadlinePassed={koDeadlinePassed}
-            group={group}
-            groupMatches={groupMatches}
             matches={knockoutMatches}
             teamOptions={teamOptions}
             matchRefs={matchRefs}
@@ -849,16 +843,10 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
 }
 
 function KnockoutPreds({
-  preds, setPreds, phaseLocked, koDeadlinePassed, group,
-  groupMatches = [], matches = [], teamOptions = [], matchRefs, viewMode = 'daily',
+  preds, setPreds, phaseLocked, koDeadlinePassed,
+  matches = [], teamOptions = [], matchRefs, viewMode = 'daily',
 }) {
-  const scheduleMatches = useMemo(() => {
-    const flat = flattenKnockoutSchedule(matches)
-    return filterRealKnockoutPorraSchedule(flat, {
-      groupMatches,
-      groupPhase: group?.phase,
-    })
-  }, [matches, groupMatches, group?.phase])
+  const scheduleMatches = useMemo(() => flattenKnockoutSchedule(matches), [matches])
   const koLocked = phaseLocked || koDeadlinePassed
 
   function isKoMatchLocked() {
@@ -914,7 +902,6 @@ function KnockoutPreds({
           onAdvance={setAdvance}
           schedulePhase="knockout"
           viewMode={viewMode}
-          flatMatchesPanel
         />
       </>
     )
