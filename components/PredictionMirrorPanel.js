@@ -84,8 +84,11 @@ export default function PredictionMirrorPanel({
   }
 
   return (
-    <details className="mirror-import">
-      <summary className="mirror-import-summary">Importar datos</summary>
+    <aside className="mirror-import-card" aria-label="Copiar porra de otro grupo">
+      <p className="mirror-import-note">
+        Participas en más de un grupo y aquí aún no hay predicciones. Puedes copiar la porra de otro
+        grupo <strong>solo en los huecos vacíos</strong>, sin pisar lo que ya tengas.
+      </p>
       <ul className="mirror-import-list">
         {sources.map(s => (
           <li key={s.id} className="mirror-import-row">
@@ -93,11 +96,11 @@ export default function PredictionMirrorPanel({
             <span className="mirror-import-actions">
               <button
                 type="button"
-                className="mirror-import-btn"
+                className="mirror-import-btn mirror-import-btn--primary"
                 disabled={!!busyId}
                 onClick={() => copyFromSibling(s)}
               >
-                Importar
+                {busyId === s.id ? 'Copiando…' : 'Copiar aquí'}
               </button>
               {onSwitchGroup && (
                 <button
@@ -106,13 +109,13 @@ export default function PredictionMirrorPanel({
                   disabled={!!busyId}
                   onClick={() => onSwitchGroup(s.group_id, s.id)}
                 >
-                  Abrir
+                  Ir al grupo
                 </button>
               )}
             </span>
           </li>
         ))}
       </ul>
-    </details>
+    </aside>
   )
 }

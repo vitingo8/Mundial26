@@ -31,7 +31,9 @@ import {
 import GroupStatsTable from './dashboard/GroupStatsTable'
 import ParticipantPredictionsSheet from './dashboard/ParticipantPredictionsSheet'
 import ProfileTab from './ProfileTab'
+import ProfileMenuSheet from './ProfileMenuSheet'
 import PredictionMirrorPanel from './PredictionMirrorPanel'
+import { useUserPorraGroups } from '../hooks/useUserPorraGroups'
 import ParticipantDisplay, { ParticipantAvatar } from './ParticipantDisplay'
 import {
   readScheduleViewMode,
@@ -88,7 +90,9 @@ export default function GroupDashboard({
   const [apiStatus, setApiStatus] = useState('idle')
   const [apiError, setApiError] = useState(null)
   const [currentGroup, setCurrentGroup] = useState(group)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const matchRefs = useRef({})
+  const { groups: userPorraGroups, hasMultiple: hasMultipleGroups } = useUserPorraGroups(user?.email)
 
   const { wcMatches, setWcMatches, wcLoading, reload: reloadWc } = useWcMatches()
   const groupMatches = useMemo(() => transformGroupMatches(wcMatches), [wcMatches])
@@ -206,6 +210,14 @@ export default function GroupDashboard({
     }))
   }
 
+  function handleProfileClick() {
+    if (hasMultipleGroups) {
+      setProfileMenuOpen(true)
+      return
+    }
+    changeTab('profile')
+  }
+
   return (
     <div className="dashboard-app">
       <header className="dash-header dash-header--compact" style={{ paddingTop: 'max(8px, var(--safe-top))' }}>
@@ -258,16 +270,27 @@ export default function GroupDashboard({
             <button
               type="button"
               className="dash-profile-btn"
-              title="Mi perfil"
-              aria-label="Mi perfil"
+              title={hasMultipleGroups ? 'Perfil y grupos' : 'Mi perfil'}
+              aria-label={hasMultipleGroups ? 'Perfil y grupos' : 'Mi perfil'}
+              aria-haspopup={hasMultipleGroups ? 'dialog' : undefined}
               aria-selected={tab === 'profile'}
-              onClick={() => changeTab('profile')}
+              onClick={handleProfileClick}
             >
               <ParticipantAvatar participant={user} size={36} />
             </button>
           </div>
         </div>
       </header>
+
+      <ProfileMenuSheet
+        open={profileMenuOpen}
+        onClose={() => setProfileMenuOpen(false)}
+        user={user}
+        currentGroupId={currentGroup.id}
+        groups={userPorraGroups}
+        onOpenProfile={() => changeTab('profile')}
+        onSwitchGroup={onSwitchGroup}
+      />
       <main className="dashboard-content dash-content app-container app-container--wide">
         {tab === 'group' && (
           <GroupTab

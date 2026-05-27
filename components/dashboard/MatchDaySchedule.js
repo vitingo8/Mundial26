@@ -138,9 +138,44 @@ export default function MatchDaySchedule({
         knockoutAdvance={showAdvancePicker(m)}
         locked={locked || (getMatchLocked ? getMatchLocked(m) : false)}
         compact={compact}
+        showMatchDate={schedulePhase === 'knockout'}
       />
     )
   }
+
+  const matchesBody =
+    sections.length === 0 || listEmpty ? (
+      <p className="schedule-empty-day">No hay partidos este día</p>
+    ) : fullView && schedulePhase !== 'knockout' ? (
+      <div className="schedule-full-list">
+        {dayMatches.map((m, i) => {
+          const dayKey = matchDateKey(m.utcDate)
+          const prevKey = i > 0 ? matchDateKey(dayMatches[i - 1].utcDate) : null
+          const showDay = dayKey !== prevKey
+          return (
+            <div key={m.id}>
+              {showDay && (
+                <div className="schedule-full-day-label">{formatFullDayLabel(m.utcDate)}</div>
+              )}
+              {renderMatchRow(m, true)}
+            </div>
+          )
+        })}
+      </div>
+    ) : (
+      sections.map(sec => (
+        <section key={sec.key || sec.label} className="schedule-block">
+          {sec.label ? (
+            <header className="schedule-block-header schedule-block-header--round">
+              {sec.label}
+            </header>
+          ) : null}
+          <div className="schedule-block-list">
+            {sec.items.map(m => renderMatchRow(m, fullView && schedulePhase === 'knockout'))}
+          </div>
+        </section>
+      ))
+    )
 
   return (
     <div className={panelClass}>
@@ -155,40 +190,9 @@ export default function MatchDaySchedule({
         </div>
       )}
 
-      <div className={matchesPanelClass}>
-        {sections.length === 0 || listEmpty ? (
-          <p className="schedule-empty-day">No hay partidos este día</p>
-        ) : fullView && schedulePhase !== 'knockout' ? (
-          <div className="schedule-full-list">
-            {dayMatches.map((m, i) => {
-              const dayKey = matchDateKey(m.utcDate)
-              const prevKey = i > 0 ? matchDateKey(dayMatches[i - 1].utcDate) : null
-              const showDay = dayKey !== prevKey
-              return (
-                <div key={m.id}>
-                  {showDay && (
-                    <div className="schedule-full-day-label">{formatFullDayLabel(m.utcDate)}</div>
-                  )}
-                  {renderMatchRow(m, true)}
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          sections.map(sec => (
-            <section key={sec.key || sec.label} className="schedule-block">
-              {sec.label ? (
-                <header className="schedule-block-header schedule-block-header--round">
-                  {sec.label}
-                </header>
-              ) : null}
-              <div className="schedule-block-list">
-                {sec.items.map(m => renderMatchRow(m, fullView && schedulePhase === 'knockout'))}
-              </div>
-            </section>
-          ))
-        )}
-      </div>
+      {flatMatchesPanel ? matchesBody : (
+        <div className={matchesPanelClass}>{matchesBody}</div>
+      )}
     </div>
   )
 }
