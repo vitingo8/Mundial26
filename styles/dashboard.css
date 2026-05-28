@@ -3252,19 +3252,19 @@ button.schedule-match-row:focus-visible {
 
   .group-standings-grid--participant .group-standings-table,
   .group-standings-grid--participant .best-thirds-table {
-    font-size: 0.65rem;
+    font-size: 0.8rem;
   }
 
   .group-standings-grid--participant .group-standings-table th,
   .group-standings-grid--participant .group-standings-table td,
   .group-standings-grid--participant .best-thirds-table th,
   .group-standings-grid--participant .best-thirds-table td {
-    padding: 3px 2px;
+    padding: 5px 3px;
   }
 
   .group-standings-grid--participant .group-standings-table th,
   .group-standings-grid--participant .best-thirds-table th {
-    font-size: 0.55rem;
+    font-size: 0.68rem;
     letter-spacing: 0.02em;
   }
 
@@ -3280,19 +3280,26 @@ button.schedule-match-row:focus-visible {
 
   .group-standings-grid--participant .best-thirds-table th.bt-col-rank,
   .group-standings-grid--participant .best-thirds-table td.best-thirds-rank {
-    width: 0.8rem;
-    max-width: 0.8rem;
-    padding-left: 1px;
-    padding-right: 1px;
+    width: 1rem;
+    max-width: 1rem;
+    padding-left: 2px;
+    padding-right: 2px;
   }
 
   .group-standings-grid--participant .best-thirds-group,
   .group-standings-grid--participant .best-thirds-table th.bt-col-group {
-    width: 1.1rem;
-    max-width: 1.1rem;
+    width: 0.85rem;
+    max-width: 0.85rem;
     padding-left: 1px;
     padding-right: 1px;
     text-align: center;
+  }
+
+  .group-standings-grid--participant .best-thirds-table th.bt-col-team,
+  .group-standings-grid--participant .best-thirds-table td.best-thirds-team {
+    width: auto;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .group-standings-grid--participant .best-thirds-table th.bt-col-group {
@@ -3312,19 +3319,28 @@ button.schedule-match-row:focus-visible {
 
   .group-standings-grid--participant .best-thirds-team img,
   .group-standings-grid--participant .best-thirds-team > span[aria-hidden] {
-    width: 14px !important;
-    height: 14px !important;
-    min-width: 14px;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px;
   }
 
-  .group-standings-grid--participant .best-thirds-team span:not([aria-hidden]) {
-    font-size: 0.62rem;
+  .group-standings-grid--participant .best-thirds-team-name {
+    font-size: 0.78rem;
   }
 
   .group-standings-grid--participant .group-standings-team > :first-child,
   .group-standings-grid--participant .group-standings-team img {
-    width: 14px !important;
-    height: 14px !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px;
+  }
+
+  .group-standings-grid--participant .group-standings-team-name {
+    font-size: 0.78rem;
+  }
+
+  .group-standings-grid--participant .gs-qual-pts {
+    font-size: 0.65rem;
   }
 }
 
@@ -3447,6 +3463,11 @@ button.schedule-match-row:focus-visible {
 
 /* Clasificación móvil (Porra + Vivo): stats estrechas, equipo con ellipsis */
 @media (max-width: 767px) {
+  .group-standings-grid .group-standings-header {
+    font-size: 0.95rem;
+    padding: 10px 12px;
+  }
+
   .group-standings-grid .group-standings-card {
     min-width: 0;
   }
@@ -3460,19 +3481,19 @@ button.schedule-match-row:focus-visible {
   .group-standings-grid .best-thirds-table {
     table-layout: fixed;
     width: 100%;
-    font-size: 0.65rem;
+    font-size: 0.8rem;
   }
 
   .group-standings-grid .group-standings-table th,
   .group-standings-grid .group-standings-table td,
   .group-standings-grid .best-thirds-table th,
   .group-standings-grid .best-thirds-table td {
-    padding: 3px 2px;
+    padding: 5px 3px;
   }
 
   .group-standings-grid .group-standings-table th,
   .group-standings-grid .best-thirds-table th {
-    font-size: 0.55rem;
+    font-size: 0.68rem;
     letter-spacing: 0.02em;
   }
 
@@ -3494,21 +3515,74 @@ button.schedule-match-row:focus-visible {
     overflow: hidden;
   }
 
+  .group-standings-grid .best-thirds-table th.bt-col-rank,
+  .group-standings-grid .best-thirds-table td.best-thirds-rank {
+    width: 1rem;
+    max-width: 1rem;
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  .group-standings-grid .best-thirds-group,
+  .group-standings-grid .best-thirds-table th.bt-col-group {
+    width: 0.85rem;
+    max-width: 0.85rem;
+    padding-left: 1px;
+    padding-right: 1px;
+    text-align: center;
+    font-size: 0.65rem;
+  }
+
+  .group-standings-grid .best-thirds-table th.bt-col-group {
+    font-size: 0;
+  }
+
+  .group-standings-grid .best-thirds-table th.bt-col-group::after {
+    content: 'G';
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .group-standings-grid .best-thirds-table th:nth-child(4),
+  .group-standings-grid .best-thirds-table td:nth-child(4),
+  .group-standings-grid .best-thirds-table .bt-col-dg,
+  .group-standings-grid .best-thirds-table .bt-col-gf {
+    width: 1.85rem;
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+
+  .group-standings-grid .best-thirds-table th.bt-col-team,
+  .group-standings-grid .best-thirds-table td.best-thirds-team {
+    width: auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+
   .group-standings-grid .group-standings-team > :first-child,
-  .group-standings-grid .group-standings-team img {
-    width: 14px !important;
-    height: 14px !important;
+  .group-standings-grid .group-standings-team img,
+  .group-standings-grid .best-thirds-team img,
+  .group-standings-grid .best-thirds-team > :first-child {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px;
     flex-shrink: 0;
   }
 
   .group-standings-grid .group-standings-team-name,
   .group-standings-grid .best-thirds-team-name {
-    font-size: 0.62rem;
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+
+  .group-standings-grid .best-thirds-team {
+    gap: 5px;
   }
 
   .group-standings-grid .gs-qual-pts {
-    font-size: 0.55rem;
-    padding: 0 4px;
+    font-size: 0.65rem;
+    padding: 1px 5px;
   }
 
   /* Porra: partidos bajo la tabla — fila horizontal, nombre con ellipsis */

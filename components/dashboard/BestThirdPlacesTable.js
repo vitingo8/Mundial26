@@ -27,7 +27,7 @@ export default function BestThirdPlacesTable({ rows, combinationKey, qualificati
             <tr>
               <th scope="col" className="bt-col-rank">#</th>
               <th scope="col" className="bt-col-group">Grupo</th>
-              <th scope="col">Equipo</th>
+              <th scope="col" className="bt-col-team">Equipo</th>
               <th scope="col" title="Puntos">Pts</th>
               <th scope="col" className="bt-col-dg" title="Diferencia de goles">DG</th>
               <th scope="col" className="bt-col-gf" title="Goles a favor">GF</th>
