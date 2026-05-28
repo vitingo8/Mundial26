@@ -39,16 +39,10 @@ const PHASE_GROUPS = [
         limitKey: 'inicioResultadoPts',
       },
       {
-        key: 'inicioAdvancePts',
-        label: 'Pasa',
-        title: `Quién pasa en KO previsto (máx. ${LIMITS.inicioAdvancePts})`,
-        limitKey: 'inicioAdvancePts',
-      },
-      {
-        key: 'qualificationWeighted',
-        label: 'Clas.',
-        title: `Clasificados a dieciseisavos (máx. ${LIMITS.qualificationPts})`,
-        limitKey: 'qualificationPts',
+        key: 'inicioClasPasaPts',
+        label: 'Clasif.',
+        title: `Clasificación a dieciseisavos + quién pasa en empate del KO previsto (máx. ${LIMITS.inicioClasPasaPts})`,
+        limitKey: 'inicioClasPasaPts',
       },
     ],
   },
@@ -209,7 +203,7 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
         <span className="stats-table-legend-swatch stats-table-legend-swatch--esp">Especiales</span>
       </div>
       <p className="stats-table-legend">
-        Cada celda: puntos / máximo de esa fase. Sin columnas duplicadas entre Inicio y Eliminatorias.
+        Clasif. en Inicio suma clasificación a dieciseisavos y aciertos de quién pasa en empates del KO previsto.
       </p>
     </div>
   )
