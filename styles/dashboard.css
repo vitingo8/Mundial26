@@ -3585,79 +3585,98 @@ button.schedule-match-row:focus-visible {
     padding: 1px 5px;
   }
 
-  /* Porra: partidos bajo la tabla — fila horizontal, nombre con ellipsis */
-  .group-standings-matches--porra .schedule-match-row--compact {
+  /* Partidos bajo clasificación — mismo tamaño que tabla de equipos */
+  .group-standings-grid .group-standings-matches--porra .schedule-match-row--compact,
+  .group-standings-grid .group-standings-matches--table .schedule-match-row--dense-table {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    gap: 4px 6px;
-    padding: 6px 8px;
+    gap: 5px 8px;
+    padding: 8px 10px;
     min-height: 0;
   }
 
-  .group-standings-matches--porra .schedule-match-team {
+  .group-standings-grid .group-standings-matches--porra .schedule-match-team,
+  .group-standings-grid .group-standings-matches--table .schedule-match-team {
     flex-direction: row;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     min-width: 0;
   }
 
-  .group-standings-matches--porra .schedule-match-team--home {
+  .group-standings-grid .group-standings-matches--porra .schedule-match-team--home,
+  .group-standings-grid .group-standings-matches--table .schedule-match-team--home {
     justify-content: flex-start;
     text-align: left;
   }
 
-  .group-standings-matches--porra .schedule-match-team--away {
+  .group-standings-grid .group-standings-matches--porra .schedule-match-team--away,
+  .group-standings-grid .group-standings-matches--table .schedule-match-team--away {
     flex-direction: row-reverse;
     justify-content: flex-start;
     text-align: right;
   }
 
-  .group-standings-matches--porra .schedule-match-team-name {
-    font-size: 0.62rem;
+  .group-standings-grid .group-standings-matches--porra .schedule-match-team-name,
+  .group-standings-grid .group-standings-matches--table .schedule-match-team-name {
+    font-size: 0.78rem;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.25;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    word-break: normal;
-    overflow-wrap: normal;
   }
 
-  .group-standings-matches--porra .schedule-match-center {
-    min-width: 4.5rem;
-    gap: 2px;
+  .group-standings-grid .group-standings-matches--porra .schedule-match-team img,
+  .group-standings-grid .group-standings-matches--porra .schedule-match-team > span[aria-hidden],
+  .group-standings-grid .group-standings-matches--table .schedule-match-team img,
+  .group-standings-grid .group-standings-matches--table .schedule-match-team > span[aria-hidden] {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px;
+  }
+
+  .group-standings-grid .group-standings-matches--porra .schedule-match-center {
+    min-width: 4.75rem;
+    gap: 3px;
     padding-bottom: 0;
   }
 
-  .group-standings-matches--porra .schedule-match-center--knockout {
+  .group-standings-grid .group-standings-matches--table .schedule-match-center {
+    min-width: 2.25rem;
+    gap: 0;
     padding-bottom: 0;
   }
 
-  .group-standings-matches--porra .schedule-match-number,
-  .group-standings-matches--porra .schedule-match-slots {
+  .group-standings-grid .group-standings-matches--porra .schedule-match-center--knockout {
+    padding-bottom: 0;
+  }
+
+  .group-standings-grid .group-standings-matches--porra .schedule-match-number,
+  .group-standings-grid .group-standings-matches--porra .schedule-match-slots,
+  .group-standings-grid .group-standings-matches--porra .schedule-match-datetime {
     display: none;
   }
 
-  .group-standings-matches--porra .schedule-match-datetime {
-    display: none;
+  .group-standings-grid .group-standings-matches--porra .schedule-match-kickoff {
+    font-size: 0.65rem;
+    line-height: 1.15;
   }
 
-  .group-standings-matches--porra .schedule-match-kickoff {
-    font-size: 0.55rem;
-    line-height: 1.1;
+  .group-standings-grid .group-standings-matches--porra .schedule-match-scores {
+    gap: 5px;
   }
 
-  .group-standings-matches--porra .schedule-match-scores {
-    gap: 4px;
+  .group-standings-grid .group-standings-matches--porra .schedule-score-input {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    font-size: 1rem !important;
   }
 
-  .group-standings-matches--porra .schedule-score-input {
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    max-width: 32px !important;
-    font-size: 0.95rem !important;
+  .group-standings-grid .group-standings-matches--table .schedule-match-scoreline {
+    font-size: 0.78rem;
   }
 }
 
