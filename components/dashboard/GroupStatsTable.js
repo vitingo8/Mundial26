@@ -5,65 +5,100 @@ import { SCORING_COLUMN_LIMITS, formatPtsOfMax } from '../../lib/scoringMaximum.
 
 const LIMITS = SCORING_COLUMN_LIMITS
 
-const COLUMNS = [
-  { key: 'rank', label: '#', title: 'Posición', kind: 'rank' },
-  { key: 'name', label: 'Jugador', title: 'Participante', kind: 'name' },
+/** Columnas agrupadas por fase (sin duplicar totales mezclados). */
+const PHASE_GROUPS = [
   {
-    key: 'total',
-    label: 'Total',
-    title: `Puntos totales (máx. ${LIMITS.total})`,
-    limitKey: 'total',
-    emphasize: true,
+    id: 'base',
+    label: null,
+    columns: [
+      { key: 'rank', label: '#', title: 'Posición', kind: 'rank' },
+      { key: 'name', label: 'Jugador', title: 'Participante', kind: 'name' },
+      {
+        key: 'total',
+        label: 'Total',
+        title: `Suma de todas las fases (máx. ${LIMITS.total})`,
+        limitKey: 'total',
+        emphasize: true,
+      },
+    ],
   },
   {
-    key: 'inicioPts',
+    id: 'inicio',
     label: 'Inicio',
-    title: `Grupos + KO previsto + clasificados (×60 %, máx. ${LIMITS.inicioPts})`,
-    limitKey: 'inicioPts',
+    columns: [
+      {
+        key: 'inicioGepPts',
+        label: 'G/E/P',
+        title: `1X2 en grupos y KO previsto (máx. ${LIMITS.inicioGepPts})`,
+        limitKey: 'inicioGepPts',
+      },
+      {
+        key: 'inicioResultadoPts',
+        label: 'Res.',
+        title: `Marcador exacto en Inicio (máx. ${LIMITS.inicioResultadoPts})`,
+        limitKey: 'inicioResultadoPts',
+      },
+      {
+        key: 'inicioAdvancePts',
+        label: 'Pasa',
+        title: `Quién pasa en KO previsto (máx. ${LIMITS.inicioAdvancePts})`,
+        limitKey: 'inicioAdvancePts',
+      },
+      {
+        key: 'qualificationWeighted',
+        label: 'Clas.',
+        title: `Clasificados a dieciseisavos (máx. ${LIMITS.qualificationPts})`,
+        limitKey: 'qualificationPts',
+      },
+    ],
   },
   {
-    key: 'knockoutPts',
-    label: 'KO',
-    title: `Eliminatorias reales (×40 %, máx. ${LIMITS.knockoutPts})`,
-    limitKey: 'knockoutPts',
+    id: 'elim',
+    label: 'Eliminatorias',
+    columns: [
+      {
+        key: 'knockoutGepPts',
+        label: 'G/E/P',
+        title: `1X2 en eliminatorias reales (máx. ${LIMITS.knockoutGepPts})`,
+        limitKey: 'knockoutGepPts',
+      },
+      {
+        key: 'knockoutResultadoPts',
+        label: 'Res.',
+        title: `Marcador exacto en eliminatorias (máx. ${LIMITS.knockoutResultadoPts})`,
+        limitKey: 'knockoutResultadoPts',
+      },
+      {
+        key: 'knockoutAdvancePts',
+        label: 'Pasa',
+        title: `Quién pasa en eliminatorias (máx. ${LIMITS.knockoutAdvancePts})`,
+        limitKey: 'knockoutAdvancePts',
+      },
+    ],
   },
   {
-    key: 'gepPts',
-    label: 'G/E/P',
-    title: `1X2 acertado (máx. ${LIMITS.gepPts} ponderado)`,
-    limitKey: 'gepPts',
-  },
-  {
-    key: 'resultadoPts',
-    label: 'Res.',
-    title: `Marcador exacto (máx. ${LIMITS.resultadoPts} ponderado)`,
-    limitKey: 'resultadoPts',
-  },
-  {
-    key: 'advancePts',
-    label: 'Pasa',
-    title: `Quién pasa en empate KO (máx. ${LIMITS.advancePts})`,
-    limitKey: 'advancePts',
-  },
-  {
-    key: 'qualificationWeighted',
-    label: 'Clas.',
-    title: `Clasificados a dieciseisavos (×60 %, máx. ${LIMITS.qualificationPts})`,
-    limitKey: 'qualificationPts',
-  },
-  {
-    key: 'especialPts',
-    label: 'Esp.',
-    title: `Goleador, mejor portero y asistente (máx. ${LIMITS.especialPts})`,
-    limitKey: 'especialPts',
-  },
-  {
-    key: 'mvpPts',
-    label: 'MVP',
-    title: `MVP del torneo (máx. ${LIMITS.mvpPts})`,
-    limitKey: 'mvpPts',
+    id: 'esp',
+    label: 'Especiales',
+    columns: [
+      {
+        key: 'especialPts',
+        label: 'Esp.',
+        title: `Goleador, portero y asistente (máx. ${LIMITS.especialPts})`,
+        limitKey: 'especialPts',
+      },
+      {
+        key: 'mvpPts',
+        label: 'MVP',
+        title: `MVP del torneo (máx. ${LIMITS.mvpPts})`,
+        limitKey: 'mvpPts',
+      },
+    ],
   },
 ]
+
+const FLAT_COLUMNS = PHASE_GROUPS.flatMap(g =>
+  g.columns.map(col => ({ ...col, phase: g.id })),
+)
 
 function PtsCell({ value, max, emphasize }) {
   const display = formatPtsOfMax(value, max)
@@ -84,11 +119,30 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
   return (
     <div className="stats-table-wrap">
       <div className="stats-table-scroll" role="region" aria-label="Tabla de puntuación" tabIndex={0}>
-        <table className="stats-table stats-table--compact stats-table--limits">
+        <table className="stats-table stats-table--compact stats-table--limits stats-table--phases">
           <thead>
+            <tr className="stats-table-phase-row">
+              {PHASE_GROUPS.map(group => (
+                <th
+                  key={group.id}
+                  colSpan={group.columns.length}
+                  scope="colgroup"
+                  className={`stats-table-phase-head stats-table-phase-head--${group.id}`}
+                >
+                  {group.label && (
+                    <span className="stats-table-phase-label">{group.label}</span>
+                  )}
+                </th>
+              ))}
+            </tr>
             <tr>
-              {COLUMNS.map(col => (
-                <th key={col.key} scope="col" title={col.title}>
+              {FLAT_COLUMNS.map(col => (
+                <th
+                  key={col.key}
+                  scope="col"
+                  title={col.title}
+                  className={`stats-table-col-head stats-table-col-head--${col.phase}`}
+                >
                   {col.label}
                 </th>
               ))}
@@ -109,13 +163,17 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
                   role={canView ? 'button' : undefined}
                   aria-label={canView ? `Ver porra de ${label}` : undefined}
                 >
-                  {COLUMNS.map(col => {
+                  {FLAT_COLUMNS.map(col => {
                     if (col.kind === 'rank') {
-                      return <td key={col.key} className="stats-table-rank">{row.rank}</td>
+                      return (
+                        <td key={col.key} className="stats-table-rank stats-table-cell--base">
+                          {row.rank}
+                        </td>
+                      )
                     }
                     if (col.kind === 'name') {
                       return (
-                        <td key={col.key} className="stats-table-name">
+                        <td key={col.key} className="stats-table-name stats-table-cell--base">
                           <ParticipantDisplay
                             participant={row}
                             isYou={isYou}
@@ -132,7 +190,7 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
                     return (
                       <td
                         key={col.key}
-                        className={`stats-table-num${col.emphasize ? ' stats-table-num--total' : ''}`}
+                        className={`stats-table-num stats-table-cell--${col.phase}${col.emphasize ? ' stats-table-num--total' : ''}`}
                         title={`${value} de ${max} pts`}
                       >
                         <PtsCell value={value} max={max} emphasize={col.emphasize} />
@@ -145,10 +203,13 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
           </tbody>
         </table>
       </div>
+      <div className="stats-table-legend stats-table-legend--phases" aria-hidden="true">
+        <span className="stats-table-legend-swatch stats-table-legend-swatch--inicio">Inicio</span>
+        <span className="stats-table-legend-swatch stats-table-legend-swatch--elim">Eliminatorias</span>
+        <span className="stats-table-legend-swatch stats-table-legend-swatch--esp">Especiales</span>
+      </div>
       <p className="stats-table-legend">
-        Cada celda muestra puntos conseguidos / máximo. Inicio incluye grupos, clasificados a dieciseisavos
-        y KO previsto (×0,6). G/E/P, Res. y Pasa mezclan Inicio y eliminatorias reales con su peso.
-        Especiales y MVP cuentan al 100 %.
+        Cada celda: puntos / máximo de esa fase. Sin columnas duplicadas entre Inicio y Eliminatorias.
       </p>
     </div>
   )

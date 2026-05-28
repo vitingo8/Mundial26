@@ -2316,7 +2316,119 @@ button.schedule-match-row:focus-visible {
 }
 
 .stats-table--limits {
-  min-width: 720px;
+  min-width: 640px;
+}
+
+.stats-table--phases .stats-table-phase-row th {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--dash-border);
+  font-weight: 700;
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+  vertical-align: bottom;
+}
+
+.stats-table-phase-head--base {
+  background: transparent;
+}
+
+.stats-table-phase-head--inicio {
+  background: rgba(42, 128, 78, 0.11);
+  color: #1f6b42;
+  box-shadow: inset 3px 0 0 rgba(42, 128, 78, 0.45);
+}
+
+.stats-table-phase-head--elim {
+  background: rgba(88, 108, 198, 0.11);
+  color: #3d4d9e;
+  box-shadow: inset 3px 0 0 rgba(88, 108, 198, 0.5);
+}
+
+.stats-table-phase-head--esp {
+  background: rgba(128, 98, 42, 0.07);
+  color: rgba(88, 68, 28, 0.9);
+}
+
+.stats-table-phase-label {
+  display: block;
+  font-weight: 800;
+  text-align: center;
+}
+
+.stats-table--phases .stats-table-col-head,
+.stats-table--phases .stats-table-phase-row th {
+  text-align: center;
+}
+
+.stats-table--phases th:nth-child(1),
+.stats-table--phases th:nth-child(2) {
+  text-align: center;
+}
+
+.stats-table--phases .stats-table-name {
+  text-align: center !important;
+}
+
+.stats-table--phases .stats-table-name .participant-display {
+  justify-content: center;
+}
+
+.stats-table-col-head--inicio,
+.stats-table-cell--inicio {
+  background: rgba(42, 128, 78, 0.06);
+}
+
+.stats-table-col-head--elim,
+.stats-table-cell--elim {
+  background: rgba(88, 108, 198, 0.07);
+}
+
+.stats-table-col-head--esp,
+.stats-table-cell--esp {
+  background: rgba(128, 98, 42, 0.05);
+}
+
+.stats-table-row--you .stats-table-cell--inicio {
+  background: rgba(42, 128, 78, 0.12);
+}
+
+.stats-table-row--you .stats-table-cell--elim {
+  background: rgba(88, 108, 198, 0.13);
+}
+
+.stats-table-row--you .stats-table-cell--esp {
+  background: rgba(128, 98, 42, 0.1);
+}
+
+.stats-table-legend--phases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-bottom: 4px;
+}
+
+.stats-table-legend-swatch {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.stats-table-legend-swatch--inicio {
+  background: rgba(42, 128, 78, 0.16);
+  color: #1f6b42;
+}
+
+.stats-table-legend-swatch--elim {
+  background: rgba(88, 108, 198, 0.16);
+  color: #3d4d9e;
+}
+
+.stats-table-legend-swatch--esp {
+  background: rgba(128, 98, 42, 0.12);
+  color: rgba(88, 68, 28, 0.9);
 }
 
 .stats-table-hint {
