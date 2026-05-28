@@ -1,8 +1,10 @@
 'use client'
 
 import TeamCrest from '../TeamCrest'
+import { lookupQualificationPoints } from '../../lib/groupQualificationScoring.js'
+import QualificationPtsBadge from './QualificationPtsBadge'
 
-export default function BestThirdPlacesTable({ rows, combinationKey }) {
+export default function BestThirdPlacesTable({ rows, combinationKey, qualificationByTeam }) {
   if (!rows.length) return null
 
   return (
@@ -33,7 +35,9 @@ export default function BestThirdPlacesTable({ rows, combinationKey }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map(row => (
+            {rows.map(row => {
+              const qualEntry = lookupQualificationPoints(qualificationByTeam, row.name)
+              return (
               <tr
                 key={row.group}
                 className={row.qualifies ? 'best-thirds-row--in' : 'best-thirds-row--out'}
@@ -42,14 +46,16 @@ export default function BestThirdPlacesTable({ rows, combinationKey }) {
                 <td className="best-thirds-group">{row.group}</td>
                 <td className="best-thirds-team">
                   <TeamCrest src={row.crest} alt={row.name} size={18} />
-                  <span>{row.name}</span>
+                  <span className="best-thirds-team-name">{row.name}</span>
+                  <QualificationPtsBadge entry={qualEntry} />
                 </td>
                 <td>{row.pts}</td>
                 <td className="bt-col-dg">{row.gd > 0 ? `+${row.gd}` : row.gd}</td>
                 <td className="bt-col-gf">{row.gf}</td>
                 <td className="bt-col-pj">{row.pj}</td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
       </div>

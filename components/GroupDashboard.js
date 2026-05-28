@@ -514,6 +514,7 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
         <ParticipantPredictionsSheet
           participant={viewingParticipant}
           groupMatches={groupMatches}
+          knockoutMatches={knockoutMatches}
           currentUserId={currentUserId}
           onClose={() => setViewingParticipant(null)}
         />
@@ -654,6 +655,7 @@ function PredictionsTab({
           setInicioKoPreds={setInicioKoPreds}
           locked={groupDeadlinePassed || phaseLocked}
           matches={groupMatches}
+          knockoutMatches={knockoutMatches}
           matchRefs={matchRefs}
           viewMode={effectiveViewMode}
           group={group}
@@ -699,7 +701,7 @@ function PredictionsTab({
 
 function GroupPhasePreds({
   preds, setPreds, inicioKoPreds, setInicioKoPreds,
-  locked, matches = [], matchRefs, viewMode = 'daily', group,
+  locked, matches = [], knockoutMatches = [], matchRefs, viewMode = 'daily', group,
 }) {
   const publishedResults = useMemo(
     () => buildPublishedResultsMap(group?.results, 'group'),
@@ -797,6 +799,7 @@ function GroupPhasePreds({
           matchRefs={matchRefs}
           onScore={setScore}
           publishedResults={publishedResults}
+          knockoutMatches={knockoutMatches}
         />
       ) : viewMode === 'bracket' ? (
         <>

@@ -2290,58 +2290,6 @@ button.schedule-match-row:focus-visible {
   gap: 8px;
 }
 
-.stats-table-summary {
-  padding: 12px 14px;
-  border: 1px solid var(--dash-border);
-  border-radius: var(--dash-radius-sm);
-  background: var(--dash-surface);
-}
-
-.stats-table-summary-title {
-  margin: 0 0 8px;
-  font-size: 0.8rem;
-  color: var(--on-pattern);
-  text-shadow: 0 1px 6px rgba(29, 49, 38, 0.3);
-}
-
-.stats-table-summary-title strong {
-  color: var(--dash-accent-deep);
-  font-size: 0.95rem;
-}
-
-.stats-table-summary-phases {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.stats-table-summary-phases li {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2px 10px;
-  font-size: 0.72rem;
-  color: var(--on-pattern);
-}
-
-.stats-table-summary-label {
-  font-weight: 700;
-}
-
-.stats-table-summary-max {
-  font-weight: 800;
-  color: var(--dash-accent-deep);
-  text-align: right;
-}
-
-.stats-table-summary-detail {
-  grid-column: 1 / -1;
-  font-size: 0.65rem;
-  opacity: 0.9;
-}
-
 .stats-table-pts {
   display: inline-flex;
   align-items: baseline;
@@ -3223,10 +3171,52 @@ button.schedule-match-row:focus-visible {
   min-width: 0;
 }
 
-.group-standings-team span {
+.group-standings-team-name,
+.best-thirds-team-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.group-standings-team span:not(.gs-qual-pts) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gs-qual-pts {
+  flex-shrink: 0;
+  margin-left: 4px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  color: var(--dash-accent-deep);
+  background: rgba(45, 106, 79, 0.14);
+  border: 1px solid rgba(45, 106, 79, 0.28);
+}
+
+.group-standings-qual-hint {
+  grid-column: 1 / -1;
+  margin: 0 0 4px;
+  padding: 10px 12px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--on-pattern);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--dash-radius-sm);
+}
+
+.best-thirds-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 /* Clasificación móvil (Porra + Vivo): stats estrechas, equipo con ellipsis */
@@ -3285,8 +3275,14 @@ button.schedule-match-row:focus-visible {
     flex-shrink: 0;
   }
 
-  .group-standings-grid .group-standings-team span {
+  .group-standings-grid .group-standings-team-name,
+  .group-standings-grid .best-thirds-team-name {
     font-size: 0.62rem;
+  }
+
+  .group-standings-grid .gs-qual-pts {
+    font-size: 0.55rem;
+    padding: 0 4px;
   }
 
   /* Porra: partidos bajo la tabla — fila horizontal, nombre con ellipsis */

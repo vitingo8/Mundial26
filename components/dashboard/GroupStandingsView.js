@@ -3,9 +3,14 @@
 import { useMemo } from 'react'
 import { computeGroupStandings } from '../../lib/groupStandings'
 import { computeBestThirdPlacesRanking } from '../../lib/bestThirdPlaces'
+import {
+  buildQualificationPointsByTeam,
+  lookupQualificationPoints,
+} from '../../lib/groupQualificationScoring.js'
 import TeamCrest from '../TeamCrest'
 import MatchRow from './MatchRow'
 import BestThirdPlacesTable from './BestThirdPlacesTable'
+import QualificationPtsBadge from './QualificationPtsBadge'
 
 export default function GroupStandingsView({
   matches,
@@ -15,6 +20,7 @@ export default function GroupStandingsView({
   matchRefs,
   gridClassName = '',
   publishedResults = {},
+  knockoutMatches = [],
 }) {
   const groups = useMemo(
     () => computeGroupStandings(matches, preds),
@@ -26,12 +32,27 @@ export default function GroupStandingsView({
     [matches, preds],
   )
 
+  const qualificationPts = useMemo(
+    () =>
+      buildQualificationPointsByTeam(
+        { predictions: { group: preds } },
+        { groupMatches: matches, knockoutMatches },
+      ),
+    [matches, preds, knockoutMatches],
+  )
+
   if (!groups.length) return null
 
   const denseMatches = gridClassName.includes('participant')
 
   return (
     <div className={`group-standings-grid${gridClassName ? ` ${gridClassName}` : ''}`}>
+      {qualificationPts.ready && (
+        <p className="group-standings-qual-hint" role="note">
+          Junto al equipo: <strong>+1</strong> si clasifica a dieciseisavos (API) y <strong>+2</strong> si
+          además aciertas 1.º / 2.º / 3.º. Cuentan al 60&nbsp;% en el total del ranking.
+        </p>
+      )}
       {groups.map(group => (
         <section key={group.id} className="group-standings-card">
           <header className="group-standings-header">{group.label}</header>
@@ -48,18 +69,25 @@ export default function GroupStandingsView({
                 </tr>
               </thead>
               <tbody>
-                {group.teams.map((team, i) => (
+                {group.teams.map((team, i) => {
+                  const qualEntry = lookupQualificationPoints(
+                    qualificationPts.byTeam,
+                    team.name,
+                  )
+                  return (
                   <tr key={team.name} className={i < 2 ? 'group-standings-row--qualify' : ''}>
                     <td className="group-standings-team">
                       <TeamCrest src={team.crest} alt={team.name} size={18} />
-                      <span>{team.name}</span>
+                      <span className="group-standings-team-name">{team.name}</span>
+                      <QualificationPtsBadge entry={qualEntry} />
                     </td>
                     <td>{team.pts}</td>
                     <td className="gs-col-dg">{team.dg > 0 ? `+${team.dg}` : team.dg}</td>
                     <td className="gs-col-gf">{team.gf}</td>
                     <td className="gs-col-pj">{team.pj}</td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -99,6 +127,7 @@ export default function GroupStandingsView({
       <BestThirdPlacesTable
         rows={bestThirds.rows}
         combinationKey={bestThirds.combinationKey}
+        qualificationByTeam={qualificationPts.byTeam}
       />
     </div>
   )

@@ -17,6 +17,7 @@ const VIEWS = [
 export default function ParticipantPredictionsSheet({
   participant,
   groupMatches,
+  knockoutMatches = [],
   onClose,
   currentUserId,
 }) {
@@ -122,6 +123,7 @@ export default function ParticipantPredictionsSheet({
                 locked
                 onScore={() => {}}
                 gridClassName="group-standings-grid--participant"
+                knockoutMatches={knockoutMatches}
               />
             )
           ) : inicioKo.schedule.length === 0 && filledKo === 0 ? (

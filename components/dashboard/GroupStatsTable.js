@@ -76,30 +76,6 @@ function PtsCell({ value, max, emphasize }) {
   )
 }
 
-function ScoringLimitsSummary() {
-  const phases = [
-    { label: 'Inicio (×60 %)', max: LIMITS.inicioPts, detail: '72 grupos + 32 KO previsto + clasificados' },
-    { label: 'Eliminatorias (×40 %)', max: LIMITS.knockoutPts, detail: '32 partidos reales' },
-    { label: 'Especiales + MVP', max: LIMITS.bonusPts, detail: 'Sin ponderar' },
-  ]
-  return (
-    <div className="stats-table-summary" aria-label="Puntos máximos por fase">
-      <p className="stats-table-summary-title">
-        Techo del torneo: <strong>{LIMITS.total} pts</strong>
-      </p>
-      <ul className="stats-table-summary-phases">
-        {phases.map(p => (
-          <li key={p.label}>
-            <span className="stats-table-summary-label">{p.label}</span>
-            <span className="stats-table-summary-max">máx. {p.max}</span>
-            <span className="stats-table-summary-detail">{p.detail}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
 export default function GroupStatsTable({ rows, currentUserId, onViewParticipant }) {
   if (!rows.length) {
     return <p className="dash-empty">Sin participantes todavía</p>
@@ -107,7 +83,6 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
 
   return (
     <div className="stats-table-wrap">
-      <ScoringLimitsSummary />
       <div className="stats-table-scroll" role="region" aria-label="Tabla de puntuación" tabIndex={0}>
         <table className="stats-table stats-table--compact stats-table--limits">
           <thead>
