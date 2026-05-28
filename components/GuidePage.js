@@ -485,7 +485,6 @@ export default function GuidePage() {
         <Link href="/" className="guia-btn guia-btn--primary" style={{ marginBottom: '1rem' }}>
           Volver a la app
         </Link>
-        <p>Porra Mundial 2026 · EE. UU. · Canadá · México</p>
       </footer>
     </div>
   )

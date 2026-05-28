@@ -2,6 +2,7 @@ import './globals.css'
 import '../styles/responsive.css'
 import '../styles/dashboard.css'
 import PwaRegister from '../components/PwaRegister'
+import SiteFooter from '../components/SiteFooter'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +37,7 @@ export default function RootLayout({ children }) {
       <body>
         <PwaRegister />
         {children}
+        <SiteFooter />
       </body>
     </html>
   )

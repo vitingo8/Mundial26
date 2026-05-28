@@ -2409,11 +2409,26 @@ button.schedule-match-row:focus-visible {
   background: rgba(128, 98, 42, 0.1);
 }
 
+.stats-table-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-table-scroll {
+  order: 0;
+}
+
 .stats-table-legend--phases {
+  order: 1;
   display: flex;
   flex-wrap: wrap;
   gap: 10px 14px;
+  margin-top: 8px;
   margin-bottom: 4px;
+}
+
+.stats-table-wrap > .stats-table-legend:not(.stats-table-legend--phases) {
+  order: 2;
 }
 
 .stats-table-legend-swatch {
@@ -2673,10 +2688,39 @@ button.schedule-match-row:focus-visible {
     text-align: right;
   }
 
-  /* Tabla: # oculto; rank encima del avatar a la izquierda */
+  /* Tabla: # colapsado (mantiene colspan de fases); rank encima del avatar */
   .stats-table--limits .stats-table-rank--desktop,
   .stats-table--limits thead .stats-table-rank--desktop {
+    visibility: collapse;
+    width: 0;
+    max-width: 0;
+    padding: 0;
+    border: 0;
+    font-size: 0;
+    line-height: 0;
+    overflow: hidden;
+  }
+
+  .stats-table-phase-row {
     display: none;
+  }
+
+  .stats-table-legend--phases {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    order: -1;
+    margin-top: 0;
+    margin-bottom: 8px;
+    width: 100%;
+  }
+
+  .stats-table-legend--phases .stats-table-legend-swatch {
+    display: block;
+    text-align: center;
+    padding: 6px 4px;
+    font-size: 0.68rem;
+    line-height: 1.2;
   }
 
   .stats-table--limits .stats-table-name {
@@ -2726,10 +2770,12 @@ button.schedule-match-row:focus-visible {
 
   .stats-table--limits .stats-table th:first-child,
   .stats-table--limits .stats-table td.stats-table-rank--desktop {
-    display: none;
+    visibility: collapse;
     width: 0;
+    max-width: 0;
     padding: 0;
     border: 0;
+    overflow: hidden;
   }
 }
 

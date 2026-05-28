@@ -217,3 +217,45 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
     animation: none !important;
   }
 }
+
+/* Pie global: todas las pantallas */
+.site-footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 14px 16px 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(29, 49, 38, 0.35);
+}
+
+.site-footer-brand,
+.site-footer-sep {
+  color: #fff;
+}
+
+.site-footer-contact {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.site-footer-contact:hover,
+.site-footer-contact:focus-visible {
+  color: #fff;
+  text-decoration-thickness: 2px;
+}
+
+.site-footer-contact:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+@media (max-width: 767px) {
+  body:has(.dashboard-app) .site-footer {
+    padding-bottom: calc(72px + var(--safe-bottom, 0px) + 14px);
+  }
+}

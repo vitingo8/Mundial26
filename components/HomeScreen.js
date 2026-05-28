@@ -139,7 +139,6 @@ export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJo
         Guía de uso — ¿Cómo funciona todo?
       </Link>
 
-      <div style={s.footer}>Porra Mundial 2026 © {new Date().getFullYear()}</div>
     </div>
   )
 }
@@ -251,9 +250,5 @@ const s = {
     background: 'rgba(255, 255, 255, 0.14)',
     border: '1px solid rgba(255, 255, 255, 0.28)',
     transition: 'background 0.2s ease',
-  },
-  footer: {
-    textAlign: 'center', color: 'var(--text-soft)', fontSize: 11,
-    marginTop: 8, paddingTop: 8, letterSpacing: 1,
   },
 }
