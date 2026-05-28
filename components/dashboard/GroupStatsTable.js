@@ -66,7 +66,7 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
         </table>
       </div>
       <p className="stats-table-legend">
-        G/E/P y Resultado ya incluyen ×0,6 (Inicio) o ×0,4 (eliminatorias reales). Especiales y MVP al 100%.
+        G/E/P y Resultado incluyen grupos, clasificados a dieciseisavos (×0,6) y eliminatorias reales (×0,4). Especiales y MVP al 100%.
       </p>
     </div>
   )

@@ -240,7 +240,7 @@ export default function GuidePage() {
             <FeatureCard
               icon="userGroup"
               title="Inicio (60% del peso)"
-              text="Todos los partidos de la fase de grupos. Además, según tus resultados, se calculan los cruces de eliminatorias «previstas» — tu bracket personal antes de que empiecen los octavos reales."
+              text="Todos los partidos de la fase de grupos, bonus por acertar quién clasifica a dieciseisavos (vs la API) y tu bracket KO previsto antes de los dieciseisavos reales."
             />
             <FeatureCard
               icon="bolt"
@@ -401,6 +401,14 @@ export default function GuidePage() {
             <div className="guia-score-row">
               <span>Eliminatorias: acierto quién pasa (siempre)</span>
               <span>+{SCORING.knockoutAdvance} pt</span>
+            </div>
+            <div className="guia-score-row">
+              <span>Clasificados a dieciseisavos (según API), por equipo que predijiste</span>
+              <span>+{SCORING.groupQualifies} pt</span>
+            </div>
+            <div className="guia-score-row">
+              <span>Además aciertas 1.º, 2.º o 3.º (mejor tercero) en su grupo</span>
+              <span>+{SCORING.groupQualExactPosition} pt extra</span>
             </div>
             <div className="guia-score-row">
               <span>Máximo goleador</span>
