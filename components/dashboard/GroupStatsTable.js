@@ -112,11 +112,6 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
 
   return (
     <div className="stats-table-wrap">
-      <div className="stats-table-legend stats-table-legend--phases" aria-hidden="true">
-        <span className="stats-table-legend-swatch stats-table-legend-swatch--inicio">Inicio</span>
-        <span className="stats-table-legend-swatch stats-table-legend-swatch--elim">Eliminatorias</span>
-        <span className="stats-table-legend-swatch stats-table-legend-swatch--esp">Especiales</span>
-      </div>
       <div className="stats-table-scroll" role="region" aria-label="Tabla de puntuación" tabIndex={0}>
         <table className="stats-table stats-table--compact stats-table--limits stats-table--phases">
           <thead>
@@ -209,6 +204,11 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
             })}
           </tbody>
         </table>
+      </div>
+      <div className="stats-table-legend stats-table-legend--phases" aria-hidden="true">
+        <span className="stats-table-legend-swatch stats-table-legend-swatch--inicio">Inicio</span>
+        <span className="stats-table-legend-swatch stats-table-legend-swatch--elim">Eliminatorias</span>
+        <span className="stats-table-legend-swatch stats-table-legend-swatch--esp">Especiales</span>
       </div>
       <p className="stats-table-legend">
         Clasif. en Inicio suma clasificación a dieciseisavos y aciertos de quién pasa en empates del KO previsto.
