@@ -250,7 +250,7 @@ export default function GuidePage() {
             <FeatureCard
               icon="star"
               title="Especiales"
-              text="Máximo goleador, portero menos goleado, máximo asistente y MVP del torneo. Escribes el nombre del jugador."
+              text="Máximo goleador, mejor portero (solo porteros), máximo asistente y MVP del torneo."
             />
           </div>
           <div className="guia-prose" style={{ marginTop: '1rem' }}>
@@ -415,7 +415,7 @@ export default function GuidePage() {
               <span>+{SCORING.topScorer} pts</span>
             </div>
             <div className="guia-score-row">
-              <span>Portero menos goleado</span>
+              <span>Mejor portero</span>
               <span>+{SCORING.topKeeper} pts</span>
             </div>
             <div className="guia-score-row">

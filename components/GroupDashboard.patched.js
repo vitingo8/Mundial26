@@ -704,7 +704,7 @@ function KnockoutPreds({ preds, setPreds, locked, matches = [], teamOptions = []
 function BonusPreds({ preds, setPreds, locked }) {
   const fields = [
     { id: 'topScorer', label: '⚽ Máximo goleador', pts: 5 },
-    { id: 'topKeeper', label: '🧤 Portero menos goleado', pts: 5 },
+    { id: 'topKeeper', label: '🧤 Mejor portero', pts: 5 },
     { id: 'topAssists', label: '🅰️ Máximo asistente', pts: 5 },
     { id: 'mvp', label: '⭐ MVP del torneo', pts: 10 },
   ]
@@ -1181,7 +1181,7 @@ function AdminTab({ group, setGroup, refreshGroup, notify, groupMatches = [], kn
           <div style={s.adminNote}>Introduce los ganadores reales para otorgar las bonificaciones.</div>
           {[
             { id: 'topScorer', label: '⚽ Máximo Goleador Real' },
-            { id: 'topKeeper', label: '🧤 Portero Menos Goleado Real' },
+            { id: 'topKeeper', label: '🧤 Mejor portero real' },
             { id: 'topAssists', label: '🅰️ Máximo Asistente Real' },
             { id: 'mvp', label: '⭐ MVP Real del Torneo' },
           ].map(f => (

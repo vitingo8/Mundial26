@@ -29,6 +29,7 @@ import {
   enrichLeaderboardWithStats,
 } from '../lib/predictionUtils'
 import GroupStatsTable from './dashboard/GroupStatsTable'
+import { SCORING_COLUMN_LIMITS, formatPtsOfMax } from '../lib/scoringMaximum.js'
 import ParticipantPredictionsSheet from './dashboard/ParticipantPredictionsSheet'
 import ProfileTab from './ProfileTab'
 import ProfileMenuSheet from './ProfileMenuSheet'
@@ -44,7 +45,11 @@ import {
 import LeagueLogo from './LeagueLogo'
 import InstallAppButton from './InstallAppButton'
 import InviteButton from './InviteButton'
-import { PLAYER_SUGGESTIONS } from '../lib/playerSuggestions'
+import {
+  PLAYER_SUGGESTIONS,
+  GOALKEEPER_SUGGESTIONS,
+  isGoalkeeperSuggestion,
+} from '../lib/playerSuggestions'
 import {
   transformGroupMatches,
   transformKnockoutMatches,
@@ -465,7 +470,7 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
         <>
           <SectionTitle>Participantes · {leaderboard.length}</SectionTitle>
           <p className="group-preds-hint">Toca un jugador para ver su clasificación y cuadro.</p>
-          {leaderboard.map((p, i) => (
+          {tableRows.map((p, i) => (
             <button
               key={p.id}
               type="button"
@@ -485,13 +490,20 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
                 />
               </div>
               <div className="dash-points">
-                <span className="dash-points-total">{p.total}</span>
+                <span className="dash-points-total" title={`${p.total ?? 0} de ${SCORING_COLUMN_LIMITS.total} pts`}>
+                  {formatPtsOfMax(p.total, SCORING_COLUMN_LIMITS.total)}
+                </span>
                 <span className="dash-points-unit"> pts</span>
-                {(p.inicioPts > 0 || p.knockoutPts > 0) && (
-                  <span className="dash-points-split">
-                    Inicio {p.inicioPts ?? 0} · KO {p.knockoutPts ?? 0}
-                  </span>
-                )}
+                <span className="dash-points-of-max">
+                  Inicio {formatPtsOfMax(p.inicioPts, SCORING_COLUMN_LIMITS.inicioPts)}
+                  {' · '}
+                  KO {formatPtsOfMax(p.knockoutPts, SCORING_COLUMN_LIMITS.knockoutPts)}
+                </span>
+                <span className="dash-points-of-max">
+                  Esp. {formatPtsOfMax(p.especialPts, SCORING_COLUMN_LIMITS.especialPts)}
+                  {' · '}
+                  MVP {formatPtsOfMax(p.mvpPts, SCORING_COLUMN_LIMITS.mvpPts)}
+                </span>
               </div>
             </button>
           ))}
@@ -1016,7 +1028,7 @@ function KnockoutPreds({
 function BonusPreds({ preds, setPreds, locked, actuals = {} }) {
   const fields = [
     { id: 'topScorer', label: 'Máximo goleador', pts: SCORING_RULES.topScorer },
-    { id: 'topKeeper', label: 'Portero menos goleado', pts: SCORING_RULES.topKeeper },
+    { id: 'topKeeper', label: 'Mejor portero', pts: SCORING_RULES.topKeeper, goalkeepersOnly: true },
     { id: 'topAssists', label: 'Máximo asistente', pts: SCORING_RULES.topAssists },
     { id: 'mvp', label: 'MVP del torneo', pts: SCORING_RULES.mvp },
   ]
@@ -1039,12 +1051,15 @@ function BonusPreds({ preds, setPreds, locked, actuals = {} }) {
           </div>
           <input
             className="dash-bonus-input"
-            list="player-suggestions"
-            placeholder="Nombre del jugador"
+            list={f.goalkeepersOnly ? 'goalkeeper-suggestions' : 'player-suggestions'}
+            placeholder={f.goalkeepersOnly ? 'Nombre del portero' : 'Nombre del jugador'}
             value={preds[f.id] || ''}
             onChange={e => setPreds(p => ({ ...p, [f.id]: e.target.value }))}
             disabled={locked}
           />
+          {f.goalkeepersOnly && pred && !isGoalkeeperSuggestion(pred) && (
+            <p className="dash-bonus-hint">Solo porteros — elige uno de la lista o escribe un portero.</p>
+          )}
           {actual && pred && (
             <div className={`dash-bonus-result${hit ? ' dash-bonus-result--hit' : ''}`}>
               <span>Real: <strong>{actual}</strong></span>
@@ -1057,6 +1072,9 @@ function BonusPreds({ preds, setPreds, locked, actuals = {} }) {
       })}
       <datalist id="player-suggestions">
         {PLAYER_SUGGESTIONS.map(p => <option key={p} value={p} />)}
+      </datalist>
+      <datalist id="goalkeeper-suggestions">
+        {GOALKEEPER_SUGGESTIONS.map(p => <option key={p} value={p} />)}
       </datalist>
     </div>
   )
@@ -1439,7 +1457,7 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
           </p>
           {[
             { id: 'topScorer', label: 'Máximo goleador' },
-            { id: 'topKeeper', label: 'Portero menos goleado' },
+            { id: 'topKeeper', label: 'Mejor portero', goalkeepersOnly: true },
             { id: 'topAssists', label: 'Máximo asistente' },
             { id: 'mvp', label: 'MVP del torneo' },
           ].map(f => (
@@ -1450,12 +1468,19 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
               <input
                 type="text"
                 className="dash-field-input"
-                placeholder="Nombre del jugador"
+                list={f.goalkeepersOnly ? 'goalkeeper-suggestions' : 'player-suggestions'}
+                placeholder={f.goalkeepersOnly ? 'Nombre del portero' : 'Nombre del jugador'}
                 value={actuals[f.id] || ''}
                 onChange={e => setActuals(a => ({ ...a, [f.id]: e.target.value }))}
               />
             </div>
           ))}
+          <datalist id="player-suggestions">
+            {PLAYER_SUGGESTIONS.map(p => <option key={p} value={p} />)}
+          </datalist>
+          <datalist id="goalkeeper-suggestions">
+            {GOALKEEPER_SUGGESTIONS.map(p => <option key={p} value={p} />)}
+          </datalist>
           <button type="button" style={s.saveBtn} onClick={saveActuals} disabled={saving}>
             <SaveButtonLabel saving={saving}>Guardar ganadores</SaveButtonLabel>
           </button>
