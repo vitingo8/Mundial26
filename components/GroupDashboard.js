@@ -478,10 +478,12 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
               onClick={() => openParticipantPreds(p)}
               aria-label={`Ver porra de ${p.team_name?.trim() || p.name}`}
             >
-              <div className={`dash-rank${i > 2 ? ' dash-rank--num' : ''}`}>
-                <RankDisplay index={i} />
+              <div className="dash-player-leading">
+                <div className={`dash-rank${i > 2 ? ' dash-rank--num' : ''}`}>
+                  <RankDisplay index={i} />
+                </div>
+                <ParticipantAvatar participant={p} size={40} />
               </div>
-              <ParticipantAvatar participant={p} size={40} />
               <div className="dash-player-info">
                 <ParticipantDisplay
                   participant={p}

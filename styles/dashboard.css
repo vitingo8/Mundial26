@@ -496,6 +496,13 @@
   color: var(--dash-muted);
 }
 
+.dash-player-leading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
 .dash-avatar {
   width: 44px;
   height: 44px;
@@ -2617,6 +2624,113 @@ button.schedule-match-row:focus-visible {
 
 .stats-table-name .participant-display {
   gap: 6px;
+}
+
+.stats-table-player-leading {
+  display: none;
+}
+
+.stats-table-player-cell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  /* Ranking: posición encima del avatar */
+  .dash-player-row {
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .dash-player-leading {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 40px;
+  }
+
+  .dash-rank {
+    width: auto;
+    min-height: 1.1rem;
+    font-size: 0.72rem;
+    line-height: 1;
+  }
+
+  .dash-player-row .participant-avatar {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .dash-points {
+    font-size: 1.15rem;
+    min-width: 0;
+  }
+
+  .dash-points-of-max {
+    font-size: 0.55rem;
+    text-align: right;
+  }
+
+  /* Tabla: # oculto; rank encima del avatar a la izquierda */
+  .stats-table--limits .stats-table-rank--desktop,
+  .stats-table--limits thead .stats-table-rank--desktop {
+    display: none;
+  }
+
+  .stats-table--limits .stats-table-name {
+    text-align: left !important;
+    padding-left: 6px;
+    vertical-align: middle;
+  }
+
+  .stats-table-player-cell {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+
+  .stats-table-player-leading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 2px;
+    width: 32px;
+  }
+
+  .stats-table-rank-mobile {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--dash-muted);
+    text-align: center;
+  }
+
+  .stats-table-player-display .participant-avatar {
+    display: none !important;
+  }
+
+  .stats-table-name .participant-display {
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+
+  .stats-table--phases .stats-table-col-head--base:nth-child(2),
+  .stats-table--phases .stats-table-name {
+    text-align: left;
+  }
+
+  .stats-table--limits .stats-table th:first-child,
+  .stats-table--limits .stats-table td.stats-table-rank--desktop {
+    display: none;
+    width: 0;
+    padding: 0;
+    border: 0;
+  }
 }
 
 /* Mi perfil */

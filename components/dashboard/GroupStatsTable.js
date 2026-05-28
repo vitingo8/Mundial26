@@ -1,6 +1,6 @@
 'use client'
 
-import ParticipantDisplay from '../ParticipantDisplay'
+import ParticipantDisplay, { ParticipantAvatar } from '../ParticipantDisplay'
 import { SCORING_COLUMN_LIMITS, formatPtsOfMax } from '../../lib/scoringMaximum.js'
 
 const LIMITS = SCORING_COLUMN_LIMITS
@@ -135,7 +135,7 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
                   key={col.key}
                   scope="col"
                   title={col.title}
-                  className={`stats-table-col-head stats-table-col-head--${col.phase}`}
+                  className={`stats-table-col-head stats-table-col-head--${col.phase}${col.kind === 'rank' ? ' stats-table-rank--desktop' : ''}`}
                 >
                   {col.label}
                 </th>
@@ -160,7 +160,7 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
                   {FLAT_COLUMNS.map(col => {
                     if (col.kind === 'rank') {
                       return (
-                        <td key={col.key} className="stats-table-rank stats-table-cell--base">
+                        <td key={col.key} className="stats-table-rank stats-table-rank--desktop stats-table-cell--base">
                           {row.rank}
                         </td>
                       )
@@ -168,14 +168,22 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
                     if (col.kind === 'name') {
                       return (
                         <td key={col.key} className="stats-table-name stats-table-cell--base">
-                          <ParticipantDisplay
-                            participant={row}
-                            isYou={isYou}
-                            showAdmin
-                            compact
-                            showAvatar
-                            avatarSize={32}
-                          />
+                          <div className="stats-table-player-cell">
+                            <div className="stats-table-player-leading" aria-hidden="true">
+                              <span className="stats-table-rank-mobile">{row.rank}</span>
+                              <ParticipantAvatar participant={row} size={30} />
+                            </div>
+                            <div className="stats-table-player-display">
+                              <ParticipantDisplay
+                                participant={row}
+                                isYou={isYou}
+                                showAdmin
+                                compact
+                                showAvatar
+                                avatarSize={32}
+                              />
+                            </div>
+                          </div>
                         </td>
                       )
                     }
