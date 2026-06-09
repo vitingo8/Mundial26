@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { footballDataFetch, WC_CODE } from '../../../lib/footballData'
 import { enrichApiMatches } from '../../../lib/fifaMatchNumbers'
-import { fetchWcMatchesCached } from '../../../lib/footballDataServerCache'
+import { getWcMatchesSafe, catalogMatchesFallback } from '../../../lib/footballDataServerCache'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,12 +13,15 @@ export async function GET(request) {
     let data
     switch (resource) {
       case 'matches':
-        data = await fetchWcMatchesCached({
+        data = await getWcMatchesSafe({
           season: searchParams.get('season') || '2026',
           status: searchParams.get('status') || undefined,
           matchday: searchParams.get('matchday') || undefined,
           stage: searchParams.get('stage') || undefined,
         })
+        if (!Array.isArray(data?.matches) || data.matches.length === 0) {
+          data = catalogMatchesFallback('respuesta vacía')
+        }
         break
       case 'teams':
         data = await footballDataFetch(`/competitions/${WC_CODE}/teams`, {
@@ -49,6 +52,9 @@ export async function GET(request) {
     }
     return NextResponse.json(data)
   } catch (e) {
+    if (resource === 'matches') {
+      return NextResponse.json(catalogMatchesFallback(e.message))
+    }
     return NextResponse.json(
       { error: e.message || 'Error al consultar football-data.org' },
       { status: 502 }
