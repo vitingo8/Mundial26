@@ -10,8 +10,6 @@ export const dynamic = 'force-dynamic'
 export const metadata = {
   title: 'Porra Mundial 2026',
   description: 'La porra definitiva del Mundial 2026 · USA · CAN · MEX',
-  viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
-  themeColor: '#49a942',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -30,6 +28,13 @@ export const metadata = {
     description: '¡Únete a la porra del Mundial 2026!',
     type: 'website',
   },
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#49a942',
 }
 
 export default function RootLayout({ children }) {
