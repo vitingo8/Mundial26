@@ -1,6 +1,7 @@
 import './globals.css'
 import '../styles/responsive.css'
 import '../styles/dashboard.css'
+import { Analytics } from '@vercel/analytics/next'
 import PwaRegister from '../components/PwaRegister'
 import SiteFooter from '../components/SiteFooter'
 
@@ -38,6 +39,7 @@ export default function RootLayout({ children }) {
         <PwaRegister />
         {children}
         <SiteFooter />
+        <Analytics />
       </body>
     </html>
   )
