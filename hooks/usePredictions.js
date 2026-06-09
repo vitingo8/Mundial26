@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { getStoredWriteToken } from '../lib/sessionToken'
+import { getStoredWriteToken, clearStoredWriteToken } from '../lib/sessionToken'
 import { isPredPhaseEditable } from '../lib/phaseLock'
 import { normalizeInicioKoPreds } from '../lib/knockoutBridge'
 import { normalizePredictions } from '../lib/predictionMirror'
@@ -88,6 +88,15 @@ export function usePredictions({
 
     const token = getStoredWriteToken(group.id, user.id)
     let error = null
+
+    async function saveViaSupabase() {
+      const result = await supabase
+        .from('porra_participants')
+        .update({ predictions, updated_at: new Date().toISOString() })
+        .eq('id', user.id)
+      return result.error
+    }
+
     if (token) {
       const res = await fetch('/api/predictions', {
         method: 'PATCH',
@@ -101,14 +110,14 @@ export function usePredictions({
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        error = { message: data.error || 'Error API' }
+        if (res.status === 403) clearStoredWriteToken()
+        const supaErr = await saveViaSupabase()
+        if (supaErr) {
+          error = { message: data.error || supaErr.message || 'Error al guardar' }
+        }
       }
     } else {
-      const result = await supabase
-        .from('porra_participants')
-        .update({ predictions, updated_at: new Date().toISOString() })
-        .eq('id', user.id)
-      error = result.error
+      error = await saveViaSupabase()
     }
 
     saveInFlight.current = false

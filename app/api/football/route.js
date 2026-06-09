@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { footballDataFetch, WC_CODE } from '../../../lib/footballData'
 import { enrichApiMatches } from '../../../lib/fifaMatchNumbers'
+import { fetchWcMatchesCached } from '../../../lib/footballDataServerCache'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +13,7 @@ export async function GET(request) {
     let data
     switch (resource) {
       case 'matches':
-        data = await footballDataFetch(`/competitions/${WC_CODE}/matches`, {
+        data = await fetchWcMatchesCached({
           season: searchParams.get('season') || '2026',
           status: searchParams.get('status') || undefined,
           matchday: searchParams.get('matchday') || undefined,
@@ -43,7 +44,7 @@ export async function GET(request) {
       default:
         return NextResponse.json({ error: 'Recurso no válido' }, { status: 400 })
     }
-    if (resource === 'matches' && Array.isArray(data?.matches)) {
+    if (resource === 'matches' && Array.isArray(data?.matches) && data._source == null) {
       data.matches = enrichApiMatches(data.matches)
     }
     return NextResponse.json(data)

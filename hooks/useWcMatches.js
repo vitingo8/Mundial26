@@ -1,9 +1,9 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
-import { fetchWcMatchesClient } from '../lib/footballData'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { fetchWcResource } from '../lib/footballData'
 
 const CACHE_KEY = 'porra_wc_matches'
-const CACHE_TTL = 60 * 60 * 1000
+const CACHE_TTL = 6 * 60 * 60 * 1000
 
 function readCache() {
   if (typeof sessionStorage === 'undefined') return null
@@ -27,6 +27,8 @@ export function useWcMatches() {
   const [wcMatches, setWcMatches] = useState([])
   const [wcLoading, setWcLoading] = useState(true)
   const [apiError, setApiError] = useState(null)
+  const wcMatchesRef = useRef([])
+  wcMatchesRef.current = wcMatches
 
   const load = useCallback(async (force = false) => {
     if (!force) {
@@ -37,17 +39,32 @@ export function useWcMatches() {
         return cached
       }
     }
-    setWcLoading(true)
+    const hadMatches = wcMatchesRef.current.length > 0
+    if (!hadMatches) setWcLoading(true)
     setApiError(null)
     try {
-      const raw = await fetchWcMatchesClient()
+      const data = await fetchWcResource('matches')
+      const raw = data.matches || []
+      if (!raw.length) {
+        throw new Error('El calendario llegó vacío')
+      }
       setWcMatches(raw)
       writeCache(raw)
+      if (data._source === 'catalog' || data._source === 'stale') {
+        setApiError(
+          data._source === 'stale'
+            ? 'Calendario en caché (API temporalmente no disponible)'
+            : 'Calendario provisional (API no disponible)',
+        )
+      }
       return raw
     } catch (e) {
       setApiError(e.message)
       const cached = readCache()
-      if (cached?.length) setWcMatches(cached)
+      if (cached?.length) {
+        setWcMatches(cached)
+        setApiError('Usando calendario guardado en el dispositivo')
+      }
       return cached || []
     } finally {
       setWcLoading(false)

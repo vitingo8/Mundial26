@@ -96,13 +96,13 @@ export default function GroupDashboard({
   const [scrollToMatchId, setScrollToMatchId] = useState(null)
   const [liveData, setLiveData] = useState([])
   const [apiStatus, setApiStatus] = useState('idle')
-  const [apiError, setApiError] = useState(null)
+  const [liveApiError, setLiveApiError] = useState(null)
   const [currentGroup, setCurrentGroup] = useState(group)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const matchRefs = useRef({})
   const { groups: userPorraGroups, hasMultiple: hasMultipleGroups } = useUserPorraGroups(user?.email)
 
-  const { wcMatches, setWcMatches, wcLoading, reload: reloadWc } = useWcMatches()
+  const { wcMatches, setWcMatches, wcLoading, apiError: wcApiError, reload: reloadWc } = useWcMatches()
   const groupMatches = useMemo(() => transformGroupMatches(wcMatches), [wcMatches])
   const knockoutMatches = useMemo(() => transformKnockoutMatches(wcMatches), [wcMatches])
   const isAdmin = user.is_admin
@@ -199,9 +199,15 @@ export default function GroupDashboard({
   async function savePredictions() { await persistPredictions(true) }
 
   async function fetchLive() {
-    setApiStatus('loading'); setApiError(null)
-    try { const raw = await reloadWc(); setLiveData(raw); setApiStatus('ok') }
-    catch (e) { setApiStatus('unavailable'); setApiError(e.message) }
+    setApiStatus('loading'); setLiveApiError(null)
+    const raw = await reloadWc()
+    if (raw?.length) {
+      setLiveData(raw)
+      setApiStatus('ok')
+    } else {
+      setApiStatus('unavailable')
+      setLiveApiError('No se pudo cargar el calendario. Inténtalo de nuevo en unos segundos.')
+    }
   }
 
   const navTabs = [
@@ -328,7 +334,8 @@ export default function GroupDashboard({
             bonusDeadlinePassed={bonusDeadlinePassed}
             koDeadlinePassed={koDeadlinePassed}
             groupMatches={groupMatches} knockoutMatches={knockoutMatches} teamOptions={teamOptions.length ? teamOptions : ALL_TEAMS}
-            wcLoading={wcLoading} groupPhase={currentGroup.phase}
+            wcLoading={wcLoading} wcApiError={wcApiError} onReloadWc={reloadWc}
+            groupPhase={currentGroup.phase}
             orphanGroupKeys={orphanGroupKeys} matchRefs={matchRefs}
             deadlines={{
               group: effectiveGroupDeadline,
@@ -363,7 +370,7 @@ export default function GroupDashboard({
           <LiveTab
             liveData={liveData}
             apiStatus={apiStatus}
-            apiError={apiError}
+            apiError={liveApiError}
             onFetch={fetchLive}
             wcLoading={wcLoading}
             group={currentGroup}
@@ -544,7 +551,8 @@ function PredictionsTab({
   inicioKoPreds, setInicioKoPreds,
   bonusPreds, setBonusPreds, saving, saveStatus, onSave,
   groupDeadlinePassed, bonusDeadlinePassed, koDeadlinePassed,
-  groupMatches, knockoutMatches, teamOptions, wcLoading, groupPhase, deadlines,
+  groupMatches, knockoutMatches, teamOptions, wcLoading, wcApiError, onReloadWc,
+  groupPhase, deadlines,
   orphanGroupKeys, matchRefs,
   user, groupId, group, onApplyMirror, onSwitchGroup, notify,
 }) {
@@ -644,12 +652,12 @@ function PredictionsTab({
         />
       )}
 
-      {wcLoading && predPhase === 'group' && (
+      {wcLoading && predPhase === 'group' && groupMatches.length === 0 && (
         <div className="dash-card">
           <div className="dash-empty">Cargando calendario FIFA 2026…</div>
         </div>
       )}
-      {predPhase === 'group' && (
+      {predPhase === 'group' && (!wcLoading || groupMatches.length > 0) && (
         <GroupPhasePreds
           preds={groupPreds}
           setPreds={setGroupPreds}
@@ -661,6 +669,8 @@ function PredictionsTab({
           matchRefs={matchRefs}
           viewMode={effectiveViewMode}
           group={group}
+          loadError={wcApiError}
+          onRetry={onReloadWc}
         />
       )}
       {predPhase === 'knockout' && (
@@ -704,6 +714,7 @@ function PredictionsTab({
 function GroupPhasePreds({
   preds, setPreds, inicioKoPreds, setInicioKoPreds,
   locked, matches = [], knockoutMatches = [], matchRefs, viewMode = 'daily', group,
+  loadError, onRetry,
 }) {
   const publishedResults = useMemo(
     () => buildPublishedResultsMap(group?.results, 'group'),
@@ -777,8 +788,15 @@ function GroupPhasePreds({
   if (!matches.length) {
     return (
       <div style={s.apiCard}>
-        <div style={s.apiMsg}>No hay partidos de grupos. Comprueba FOOTBALL_DATA_API_KEY en el servidor.</div>
-        <div style={s.apiSub}>{PROVISIONAL_TEAMS_NOTE}</div>
+        <div style={s.apiMsg}>No se pudo cargar el calendario de grupos</div>
+        <div style={s.apiSub}>
+          {loadError || 'Puede ser un fallo temporal de red. Tus predicciones guardadas no se pierden.'}
+        </div>
+        {onRetry && (
+          <button type="button" className="dash-save-manual" style={{ ...s.saveBtn, marginTop: 12 }} onClick={() => onRetry()}>
+            Reintentar carga
+          </button>
+        )}
       </div>
     )
   }
@@ -1187,7 +1205,7 @@ function LiveTab({
             <Icon name="exclamationTriangle" size="sm" /> API en vivo no disponible
           </div>
           <div style={s.apiSub}>
-            {apiError || 'Configura FOOTBALL_DATA_API_KEY. Mostrando resultados del organizador si existen.'}
+            {apiError || 'No se pudo conectar con la API en vivo. Mostrando resultados del organizador si existen.'}
           </div>
         </div>
       )}
