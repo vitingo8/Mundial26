@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import TeamCrest from '../TeamCrest'
 import { Icon } from '../icons'
 
@@ -11,8 +11,32 @@ const FILTERS = [
   { id: 'team', label: 'Club' },
 ]
 
-function pitchPosition(layout, isHome) {
+const MOBILE_LINEUP_MQ = '(max-width: 639px)'
+
+function useVerticalLineupPitch() {
+  const [vertical, setVertical] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia(MOBILE_LINEUP_MQ).matches,
+  )
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_LINEUP_MQ)
+    const sync = () => setVertical(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+
+  return vertical
+}
+
+function pitchPosition(layout, isHome, vertical) {
   if (!layout) return { left: '50%', top: '50%' }
+  if (vertical) {
+    const topPct = isHome
+      ? layout.x * 50
+      : 50 + (1 - layout.x) * 50
+    return { left: `${layout.y * 100}%`, top: `${topPct}%` }
+  }
   const leftPct = isHome ? layout.x * 50 : (1 - layout.x * 0.5) * 100
   return { left: `${leftPct}%`, top: `${layout.y * 100}%` }
 }
@@ -50,8 +74,8 @@ function playerLabel(player) {
   return num ? `${num} ${last}` : last
 }
 
-function PitchPlayer({ player, isHome, filterId }) {
-  const pos = pitchPosition(player.layout, isHome)
+function PitchPlayer({ player, isHome, filterId, vertical }) {
+  const pos = pitchPosition(player.layout, isHome, vertical)
   const tone = filterId === 'match' ? ratingTone(player.rating) : 'neutral'
   const badge = filterValue(player, filterId)
   const hasGoal = player.events?.includes('goal')
@@ -137,6 +161,7 @@ export default function LineupPitchView({
 
   const [filterId, setFilterId] = useState('match')
   const activeFilter = allowedFilters.some(f => f.id === filterId) ? filterId : 'match'
+  const verticalPitch = useVerticalLineupPitch()
 
   return (
     <div className="lineup-pitch-wrap">
@@ -173,16 +198,16 @@ export default function LineupPitchView({
         />
       </div>
 
-      <div className="lineup-pitch">
+      <div className={`lineup-pitch${verticalPitch ? ' lineup-pitch--vertical' : ''}`}>
         <div className="lineup-pitch-markings" aria-hidden="true">
           <span className="lineup-pitch-box lineup-pitch-box--left" />
           <span className="lineup-pitch-box lineup-pitch-box--right" />
         </div>
         {homeLineup.map(p => (
-          <PitchPlayer key={`h-${p.id}`} player={p} isHome filterId={activeFilter} />
+          <PitchPlayer key={`h-${p.id}`} player={p} isHome filterId={activeFilter} vertical={verticalPitch} />
         ))}
         {awayLineup.map(p => (
-          <PitchPlayer key={`a-${p.id}`} player={p} isHome={false} filterId={activeFilter} />
+          <PitchPlayer key={`a-${p.id}`} player={p} isHome={false} filterId={activeFilter} vertical={verticalPitch} />
         ))}
       </div>
     </div>

@@ -3297,6 +3297,131 @@ button.schedule-match-row:focus-visible {
   white-space: nowrap;
 }
 
+@media (max-width: 639px) {
+  .lineup-pitch-header {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+
+  .lineup-pitch-header--no-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lineup-pitch-team--home,
+  .lineup-pitch-team--away {
+    justify-self: stretch;
+  }
+
+  .lineup-pitch-team--away {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .lineup-pitch-filters {
+    order: -1;
+    justify-self: stretch;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .lineup-pitch-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .lineup-pitch--vertical {
+    aspect-ratio: 10 / 17;
+    max-height: none;
+    min-height: min(72vh, 560px);
+  }
+
+  .lineup-pitch--vertical .lineup-pitch-markings::before {
+    left: 0;
+    right: 0;
+    top: 50%;
+    bottom: auto;
+    width: auto;
+    height: 2px;
+    margin-left: 0;
+  }
+
+  .lineup-pitch--vertical .lineup-pitch-box {
+    top: auto;
+    left: 22%;
+    width: 56%;
+    height: 14%;
+  }
+
+  .lineup-pitch--vertical .lineup-pitch-box--left {
+    top: 0;
+    bottom: auto;
+    border-top: 0;
+    border-left: 2px solid rgba(255, 255, 255, 0.32);
+    border-right: 2px solid rgba(255, 255, 255, 0.32);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.32);
+  }
+
+  .lineup-pitch--vertical .lineup-pitch-box--right {
+    top: auto;
+    bottom: 0;
+    border-bottom: 0;
+    border-left: 2px solid rgba(255, 255, 255, 0.32);
+    border-right: 2px solid rgba(255, 255, 255, 0.32);
+    border-top: 2px solid rgba(255, 255, 255, 0.32);
+  }
+
+  .lineup-pitch-player {
+    width: 50px;
+  }
+
+  .lineup-pitch-player-avatar-wrap {
+    width: 34px;
+    height: 34px;
+  }
+
+  .lineup-pitch-player-avatar,
+  .lineup-pitch-player-fallback {
+    width: 34px;
+    height: 34px;
+    border-width: 1.5px;
+  }
+
+  .lineup-pitch-player-fallback {
+    font-size: 0.68rem;
+  }
+
+  .lineup-pitch-badge {
+    top: -3px;
+    right: -6px;
+    min-width: 18px;
+    padding: 0 3px;
+    font-size: 0.5rem;
+  }
+
+  .lineup-pitch-badge--neutral {
+    max-width: 40px;
+  }
+
+  .lineup-pitch-player-events {
+    left: -3px;
+    bottom: -1px;
+    gap: 1px;
+  }
+
+  .lineup-pitch-event {
+    width: 11px;
+    height: 11px;
+    font-size: 0.42rem;
+  }
+
+  .lineup-pitch-player-name {
+    max-width: 58px;
+    font-size: 0.56rem;
+  }
+}
+
 @media (min-width: 640px) {
   .lineup-pitch {
     max-height: 420px;
