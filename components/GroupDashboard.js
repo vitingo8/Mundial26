@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getStoredWriteToken } from '../lib/sessionToken'
-import { migratePredictionMap, countOrphanPredKeys } from '../lib/matchIdMap'
+import { migratePredictionMap, countOrphanPredKeys, migrateGroupResults } from '../lib/matchIdMap'
 import { isPhaseLocked, msUntilDeadline, formatCountdown } from '../lib/phaseLock'
 import { usePredictions } from '../hooks/usePredictions'
 import { useWcMatches } from '../hooks/useWcMatches'
@@ -766,8 +766,8 @@ function GroupPhasePreds({
   loadError, onRetry, apiMatches = [], onOpenMatch,
 }) {
   const publishedResults = useMemo(
-    () => buildPublishedResultsMap(group?.results, 'group'),
-    [group?.results],
+    () => buildPublishedResultsMap(group?.results, 'group', matches),
+    [group?.results, matches],
   )
   function setScore(id, side, val) {
     if (val === '' || val === undefined) {
@@ -989,8 +989,8 @@ function KnockoutPreds({
     [participant, groupMatches, matches, preds],
   )
   const publishedResults = useMemo(
-    () => buildPublishedResultsMap(group?.results, 'knockout'),
-    [group?.results],
+    () => buildPublishedResultsMap(group?.results, 'knockout', matches),
+    [group?.results, matches],
   )
   const koLocked = phaseLocked || koDeadlinePassed
 
@@ -1161,8 +1161,12 @@ function BonusPreds({ preds, setPreds, locked, actuals = {} }) {
 
 // ─── LIVE TAB ─────────────────────────────────────────────────────────────────
 function AdminResultsFallback({ group, groupMatches, userPreds }) {
+  const results = useMemo(
+    () => migrateGroupResults(group?.results || {}, groupMatches, []),
+    [group?.results, groupMatches],
+  )
   const withResults = groupMatches.filter(m => {
-    const r = group.results?.group?.[m.id]
+    const r = results.group?.[m.id]
     return r && r.home != null && r.away != null
   })
   if (!withResults.length) return null
@@ -1170,7 +1174,7 @@ function AdminResultsFallback({ group, groupMatches, userPreds }) {
     <>
       <SectionTitle icon="clipboardList">Resultados del organizador</SectionTitle>
       {withResults.slice(0, 25).map(m => {
-        const r = group.results.group[m.id]
+        const r = results.group[m.id]
         const pred = userPreds?.group?.[m.id]
         return (
           <div key={m.id} style={s.liveCard}>
