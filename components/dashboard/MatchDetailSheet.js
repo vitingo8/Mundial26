@@ -14,6 +14,8 @@ import {
   formatMatchRoundLabel,
   getHeaderGoalScorers,
   getMatchDetailScore,
+  getUnifiedSubstitutions,
+  annotateBenchPlayers,
   isLiveMatchStatus,
   pickStatsComparison,
   pickTeamStatistics,
@@ -150,6 +152,19 @@ export default function MatchDetailSheet({
     [match?.statsComparison],
   )
   const hasLineups = (home.lineup?.length || 0) + (away.lineup?.length || 0) > 0
+  const substitutions = useMemo(
+    () => getUnifiedSubstitutions(match, homeName, awayName),
+    [match, homeName, awayName],
+  )
+  const homeBench = useMemo(
+    () => annotateBenchPlayers(home.bench, substitutions, homeName),
+    [home.bench, substitutions, homeName],
+  )
+  const awayBench = useMemo(
+    () => annotateBenchPlayers(away.bench, substitutions, awayName),
+    [away.bench, substitutions, awayName],
+  )
+  const benchSubbedOn = homeBench.some(p => p.subOn) || awayBench.some(p => p.subOn)
   const liveClock = useMemo(
     () => formatLiveClock(match?.liveTime, match?.minute, match?.status),
     [match?.liveTime, match?.minute, match?.status],
@@ -389,23 +404,25 @@ export default function MatchDetailSheet({
                     awayLineup={away.lineup}
                     availableFilters={match?.lineupFilters}
                   />
-                  {(home.bench?.length > 0 || away.bench?.length > 0) && (
+                  {(homeBench.length > 0 || awayBench.length > 0) && (
                     <>
-                      <h3 className="match-detail-section-title match-detail-section-title--bench">Suplentes</h3>
+                      <h3 className="match-detail-section-title match-detail-section-title--bench">
+                        {benchSubbedOn ? 'Suplentes y cambios' : 'Suplentes'}
+                      </h3>
                       <div className="match-detail-lineups">
                         <LineupColumn
                           teamName={homeName}
                           crest={homeCrest}
                           formation={null}
                           lineup={[]}
-                          bench={home.bench}
+                          bench={homeBench}
                         />
                         <LineupColumn
                           teamName={awayName}
                           crest={awayCrest}
                           formation={null}
                           lineup={[]}
-                          bench={away.bench}
+                          bench={awayBench}
                         />
                       </div>
                     </>
@@ -700,6 +717,42 @@ function CompareStatRow({ label, home, away, type }) {
   )
 }
 
+function BenchPlayerRow({ player }) {
+  const subOn = player.subOn
+  return (
+    <li className={`match-detail-bench-player${subOn ? ' match-detail-bench-player--on' : ''}`}>
+      <div className="match-detail-bench-avatar-wrap">
+        {player.photoUrl ? (
+          <img className="match-detail-bench-avatar" src={player.photoUrl} alt="" loading="lazy" />
+        ) : (
+          <span className="match-detail-bench-avatar match-detail-bench-avatar--placeholder" aria-hidden="true" />
+        )}
+        {subOn && (
+          <span className="match-detail-bench-arrow" aria-hidden="true">→</span>
+        )}
+      </div>
+      <div className="match-detail-bench-body">
+        <div className="match-detail-bench-name-row">
+          <span className="match-detail-shirt">{player.shirtNumber ?? '—'}</span>
+          <span className="match-detail-player-name">{player.name}</span>
+        </div>
+        {subOn && (
+          <p className="match-detail-bench-sub">
+            <span className="match-detail-bench-sub-minute">
+              {formatEventMinute(subOn.minute, subOn.injuryTime)}
+            </span>
+            {' · entra por '}
+            <span className="match-detail-bench-sub-out">
+              {subOn.replaced?.shirtNumber != null && `${subOn.replaced.shirtNumber} `}
+              {subOn.replaced?.name || '—'}
+            </span>
+          </p>
+        )}
+      </div>
+    </li>
+  )
+}
+
 function LineupColumn({ teamName, crest, formation, lineup = [], bench = [], rating }) {
   if (!lineup.length && !bench.length) return null
   return (
@@ -729,10 +782,7 @@ function LineupColumn({ teamName, crest, formation, lineup = [], bench = [], rat
           {lineup.length > 0 && <p className="match-detail-bench-label">Suplentes</p>}
           <ul className="match-detail-players match-detail-players--bench">
             {bench.map(p => (
-              <li key={p.id}>
-                <span className="match-detail-shirt">{p.shirtNumber ?? '—'}</span>
-                <span className="match-detail-player-name">{p.name}</span>
-              </li>
+              <BenchPlayerRow key={p.id} player={p} />
             ))}
           </ul>
         </>

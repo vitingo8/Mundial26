@@ -14,7 +14,7 @@ import ScoreInput from './ScoreInput'
 
 import { needsKnockoutAdvancePick } from '../../lib/knockoutAdvances'
 import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
-import { isLiveMatchStatus } from '../../lib/matchDetail'
+import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
 import { PorraLiveHeader } from './LiveResultRow'
 
 
@@ -202,14 +202,20 @@ export default function MatchRow({
     return summarizeMatchPoints(predRow, publishedResult, scoringOpts)
   }, [publishedResult, homeVal, awayVal, advancesVal, scoringOpts])
 
-  const liveScore = apiRaw ? getApiMatchDisplayScore(apiRaw) : null
-  const isLive = apiRaw && isLiveMatchStatus(apiRaw.status)
-  const showLiveHeader = isLive && liveScore && !readOnly
+  const apiScore = apiRaw ? getApiMatchDisplayScore(apiRaw) : null
+  const isApiLive = apiRaw && isLiveMatchStatus(apiRaw.status)
+  const isApiFinished = apiRaw?.status === 'FINISHED'
+  const showPorraHeader = !readOnly && apiRaw && apiScore && isPorraApiResultStatus(apiRaw.status)
 
   const livePointsSummary = useMemo(() => {
-    if (!showLiveHeader || !liveScore) return null
-    return summarizeMatchPoints(predRow, liveScore, scoringOpts)
-  }, [showLiveHeader, liveScore, homeVal, awayVal, advancesVal, scoringOpts])
+    if (!isApiLive || !apiScore || publishedResult) return null
+    return summarizeMatchPoints(predRow, apiScore, scoringOpts)
+  }, [isApiLive, apiScore, publishedResult, homeVal, awayVal, advancesVal, scoringOpts])
+
+  const apiFinishedPointsSummary = useMemo(() => {
+    if (!isApiFinished || !apiScore || publishedResult) return null
+    return summarizeMatchPoints(predRow, apiScore, scoringOpts)
+  }, [isApiFinished, apiScore, publishedResult, homeVal, awayVal, advancesVal, scoringOpts])
 
   function setRowRef(el) {
 
@@ -233,12 +239,12 @@ export default function MatchRow({
         />
       )
     }
-    if (showLiveHeader && livePointsSummary?.pts > 0) {
+    if (isApiLive && livePointsSummary?.pts > 0) {
       return (
         <MatchPointsBubble
           points={livePointsSummary.pts}
           detail={livePointsSummary.detail}
-          publishedResult={liveScore}
+          publishedResult={apiScore}
           homeCrest={homeCrest}
           awayCrest={awayCrest}
           homeName={home}
@@ -247,17 +253,38 @@ export default function MatchRow({
         />
       )
     }
+    if (isApiFinished && apiFinishedPointsSummary?.pts > 0) {
+      return (
+        <MatchPointsBubble
+          points={apiFinishedPointsSummary.pts}
+          detail={apiFinishedPointsSummary.detail}
+          publishedResult={apiScore}
+          homeCrest={homeCrest}
+          awayCrest={awayCrest}
+          homeName={home}
+          awayName={away}
+        />
+      )
+    }
     return null
   })()
 
+  const wrapClass = [
+    'schedule-match-wrap',
+    isApiLive ? 'schedule-match-wrap--live' : '',
+    isApiFinished ? 'schedule-match-wrap--finished' : '',
+  ].filter(Boolean).join(' ')
+
+  const rowStateClass = isApiLive ? ' schedule-match-row--live' : isApiFinished ? ' schedule-match-row--finished' : ''
+
   return (
 
-    <div className={`schedule-match-wrap${showLiveHeader ? ' schedule-match-wrap--live' : ''}`}>
-    {showLiveHeader && (
+    <div className={wrapClass}>
+    {showPorraHeader && (
       <PorraLiveHeader
         home={home}
         away={away}
-        score={liveScore}
+        score={apiScore}
         status={apiRaw.status}
         liveMinute={apiRaw.liveTime?.short || (apiRaw.minute != null ? `${apiRaw.minute}'` : null)}
         onOpenDetail={onOpenLiveDetail}
@@ -265,7 +292,7 @@ export default function MatchRow({
     )}
     <div
 
-      className={`schedule-match-row${compact ? ' schedule-match-row--compact' : ''}${denseTable ? ' schedule-match-row--dense-table' : ''}${pickAdvance ? ' schedule-match-row--pick-advance' : ''}${showLiveHeader ? ' schedule-match-row--live' : ''}`}
+      className={`schedule-match-row${compact ? ' schedule-match-row--compact' : ''}${denseTable ? ' schedule-match-row--dense-table' : ''}${pickAdvance ? ' schedule-match-row--pick-advance' : ''}${rowStateClass}`}
 
       ref={setRowRef}
 
@@ -372,7 +399,7 @@ export default function MatchRow({
             </div>
             </div>
 
-            {!showLiveHeader && showMatchDate ? (
+            {!showPorraHeader && showMatchDate ? (
 
               <span className="schedule-match-datetime">
 
@@ -382,7 +409,7 @@ export default function MatchRow({
 
               </span>
 
-            ) : !showLiveHeader ? (
+            ) : !showPorraHeader ? (
 
               <span className="schedule-match-kickoff">{kickoff}</span>
 

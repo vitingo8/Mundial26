@@ -13,16 +13,22 @@ function normalizeLiveMinute(raw) {
   return digits ? `${digits}'` : String(raw).trim()
 }
 
-/** Cabecera minimalista en Porra: Local 1:0 Visitante · min · Vivo */
+/** Cabecera minimalista en Porra: Local 1:0 Visitante · min · Vivo / Finalizado */
 export function PorraLiveHeader({ home, away, score, status, liveMinute, onOpenDetail }) {
+  const isFinished = status === 'FINISHED'
   const isLive = LIVE_STATUSES.has(status)
   const isPaused = status === 'PAUSED'
-  if (!isLive && !isPaused) return null
+  if (!isLive && !isPaused && !isFinished) return null
   if (score?.home == null || score?.away == null) return null
 
-  const minute = !isPaused ? normalizeLiveMinute(liveMinute) : null
-  const label = isPaused ? 'Descanso' : 'Vivo'
-  const stripClass = `porra-live-strip${onOpenDetail ? ' porra-live-strip--clickable' : ''}`
+  const minute = isLive && !isPaused ? normalizeLiveMinute(liveMinute) : null
+  const label = isFinished ? 'Finalizado' : isPaused ? 'Descanso' : 'Vivo'
+  const stripClass = [
+    'porra-live-strip',
+    onOpenDetail ? 'porra-live-strip--clickable' : '',
+    isFinished ? 'porra-live-strip--finished' : '',
+    isLive && !isPaused ? 'porra-live-strip--live' : '',
+  ].filter(Boolean).join(' ')
 
   const inner = (
     <>
@@ -31,7 +37,9 @@ export function PorraLiveHeader({ home, away, score, status, liveMinute, onOpenD
       <span className="porra-live-strip__team">{away}</span>
       {minute && <span className="porra-live-strip__minute">{minute}</span>}
       <span className="porra-live-strip__live">
-        {isPaused ? (
+        {isFinished ? (
+          <Icon name="checkCircle" size={11} />
+        ) : isPaused ? (
           <Icon name="pauseCircle" size={11} />
         ) : (
           <Icon name="signal" size={11} className="live-score-block__live-icon" />
@@ -50,7 +58,11 @@ export function PorraLiveHeader({ home, away, score, status, liveMinute, onOpenD
         type="button"
         className={stripClass}
         onClick={onOpenDetail}
-        aria-label={`Abrir directo: ${home} ${score.home}:${score.away} ${away} · ${label}`}
+        aria-label={
+          isFinished
+            ? `Ver partido: ${home} ${score.home}:${score.away} ${away} · Finalizado`
+            : `Abrir directo: ${home} ${score.home}:${score.away} ${away} · ${label}`
+        }
       >
         {inner}
       </button>

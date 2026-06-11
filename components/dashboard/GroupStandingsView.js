@@ -8,7 +8,7 @@ import {
   lookupQualificationPoints,
 } from '../../lib/groupQualificationScoring.js'
 import { indexApiMatches } from '../../lib/apiMatchScores'
-import { isLiveMatchStatus } from '../../lib/matchDetail'
+import { isPorraApiResultStatus } from '../../lib/matchDetail'
 import TeamCrest from '../TeamCrest'
 import MatchRow from './MatchRow'
 import BestThirdPlacesTable from './BestThirdPlacesTable'
@@ -125,7 +125,7 @@ export default function GroupStandingsView({
                 publishedResult={publishedResults[m.id]}
                 apiRaw={rawById[m.id]}
                 onOpenLiveDetail={
-                  onOpenMatch && rawById[m.id] && isLiveMatchStatus(rawById[m.id].status)
+                  onOpenMatch && rawById[m.id] && isPorraApiResultStatus(rawById[m.id].status)
                     ? () => onOpenMatch(m)
                     : undefined
                 }

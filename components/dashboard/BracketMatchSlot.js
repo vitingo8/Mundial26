@@ -5,7 +5,7 @@ import TeamCrest from '../TeamCrest'
 import ScoreInput from './ScoreInput'
 import { needsKnockoutAdvancePick } from '../../lib/knockoutAdvances'
 import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
-import { isLiveMatchStatus } from '../../lib/matchDetail'
+import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
 import { PorraLiveHeader } from './LiveResultRow'
 import { summarizeMatchPoints } from '../../lib/matchPointsDisplay'
 import { resolveKnockoutTeamsForScoring } from '../../lib/knockoutMatchScoring'
@@ -83,7 +83,9 @@ export default function BracketMatchSlot({
   const apiScore = apiRaw ? getApiMatchDisplayScore(apiRaw) : null
   const score = readOnly ? apiScore : null
   const hasScore = score?.home != null && score?.away != null
-  const showLiveHeader = !readOnly && apiRaw && isLiveMatchStatus(apiRaw.status) && apiScore
+  const isApiLive = apiRaw && isLiveMatchStatus(apiRaw.status)
+  const isApiFinished = apiRaw?.status === 'FINISHED'
+  const showPorraHeader = !readOnly && apiRaw && apiScore && isPorraApiResultStatus(apiRaw.status)
   const predRow = {
     home: pred.home === '' || pred.home == null ? null : Number(pred.home),
     away: pred.away === '' || pred.away == null ? null : Number(pred.away),
@@ -104,7 +106,12 @@ export default function BracketMatchSlot({
       : null
 
   const livePointsSummary =
-    showLiveHeader && apiScore
+    isApiLive && apiScore && !publishedResult
+      ? summarizeMatchPoints(predRow, apiScore, knockoutScoringOpts)
+      : null
+
+  const apiFinishedPointsSummary =
+    isApiFinished && apiScore && !publishedResult
       ? summarizeMatchPoints(predRow, apiScore, knockoutScoringOpts)
       : null
 
@@ -138,12 +145,33 @@ export default function BracketMatchSlot({
         />
       )
     }
+    if (apiFinishedPointsSummary?.pts > 0) {
+      return (
+        <MatchPointsBubble
+          points={apiFinishedPointsSummary.pts}
+          detail={apiFinishedPointsSummary.detail}
+          publishedResult={apiScore}
+          homeCrest={match.homeCrest}
+          awayCrest={match.awayCrest}
+          homeName={match.home}
+          awayName={match.away}
+          className="match-points-bubble-wrap--bracket"
+        />
+      )
+    }
     return null
   })()
 
+  const slotStateClass =
+    (readOnly && apiRaw?.status === 'IN_PLAY') || isApiLive
+      ? ' bracket-slot--live'
+      : isApiFinished
+        ? ' bracket-slot--finished'
+        : ''
+
   return (
     <div
-      className={`bracket-slot${(readOnly && apiRaw?.status === 'IN_PLAY') || showLiveHeader ? ' bracket-slot--live' : ''}${readOnly && onGoToPrediction ? ' bracket-slot--clickable' : ''}${pointsBubble ? ' bracket-slot--has-points' : ''}`}
+      className={`bracket-slot${slotStateClass}${readOnly && onGoToPrediction ? ' bracket-slot--clickable' : ''}${pointsBubble ? ' bracket-slot--has-points' : ''}`}
       ref={matchRef}
       role={readOnly && onGoToPrediction ? 'button' : undefined}
       tabIndex={readOnly && onGoToPrediction ? 0 : undefined}
@@ -151,14 +179,14 @@ export default function BracketMatchSlot({
       onKeyDown={readOnly && onGoToPrediction ? e => { if (e.key === 'Enter') onGoToPrediction(match.id) } : undefined}
     >
       {pointsBubble}
-      {showLiveHeader && (
+      {showPorraHeader && (
         <PorraLiveHeader
           home={match.home}
           away={match.away}
           score={apiScore}
           status={apiRaw.status}
           liveMinute={apiRaw.liveTime?.short || (apiRaw.minute != null ? `${apiRaw.minute}'` : null)}
-          onOpenDetail={showLiveHeader && onOpenMatch ? () => onOpenMatch(match) : undefined}
+          onOpenDetail={onOpenMatch ? () => onOpenMatch(match) : undefined}
         />
       )}
       <div className="bracket-slot-tag">P{match.matchNumber}</div>
