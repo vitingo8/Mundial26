@@ -5,6 +5,8 @@ import TeamCrest from '../TeamCrest'
 import ScoreInput from './ScoreInput'
 import { needsKnockoutAdvancePick } from '../../lib/knockoutAdvances'
 import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
+import { isLiveMatchStatus } from '../../lib/matchDetail'
+import { PorraLiveHeader } from './LiveResultRow'
 import { summarizeMatchPoints } from '../../lib/matchPointsDisplay'
 import { resolveKnockoutTeamsForScoring } from '../../lib/knockoutMatchScoring'
 import MatchPointsBubble from './MatchPointsBubble'
@@ -77,8 +79,10 @@ export default function BracketMatchSlot({
 
   const matchLocked = locked || (getMatchLocked ? getMatchLocked(match) : isMatchKickoffPassed(match.utcDate))
 
-  const score = readOnly ? getApiMatchDisplayScore(apiRaw) : null
+  const apiScore = apiRaw ? getApiMatchDisplayScore(apiRaw) : null
+  const score = readOnly ? apiScore : null
   const hasScore = score?.home != null && score?.away != null
+  const showLiveHeader = !readOnly && apiRaw && isLiveMatchStatus(apiRaw.status) && apiScore
   const predRow = {
     home: pred.home === '' || pred.home == null ? null : Number(pred.home),
     away: pred.away === '' || pred.away == null ? null : Number(pred.away),
@@ -87,32 +91,58 @@ export default function BracketMatchSlot({
   const pickAdvance =
     !readOnly && !matchLocked && needsKnockoutAdvancePick(predRow) && onAdvance
 
+  const knockoutScoringOpts = {
+    knockout: true,
+    predictedTeams: scoringTeams.predictedTeams,
+    actualTeams: scoringTeams.actualTeams,
+  }
+
   const pointsSummary =
     !readOnly && publishedResult
-      ? summarizeMatchPoints(predRow, publishedResult, {
-          knockout: true,
-          predictedTeams: scoringTeams.predictedTeams,
-          actualTeams: scoringTeams.actualTeams,
-        })
+      ? summarizeMatchPoints(predRow, publishedResult, knockoutScoringOpts)
       : null
 
-  const pointsBubble =
-    pointsSummary?.pts > 0 ? (
-      <MatchPointsBubble
-        points={pointsSummary.pts}
-        detail={pointsSummary.detail}
-        publishedResult={publishedResult}
-        homeCrest={match.homeCrest}
-        awayCrest={match.awayCrest}
-        homeName={match.home}
-        awayName={match.away}
-        className="match-points-bubble-wrap--bracket"
-      />
-    ) : null
+  const livePointsSummary =
+    showLiveHeader && apiScore
+      ? summarizeMatchPoints(predRow, apiScore, knockoutScoringOpts)
+      : null
+
+  const pointsBubble = (() => {
+    if (pointsSummary?.pts > 0) {
+      return (
+        <MatchPointsBubble
+          points={pointsSummary.pts}
+          detail={pointsSummary.detail}
+          publishedResult={publishedResult}
+          homeCrest={match.homeCrest}
+          awayCrest={match.awayCrest}
+          homeName={match.home}
+          awayName={match.away}
+          className="match-points-bubble-wrap--bracket"
+        />
+      )
+    }
+    if (livePointsSummary?.pts > 0) {
+      return (
+        <MatchPointsBubble
+          points={livePointsSummary.pts}
+          detail={livePointsSummary.detail}
+          publishedResult={apiScore}
+          homeCrest={match.homeCrest}
+          awayCrest={match.awayCrest}
+          homeName={match.home}
+          awayName={match.away}
+          className="match-points-bubble-wrap--bracket"
+          provisional
+        />
+      )
+    }
+    return null
+  })()
 
   return (
     <div
-      className={`bracket-slot${readOnly && apiRaw?.status === 'IN_PLAY' ? ' bracket-slot--live' : ''}${readOnly && onGoToPrediction ? ' bracket-slot--clickable' : ''}${pointsBubble ? ' bracket-slot--has-points' : ''}`}
+      className={`bracket-slot${(readOnly && apiRaw?.status === 'IN_PLAY') || showLiveHeader ? ' bracket-slot--live' : ''}${readOnly && onGoToPrediction ? ' bracket-slot--clickable' : ''}${pointsBubble ? ' bracket-slot--has-points' : ''}`}
       ref={matchRef}
       role={readOnly && onGoToPrediction ? 'button' : undefined}
       tabIndex={readOnly && onGoToPrediction ? 0 : undefined}
@@ -120,6 +150,15 @@ export default function BracketMatchSlot({
       onKeyDown={readOnly && onGoToPrediction ? e => { if (e.key === 'Enter') onGoToPrediction(match.id) } : undefined}
     >
       {pointsBubble}
+      {showLiveHeader && (
+        <PorraLiveHeader
+          home={match.home}
+          away={match.away}
+          score={apiScore}
+          status={apiRaw.status}
+          liveMinute={apiRaw.liveTime?.short || (apiRaw.minute != null ? `${apiRaw.minute}'` : null)}
+        />
+      )}
       <div className="bracket-slot-tag">P{match.matchNumber}</div>
 
       <BracketTeam

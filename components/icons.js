@@ -6,6 +6,7 @@ import {
   ArrowPathIcon,
   ArrowTopRightOnSquareIcon,
   ArrowTrendingUpIcon,
+  ArrowUturnLeftIcon,
   AtSymbolIcon,
   Bars3Icon,
   BoltIcon,
@@ -23,6 +24,7 @@ import {
   EnvelopeIcon,
   ExclamationTriangleIcon,
   FireIcon,
+  FlagIcon,
   KeyIcon,
   LinkIcon,
   LockClosedIcon,
@@ -37,6 +39,7 @@ import {
   UserIcon,
   ViewfinderCircleIcon,
 } from '@heroicons/react/24/outline'
+import { Volleyball } from 'lucide-react'
 
 /** @type {Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>>} */
 export const ICONS = {
@@ -62,6 +65,10 @@ export const ICONS = {
   envelope: EnvelopeIcon,
   exclamationTriangle: ExclamationTriangleIcon,
   fire: FireIcon,
+  flag: FlagIcon,
+  goal: Volleyball,
+  goalOwn: ArrowUturnLeftIcon,
+  goalPenalty: FlagIcon,
   key: KeyIcon,
   link: LinkIcon,
   lockClosed: LockClosedIcon,
@@ -78,6 +85,13 @@ export const ICONS = {
 }
 
 const SIZE_PX = { sm: 16, md: 20, lg: 24, xl: 28 }
+
+/** Icono según tipo de gol (REGULAR / PENALTY / OWN). */
+export function goalIconName(type) {
+  if (type === 'PENALTY') return 'goalPenalty'
+  if (type === 'OWN') return 'goalOwn'
+  return 'goal'
+}
 
 /** Tab / nav icon keys */
 export const TAB_ICONS = {
@@ -190,8 +204,11 @@ const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
 const UPCOMING_STATUSES = new Set(['SCHEDULED', 'TIMED'])
 
 export function MatchStatus({ status, highlight, upcoming }) {
-  if (highlight || LIVE_STATUSES.has(status)) {
+  if (highlight || status === 'IN_PLAY' || status === 'LIVE') {
     return <IconLabel icon="signal" iconSize="sm">EN JUEGO</IconLabel>
+  }
+  if (status === 'PAUSED') {
+    return <IconLabel icon="pauseCircle" iconSize="sm">Descanso</IconLabel>
   }
   if (upcoming || UPCOMING_STATUSES.has(status)) {
     return null

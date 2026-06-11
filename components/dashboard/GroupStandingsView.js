@@ -7,6 +7,7 @@ import {
   buildQualificationPointsByTeam,
   lookupQualificationPoints,
 } from '../../lib/groupQualificationScoring.js'
+import { indexApiMatches } from '../../lib/apiMatchScores'
 import TeamCrest from '../TeamCrest'
 import MatchRow from './MatchRow'
 import BestThirdPlacesTable from './BestThirdPlacesTable'
@@ -21,7 +22,9 @@ export default function GroupStandingsView({
   gridClassName = '',
   publishedResults = {},
   knockoutMatches = [],
+  apiMatches = [],
 }) {
+  const rawById = useMemo(() => indexApiMatches(apiMatches), [apiMatches])
   const groups = useMemo(
     () => computeGroupStandings(matches, preds),
     [matches, preds],
@@ -118,6 +121,7 @@ export default function GroupStandingsView({
                 denseTable={denseMatches}
                 showMatchDate={!denseMatches}
                 publishedResult={publishedResults[m.id]}
+                apiRaw={rawById[m.id]}
               />
             ))}
           </div>

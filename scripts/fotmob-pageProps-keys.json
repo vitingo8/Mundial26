@@ -1,0 +1,38 @@
+{
+  "topKeys": [
+    "general",
+    "header",
+    "nav",
+    "ongoing",
+    "hasPendingVAR",
+    "content",
+    "seo",
+    "fetchingLeagueData",
+    "ssr",
+    "fallback",
+    "translations"
+  ],
+  "contentKeys": [
+    "matchFacts",
+    "liveticker",
+    "superlive",
+    "buzz",
+    "stats",
+    "playerStats",
+    "shotmap",
+    "weather",
+    "lineup",
+    "hasPlayoff",
+    "table",
+    "h2h",
+    "momentum",
+    "attackingZones",
+    "heatmapUrl"
+  ],
+  "statsType": "object",
+  "statsKeys": [
+    "Periods"
+  ],
+  "eventsType": "undefined",
+  "lineupType": "object"
+}

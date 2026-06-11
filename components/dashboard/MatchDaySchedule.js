@@ -12,6 +12,7 @@ import {
 import { groupMatchesByKnockoutRound } from '../../lib/knockoutBracketDisplay'
 
 import DayTabs from './DayTabs'
+import { indexApiMatches } from '../../lib/apiMatchScores'
 import MatchRow from './MatchRow'
 import { resolveKnockoutTeamsForScoring } from '../../lib/knockoutMatchScoring'
 
@@ -39,7 +40,9 @@ export default function MatchDaySchedule({
   advancePickerForMatch,
   publishedResults = {},
   knockoutScoringCtx = null,
+  apiMatches = [],
 }) {
+  const rawById = useMemo(() => indexApiMatches(apiMatches), [apiMatches])
   const knockoutAdvanceDefault = schedulePhase === 'knockout'
   function showAdvancePicker(m) {
     if (advancePickerForMatch) return advancePickerForMatch(m)
@@ -148,6 +151,7 @@ export default function MatchDaySchedule({
         showMatchDate={schedulePhase === 'knockout'}
         publishedResult={publishedResult}
         knockoutScoringTeams={scoringTeams}
+        apiRaw={rawById[m.id]}
       />
     )
   }

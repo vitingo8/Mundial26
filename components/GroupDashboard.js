@@ -84,7 +84,7 @@ import {
   formatMadridDateTime,
 } from '../lib/madridTime'
 import {
-  Icon, IconLabel, RankDisplay, LockedBanner, SaveButtonLabel, RefreshButtonLabel,
+  Icon, IconLabel, RankDisplay, SaveButtonLabel, RefreshButtonLabel,
   RoundHeader, TAB_ICONS, PHASE_ICONS, BONUS_FIELD_ICONS,
 } from './icons'
 
@@ -172,6 +172,22 @@ export default function GroupDashboard({
   useEffect(() => {
     if (tab === 'live' && apiStatus === 'idle' && wcMatches.length > 0) { setLiveData(wcMatches); setApiStatus('ok') }
   }, [tab, wcMatches, apiStatus])
+
+  const hasLiveMatches = useMemo(
+    () => liveData.some(m => ['IN_PLAY', 'PAUSED', 'LIVE'].includes(m.status)),
+    [liveData],
+  )
+
+  useEffect(() => {
+    if (tab !== 'live') return
+    void fetchLive()
+  }, [tab])
+
+  useEffect(() => {
+    if (tab !== 'live' || !hasLiveMatches) return
+    const t = setInterval(() => { void fetchLive() }, 30_000)
+    return () => clearInterval(t)
+  }, [tab, hasLiveMatches])
 
   useEffect(() => {
     if (!scrollToMatchId || tab !== 'predictions') return
@@ -335,6 +351,7 @@ export default function GroupDashboard({
             koDeadlinePassed={koDeadlinePassed}
             groupMatches={groupMatches} knockoutMatches={knockoutMatches} teamOptions={teamOptions.length ? teamOptions : ALL_TEAMS}
             wcLoading={wcLoading} wcApiError={wcApiError} onReloadWc={reloadWc}
+            apiMatches={wcMatches}
             groupPhase={currentGroup.phase}
             orphanGroupKeys={orphanGroupKeys} matchRefs={matchRefs}
             deadlines={{
@@ -556,6 +573,7 @@ function PredictionsTab({
   groupPhase, deadlines,
   orphanGroupKeys, matchRefs,
   user, groupId, group, onApplyMirror, onSwitchGroup, notify,
+  apiMatches = [],
 }) {
   const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
 
@@ -672,6 +690,7 @@ function PredictionsTab({
           group={group}
           loadError={wcApiError}
           onRetry={onReloadWc}
+          apiMatches={apiMatches}
         />
       )}
       {predPhase === 'knockout' && (
@@ -693,6 +712,7 @@ function PredictionsTab({
             group={group}
             participant={user}
             groupMatches={groupMatches}
+            apiMatches={apiMatches}
           />
         </>
       )}
@@ -715,7 +735,7 @@ function PredictionsTab({
 function GroupPhasePreds({
   preds, setPreds, inicioKoPreds, setInicioKoPreds,
   locked, matches = [], knockoutMatches = [], matchRefs, viewMode = 'daily', group,
-  loadError, onRetry,
+  loadError, onRetry, apiMatches = [],
 }) {
   const publishedResults = useMemo(
     () => buildPublishedResultsMap(group?.results, 'group'),
@@ -804,7 +824,6 @@ function GroupPhasePreds({
 
   return (
     <div>
-      {locked && <div className="dash-banner dash-banner--lock">Plazo cerrado · Solo lectura</div>}
       <div className="dash-progress-wrap">
         <div className="dash-progress-bar">
           <div className="dash-progress-fill" style={{ width: `${Math.round(filled / total * 100)}%` }} />
@@ -821,6 +840,7 @@ function GroupPhasePreds({
           onScore={setScore}
           publishedResults={publishedResults}
           knockoutMatches={knockoutMatches}
+          apiMatches={apiMatches}
         />
       ) : viewMode === 'bracket' ? (
         <>
@@ -838,6 +858,7 @@ function GroupPhasePreds({
             matchRefs={matchRefs}
             error={inicioKo.error}
             publishedResults={publishedResults}
+            apiMatches={apiMatches}
           />
         </>
       ) : viewMode === 'daily' ? (
@@ -868,6 +889,7 @@ function GroupPhasePreds({
             getSectionKey={sectionKey}
             getSectionLabel={sectionLabel}
             publishedResults={publishedResults}
+            apiMatches={apiMatches}
           />
         </>
       ) : (
@@ -883,6 +905,7 @@ function GroupPhasePreds({
             getSectionKey={m => m.group || '—'}
             getSectionLabel={m => `Grupo ${m.group}`}
             publishedResults={publishedResults}
+            apiMatches={apiMatches}
           />
           <PredictedKnockoutSection
             groupMatches={matches}
@@ -919,7 +942,7 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
 function KnockoutPreds({
   preds, setPreds, phaseLocked, koDeadlinePassed,
   matches = [], teamOptions = [], matchRefs, viewMode = 'daily', group,
-  participant, groupMatches = [],
+  participant, groupMatches = [], apiMatches = [],
 }) {
   const scheduleMatches = useMemo(
     () => buildEliminatoriasKnockoutSchedule(matches, preds),
@@ -960,7 +983,6 @@ function KnockoutPreds({
   if (viewMode === 'bracket') {
     return (
       <>
-        {koLocked && <div className="dash-banner dash-banner--lock">Plazo de eliminatorias cerrado · Solo lectura</div>}
         {!koLocked && (
           <p className="dash-phase-hint">
             Dieciseisavos con equipos reales (API). Del octavo en adelante, el cuadro sale de tu porra: marcador y quién pasa.
@@ -975,6 +997,7 @@ function KnockoutPreds({
           matchRefs={matchRefs}
           publishedResults={publishedResults}
           knockoutScoringCtx={knockoutScoringCtx}
+          apiMatches={apiMatches}
         />
       </>
     )
@@ -983,7 +1006,6 @@ function KnockoutPreds({
   if (scheduleMatches.length > 0) {
     return (
       <>
-        {koLocked && <div className="dash-banner dash-banner--lock">Plazo de eliminatorias cerrado · Solo lectura</div>}
         {!koLocked && (
           <p className="dash-phase-hint">
             Dieciseisavos con equipos reales (API). Del octavo en adelante, el cuadro sale de tu porra: marcador y quién pasa.
@@ -1000,6 +1022,7 @@ function KnockoutPreds({
           viewMode={viewMode}
           publishedResults={publishedResults}
           knockoutScoringCtx={knockoutScoringCtx}
+          apiMatches={apiMatches}
         />
       </>
     )
@@ -1010,7 +1033,6 @@ function KnockoutPreds({
 
   return (
     <div>
-      {legacyLocked && <div style={s.lockedBanner}><LockedBanner>Plazo cerrado · Solo lectura</LockedBanner></div>}
       <div style={s.koNote}>
         Calendario no disponible. Elige equipos de la lista y marca resultado.
       </div>
@@ -1058,7 +1080,6 @@ function BonusPreds({ preds, setPreds, locked, actuals = {} }) {
   ]
   return (
     <div className="dash-bonus-list">
-      {locked && <div style={s.lockedBanner}><LockedBanner>Plazo cerrado · Solo lectura</LockedBanner></div>}
       {fields.map(f => {
         const actual = actuals[f.id]
         const pred = preds[f.id]
@@ -1153,6 +1174,8 @@ function LiveTab({
       homeCrest: m.homeCrest,
       awayCrest: m.awayCrest,
       utcDate: m.utcDate,
+      group: m.group,
+      stage: m.stage,
       userPred: preds?.[m.id],
     })
   }
@@ -1192,7 +1215,7 @@ function LiveTab({
 
       {apiStatus === 'idle' && !wcLoading && liveData.length === 0 && (
         <div style={s.apiCard}>
-          <div style={s.apiMsg}>Pulsa el botón superior para cargar el calendario FIFA 2026</div>
+          <div style={s.apiMsg}>Pulsa actualizar para cargar resultados en vivo (FotMob)</div>
         </div>
       )}
       {wcLoading && apiStatus !== 'loading' && (
@@ -1206,7 +1229,7 @@ function LiveTab({
             <Icon name="exclamationTriangle" size="sm" /> API en vivo no disponible
           </div>
           <div style={s.apiSub}>
-            {apiError || 'No se pudo conectar con la API en vivo. Mostrando resultados del organizador si existen.'}
+            {apiError || 'No se pudo conectar con FotMob. Mostrando resultados del organizador si existen.'}
           </div>
         </div>
       )}
@@ -1279,7 +1302,11 @@ function LiveTab({
         <MatchDetailSheet
           matchId={detailMatch.id}
           summary={detailMatch}
+          liveSnapshot={liveData.find(x => String(x.id) === String(detailMatch.id))}
           userPred={detailMatch.userPred}
+          groupMatches={groupMatches}
+          apiMatches={liveData}
+          userPreds={userPreds?.group || {}}
           onClose={() => setDetailMatch(null)}
         />
       )}

@@ -13,6 +13,9 @@ import { focusAwayInRow, focusNextMatchHomeScore } from '../../lib/scheduleScore
 import ScoreInput from './ScoreInput'
 
 import { needsKnockoutAdvancePick } from '../../lib/knockoutAdvances'
+import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
+import { isLiveMatchStatus } from '../../lib/matchDetail'
+import { PorraLiveHeader } from './LiveResultRow'
 
 
 
@@ -150,6 +153,9 @@ export default function MatchRow({
   /** { predictedTeams, actualTeams } para puntuar eliminatorias */
   knockoutScoringTeams = null,
 
+  /** Partido crudo de la API (marcador y estado en vivo). */
+  apiRaw = null,
+
 }) {
 
   const rowRef = useRef(null)
@@ -179,15 +185,28 @@ export default function MatchRow({
 
     knockoutAdvance && !readOnly && needsKnockoutAdvancePick(predRow) && onAdvance
 
+  const scoringOpts = useMemo(
+    () => ({
+      knockout: knockoutAdvance,
+      predictedTeams: knockoutScoringTeams?.predictedTeams,
+      actualTeams: knockoutScoringTeams?.actualTeams,
+    }),
+    [knockoutAdvance, knockoutScoringTeams],
+  )
+
   const pointsSummary = useMemo(() => {
     if (!publishedResult) return null
-    const { predictedTeams, actualTeams } = knockoutScoringTeams || {}
-    return summarizeMatchPoints(predRow, publishedResult, {
-      knockout: knockoutAdvance,
-      predictedTeams,
-      actualTeams,
-    })
-  }, [publishedResult, homeVal, awayVal, advancesVal, knockoutAdvance, knockoutScoringTeams])
+    return summarizeMatchPoints(predRow, publishedResult, scoringOpts)
+  }, [publishedResult, homeVal, awayVal, advancesVal, scoringOpts])
+
+  const liveScore = apiRaw ? getApiMatchDisplayScore(apiRaw) : null
+  const isLive = apiRaw && isLiveMatchStatus(apiRaw.status)
+  const showLiveHeader = isLive && liveScore && !readOnly
+
+  const livePointsSummary = useMemo(() => {
+    if (!showLiveHeader || !liveScore) return null
+    return summarizeMatchPoints(predRow, liveScore, scoringOpts)
+  }, [showLiveHeader, liveScore, homeVal, awayVal, advancesVal, scoringOpts])
 
   function setRowRef(el) {
 
@@ -197,27 +216,52 @@ export default function MatchRow({
 
   }
 
-
-
-  const pointsBubble =
-    publishedResult && pointsSummary?.pts > 0 ? (
-      <MatchPointsBubble
-        points={pointsSummary.pts}
-        detail={pointsSummary.detail}
-        publishedResult={publishedResult}
-        homeCrest={homeCrest}
-        awayCrest={awayCrest}
-        homeName={home}
-        awayName={away}
-      />
-    ) : null
+  const pointsBubble = (() => {
+    if (publishedResult && pointsSummary?.pts > 0) {
+      return (
+        <MatchPointsBubble
+          points={pointsSummary.pts}
+          detail={pointsSummary.detail}
+          publishedResult={publishedResult}
+          homeCrest={homeCrest}
+          awayCrest={awayCrest}
+          homeName={home}
+          awayName={away}
+        />
+      )
+    }
+    if (showLiveHeader && livePointsSummary?.pts > 0) {
+      return (
+        <MatchPointsBubble
+          points={livePointsSummary.pts}
+          detail={livePointsSummary.detail}
+          publishedResult={liveScore}
+          homeCrest={homeCrest}
+          awayCrest={awayCrest}
+          homeName={home}
+          awayName={away}
+          provisional
+        />
+      )
+    }
+    return null
+  })()
 
   return (
 
-    <div className="schedule-match-wrap">
+    <div className={`schedule-match-wrap${showLiveHeader ? ' schedule-match-wrap--live' : ''}`}>
+    {showLiveHeader && (
+      <PorraLiveHeader
+        home={home}
+        away={away}
+        score={liveScore}
+        status={apiRaw.status}
+        liveMinute={apiRaw.liveTime?.short || (apiRaw.minute != null ? `${apiRaw.minute}'` : null)}
+      />
+    )}
     <div
 
-      className={`schedule-match-row${compact ? ' schedule-match-row--compact' : ''}${denseTable ? ' schedule-match-row--dense-table' : ''}${pickAdvance ? ' schedule-match-row--pick-advance' : ''}`}
+      className={`schedule-match-row${compact ? ' schedule-match-row--compact' : ''}${denseTable ? ' schedule-match-row--dense-table' : ''}${pickAdvance ? ' schedule-match-row--pick-advance' : ''}${showLiveHeader ? ' schedule-match-row--live' : ''}`}
 
       ref={setRowRef}
 
@@ -324,7 +368,7 @@ export default function MatchRow({
             </div>
             </div>
 
-            {showMatchDate ? (
+            {!showLiveHeader && showMatchDate ? (
 
               <span className="schedule-match-datetime">
 
@@ -334,11 +378,11 @@ export default function MatchRow({
 
               </span>
 
-            ) : (
+            ) : !showLiveHeader ? (
 
               <span className="schedule-match-kickoff">{kickoff}</span>
 
-            )}
+            ) : null}
 
             {knockoutAdvance && !readOnly ? (
               <p

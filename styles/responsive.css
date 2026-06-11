@@ -323,27 +323,6 @@
   text-align: left;
 }
 
-/* Panel ver porra — siempre pantalla Todo (portal en document.body) */
-@media (min-width: 640px) {
-  .match-detail-backdrop {
-    align-items: center;
-    justify-content: center;
-    padding: max(16px, var(--safe-top)) 16px max(16px, var(--safe-bottom));
-  }
-
-  .match-detail-sheet {
-    width: min(96vw, 520px);
-    height: auto;
-    max-height: min(90vh, 820px);
-    margin-top: 0;
-    border-radius: 20px;
-  }
-
-  .match-detail-lineups {
-    grid-template-columns: 1fr;
-  }
-}
-
 .participant-preds-backdrop {
   position: fixed;
   inset: 0;

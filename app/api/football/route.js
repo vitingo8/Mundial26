@@ -1,63 +1,54 @@
 import { NextResponse } from 'next/server'
-import { footballDataFetch, WC_CODE } from '../../../lib/footballData'
-import { enrichApiMatches } from '../../../lib/fifaMatchNumbers'
-import { getWcMatchesSafe, catalogMatchesFallback } from '../../../lib/footballDataServerCache'
+import {
+  catalogMatchesFallback,
+  getFotmobMatchDetail,
+  getWcMatchesSafe,
+  invalidateLiveCaches,
+} from '../../../lib/fotmobServerCache'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const resource = searchParams.get('resource') || 'matches'
+  const force = searchParams.get('force') === '1'
 
   try {
-    let data
+    if (force && resource === 'matches') invalidateLiveCaches()
+
     switch (resource) {
-      case 'matches':
-        data = await getWcMatchesSafe({
-          season: searchParams.get('season') || '2026',
-          status: searchParams.get('status') || undefined,
-          matchday: searchParams.get('matchday') || undefined,
-          stage: searchParams.get('stage') || undefined,
-        })
+      case 'matches': {
+        const data = await getWcMatchesSafe()
         if (!Array.isArray(data?.matches) || data.matches.length === 0) {
-          data = catalogMatchesFallback('respuesta vacía')
+          return NextResponse.json(catalogMatchesFallback('respuesta vacía'))
         }
-        break
-      case 'teams':
-        data = await footballDataFetch(`/competitions/${WC_CODE}/teams`, {
-          season: searchParams.get('season') || '2026',
-        })
-        break
-      case 'standings':
-        data = await footballDataFetch(`/competitions/${WC_CODE}/standings`, {
-          season: searchParams.get('season') || '2026',
-        })
-        break
-      case 'competition':
-        data = await footballDataFetch(`/competitions/${WC_CODE}`)
-        break
+        return NextResponse.json(data)
+      }
       case 'match': {
         const id = searchParams.get('id')
         if (!id) {
           return NextResponse.json({ error: 'id requerido' }, { status: 400 })
         }
-        data = await footballDataFetch(`/matches/${id}`)
-        break
+        const data = await getFotmobMatchDetail(id, { force })
+        return NextResponse.json(data)
       }
+      case 'competition':
+        return NextResponse.json({
+          name: 'FIFA World Cup',
+          code: 'WC',
+          season: '2026',
+          provider: 'fotmob',
+        })
       default:
         return NextResponse.json({ error: 'Recurso no válido' }, { status: 400 })
     }
-    if (resource === 'matches' && Array.isArray(data?.matches) && data._source == null) {
-      data.matches = enrichApiMatches(data.matches)
-    }
-    return NextResponse.json(data)
   } catch (e) {
     if (resource === 'matches') {
       return NextResponse.json(catalogMatchesFallback(e.message))
     }
     return NextResponse.json(
-      { error: e.message || 'Error al consultar football-data.org' },
-      { status: 502 }
+      { error: e.message || 'Error al consultar FotMob' },
+      { status: 502 },
     )
   }
 }

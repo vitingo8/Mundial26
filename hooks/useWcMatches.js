@@ -3,15 +3,21 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { fetchWcResource } from '../lib/footballData'
 
 const CACHE_KEY = 'porra_wc_matches'
-const CACHE_TTL = 6 * 60 * 60 * 1000
+const CACHE_TTL_LIVE = 30 * 1000
+const CACHE_TTL_IDLE = 10 * 60 * 1000
+
+function hasLiveMatches(list) {
+  return (list || []).some(m => ['IN_PLAY', 'PAUSED', 'LIVE'].includes(m.status))
+}
 
 function readCache() {
   if (typeof sessionStorage === 'undefined') return null
   try {
     const raw = sessionStorage.getItem(CACHE_KEY)
     if (!raw) return null
-    const { ts, data } = JSON.parse(raw)
-    if (Date.now() - ts > CACHE_TTL) return null
+    const { ts, data, live } = JSON.parse(raw)
+    const ttl = live ? CACHE_TTL_LIVE : CACHE_TTL_IDLE
+    if (Date.now() - ts > ttl) return null
     return data
   } catch {
     return null
@@ -20,7 +26,11 @@ function readCache() {
 
 function writeCache(data) {
   if (typeof sessionStorage === 'undefined') return
-  sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }))
+  sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+    ts: Date.now(),
+    data,
+    live: hasLiveMatches(data),
+  }))
 }
 
 export function useWcMatches() {
@@ -43,7 +53,7 @@ export function useWcMatches() {
     if (!hadMatches) setWcLoading(true)
     setApiError(null)
     try {
-      const data = await fetchWcResource('matches')
+      const data = await fetchWcResource('matches', force ? { force: '1' } : {})
       const raw = data.matches || []
       if (!raw.length) {
         throw new Error('El calendario llegó vacío')
@@ -53,9 +63,11 @@ export function useWcMatches() {
       if (data._source === 'catalog' || data._source === 'stale') {
         setApiError(
           data._source === 'stale'
-            ? 'Calendario en caché (API temporalmente no disponible)'
-            : 'Calendario provisional (API no disponible)',
+            ? 'Calendario en caché (FotMob temporalmente no disponible)'
+            : 'Calendario provisional (FotMob no disponible)',
         )
+      } else if (data._source === 'fotmob' || data._source === 'cache') {
+        setApiError(null)
       }
       return raw
     } catch (e) {
@@ -77,5 +89,11 @@ export function useWcMatches() {
     load(false)
   }, [load])
 
-  return { wcMatches, setWcMatches, wcLoading, apiError, reload }
+  useEffect(() => {
+    if (!hasLiveMatches(wcMatches)) return
+    const t = setInterval(() => load(true), 30_000)
+    return () => clearInterval(t)
+  }, [wcMatches, load])
+
+  return { wcMatches, setWcMatches, wcLoading, apiError, reload, hasLive: hasLiveMatches(wcMatches) }
 }

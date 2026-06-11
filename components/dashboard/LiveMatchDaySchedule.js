@@ -90,6 +90,7 @@ export default function LiveMatchDaySchedule({
         utcDate={m.utcDate}
         score={score}
         status={status}
+        liveMinute={raw?.liveTime?.short || (raw?.minute != null ? `${raw.minute}'` : null)}
         userPred={pred}
         compact={compact}
         onGoToPrediction={onGoToPrediction ? () => onGoToPrediction(m.id) : undefined}

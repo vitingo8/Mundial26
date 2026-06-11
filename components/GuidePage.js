@@ -295,13 +295,17 @@ export default function GuidePage() {
               y usar las mismas vistas Día / Todo / Clasificación.
             </p>
             <p>
-              Si tocas un partido, la app te lleva a la Porra en ese encuentro para revisar o
-              Todor tu predicción (si el plazo sigue abierto).
+              Si tocas un partido, verás el detalle en vivo: <strong>xG</strong>, estadísticas,
+              goles, tarjetas, alineaciones y minuto a minuto (datos FotMob).
+            </p>
+            <p>
+              También puedes ir a la Porra en ese encuentro para revisar o corregir tu predicción
+              (si el plazo sigue abierto).
             </p>
           </div>
           <Tip>
-            Usa el botón de actualizar arriba para refrescar marcadores. Si no hay conexión con
-            datos en vivo, verás los resultados que haya introducido el organizador.
+            En Vivo se refresca solo cada 30 s mientras haya partidos en juego. Usa Actualizar
+            para forzar datos nuevos. Si FotMob no responde, verás resultados del organizador.
           </Tip>
         </Section>
 
@@ -459,7 +463,7 @@ export default function GuidePage() {
               <summary>¿Por qué no puedo editar mis predicciones?</summary>
               <p>
                 El organizador fijó una fecha límite y ya pasó, o la fase del torneo en la que estáis
-                no permite más cambios. Verás un aviso de «Plazo cerrado · Solo lectura».
+                no permite más cambios.
               </p>
             </details>
             <details>
