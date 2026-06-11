@@ -1,7 +1,7 @@
 'use client'
 
 import { SCORING } from '../../lib/gameData'
-import { IconLabel, BONUS_FIELD_ICONS } from '../icons'
+import { Icon, BONUS_FIELD_ICONS } from '../icons'
 
 export const BONUS_PRED_FIELDS = [
   { id: 'topScorer', label: 'Máximo goleador', pts: SCORING.topScorer },
@@ -19,6 +19,45 @@ export default function BonusPredictionsView({ preds = {}, readOnly = false, act
     return <p className="dash-empty">Aún no ha rellenado las predicciones especiales.</p>
   }
 
+  if (readOnly) {
+    return (
+      <div className="participant-preds-bonus-list">
+        {BONUS_PRED_FIELDS.map(f => {
+          const pred = String(preds[f.id] ?? '').trim()
+          const actual = actuals[f.id]
+          const hit =
+            pred &&
+            actual &&
+            pred.toLowerCase() === actual.trim().toLowerCase()
+
+          return (
+            <article key={f.id} className="participant-preds-bonus-card">
+              <div className="participant-preds-bonus-card-head">
+                <span className="participant-preds-bonus-icon" aria-hidden="true">
+                  <Icon name={BONUS_FIELD_ICONS[f.id]} size="sm" />
+                </span>
+                <span className="participant-preds-bonus-label">{f.label}</span>
+              </div>
+              <p className={`participant-preds-bonus-value${pred ? '' : ' participant-preds-bonus-value--empty'}`}>
+                {pred || 'Sin rellenar'}
+              </p>
+              {actual && pred && (
+                <div className={`participant-preds-bonus-result${hit ? ' participant-preds-bonus-result--hit' : ''}`}>
+                  <span className="participant-preds-bonus-result-real">
+                    Real: <strong>{actual}</strong>
+                  </span>
+                  <span className="participant-preds-bonus-result-badge">
+                    {hit ? 'Acierto' : 'No coincide'}
+                  </span>
+                </div>
+              )}
+            </article>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
     <div className="dash-bonus-list">
       {BONUS_PRED_FIELDS.map(f => {
@@ -32,15 +71,10 @@ export default function BonusPredictionsView({ preds = {}, readOnly = false, act
         return (
           <div key={f.id} className="dash-bonus-field">
             <div className="dash-bonus-label">
-              <IconLabel icon={BONUS_FIELD_ICONS[f.id]} iconSize="sm">{f.label}</IconLabel>
-              {!readOnly && <span className="dash-bonus-pts">+{f.pts} pts</span>}
+              <span>{f.label}</span>
+              <span className="dash-bonus-pts">+{f.pts} pts</span>
             </div>
-            {readOnly ? (
-              <p className={`participant-preds-bonus-value${pred ? '' : ' participant-preds-bonus-value--empty'}`}>
-                {pred || 'Sin rellenar'}
-              </p>
-            ) : null}
-            {readOnly && actual && pred && (
+            {actual && pred && (
               <div className={`dash-bonus-result${hit ? ' dash-bonus-result--hit' : ''}`}>
                 <span>Real: <strong>{actual}</strong></span>
                 <span className="dash-bonus-result-detail">{hit ? 'Acierto' : 'No coincide'}</span>

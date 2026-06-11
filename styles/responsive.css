@@ -468,22 +468,98 @@
   padding-right: 8px;
 }
 
+.participant-preds-bonus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.participant-preds-bonus-card {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid var(--dash-border, #dce8e0);
+  box-shadow: 0 1px 3px rgba(29, 49, 38, 0.06);
+}
+
+.participant-preds-bonus-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.participant-preds-bonus-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: rgba(45, 106, 79, 0.1);
+  color: var(--accent, #2d6a4f);
+}
+
+.participant-preds-bonus-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--dash-muted, #5a7264);
+  line-height: 1.2;
+}
+
 .participant-preds-bonus-value {
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text, #1a1a1a);
+  padding: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--dash-text, #1d3126);
   line-height: 1.35;
+  word-break: break-word;
 }
 
 .participant-preds-bonus-value--empty {
   font-weight: 500;
-  color: var(--muted, #6b7280);
+  font-size: 0.95rem;
+  color: var(--dash-muted, #8a9d92);
   font-style: italic;
+}
+
+.participant-preds-bonus-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--dash-border, #dce8e0);
+  font-size: 0.85rem;
+  color: var(--dash-muted, #5a7264);
+}
+
+.participant-preds-bonus-result-real strong {
+  color: var(--dash-text, #1d3126);
+  font-weight: 700;
+}
+
+.participant-preds-bonus-result-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #f0f3f1;
+  color: #6b7c72;
+}
+
+.participant-preds-bonus-result--hit .participant-preds-bonus-result-badge {
+  background: rgba(45, 106, 79, 0.12);
+  color: var(--accent, #2d6a4f);
 }
 
 @media (min-width: 900px) {
