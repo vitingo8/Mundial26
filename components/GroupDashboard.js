@@ -525,6 +525,7 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
           groupMatches={groupMatches}
           knockoutMatches={knockoutMatches}
           currentUserId={currentUserId}
+          bonusActuals={group.actuals}
           onClose={() => setViewingParticipant(null)}
         />
       )}

@@ -468,6 +468,24 @@
   padding-right: 8px;
 }
 
+.participant-preds-bonus-value {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text, #1a1a1a);
+  line-height: 1.35;
+}
+
+.participant-preds-bonus-value--empty {
+  font-weight: 500;
+  color: var(--muted, #6b7280);
+  font-style: italic;
+}
+
 @media (min-width: 900px) {
   .participant-preds-header {
     padding-top: max(18px, var(--safe-top));

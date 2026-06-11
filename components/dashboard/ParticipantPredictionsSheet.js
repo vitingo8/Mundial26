@@ -8,16 +8,19 @@ import { countFilledMatches } from '../../lib/predictionUtils'
 import ParticipantDisplay, { ParticipantAvatar } from '../ParticipantDisplay'
 import GroupStandingsView from './GroupStandingsView'
 import KnockoutBracketView from './KnockoutBracketView'
+import BonusPredictionsView from './BonusPredictionsView'
 
 const VIEWS = [
   { id: 'groups', label: 'Clasificación' },
   { id: 'bracket', label: 'Cuadro' },
+  { id: 'bonuses', label: 'Especiales' },
 ]
 
 export default function ParticipantPredictionsSheet({
   participant,
   groupMatches,
   knockoutMatches = [],
+  bonusActuals = {},
   onClose,
   currentUserId,
 }) {
@@ -43,11 +46,15 @@ export default function ParticipantPredictionsSheet({
     }
   }, [participant?.id, onClose])
 
-  const { groupPreds, inicioKoPreds } = useMemo(() => {
+  const { groupPreds, inicioKoPreds, bonusPreds } = useMemo(() => {
     const raw = participant?.predictions || {}
     const { migrated: g } = migratePredictionMap(raw.group || {}, groupMatches)
     const inicio = normalizeInicioKoPreds(raw.inicioKnockout || {})
-    return { groupPreds: g, inicioKoPreds: inicio }
+    return {
+      groupPreds: g,
+      inicioKoPreds: inicio,
+      bonusPreds: raw.bonuses || {},
+    }
   }, [participant, groupMatches])
 
   const inicioKo = useMemo(
@@ -126,6 +133,8 @@ export default function ParticipantPredictionsSheet({
                 knockoutMatches={knockoutMatches}
               />
             )
+          ) : view === 'bonuses' ? (
+            <BonusPredictionsView preds={bonusPreds} readOnly actuals={bonusActuals} />
           ) : inicioKo.schedule.length === 0 && filledKo === 0 ? (
             <p className="dash-empty">
               {inicioKo.error
