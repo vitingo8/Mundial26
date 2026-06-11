@@ -3094,6 +3094,41 @@ button.schedule-match-row:focus-visible {
   color: var(--dash-text, inherit);
 }
 
+.match-detail-bench-player--sent-off .match-detail-bench-avatar,
+.match-detail-bench-player--sent-off .match-detail-bench-avatar--placeholder {
+  opacity: 0.38;
+  filter: grayscale(0.85);
+}
+
+.match-detail-bench-player--sent-off .match-detail-bench-arrow {
+  display: none;
+}
+
+.match-detail-bench-player--sent-off .match-detail-player-name {
+  opacity: 0.45;
+  text-decoration: line-through;
+  text-decoration-color: rgba(220, 38, 38, 0.55);
+}
+
+.match-detail-bench-card {
+  position: absolute;
+  right: -3px;
+  bottom: -2px;
+  width: 14px;
+  height: 18px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px var(--dash-bg, #0f1419);
+}
+
+.match-detail-bench-card--red {
+  background: #dc2626;
+}
+
+.match-detail-bench-sub--sent-off {
+  color: #dc2626;
+  font-weight: 600;
+}
+
 .match-detail-section--lineup {
   padding: 0;
   overflow: hidden;
@@ -3747,6 +3782,52 @@ button.schedule-match-row:focus-visible {
 
 .group-standings-matches--match-detail {
   border-top: 1px solid var(--dash-border, #e2ebe6);
+}
+
+.group-standings-matches--match-detail.group-standings-matches--table {
+  padding: 2px 0;
+}
+
+.group-standings-matches--match-detail .schedule-match-row--dense-table {
+  padding: 5px 10px;
+  min-height: 0;
+  gap: 4px 8px;
+  border-bottom: 1px solid rgba(29, 49, 38, 0.06);
+}
+
+.group-standings-matches--match-detail .schedule-match-row-wrap--dense:last-child .schedule-match-row--dense-table {
+  border-bottom: none;
+}
+
+.group-standings-matches--match-detail .schedule-match-team-name {
+  font-size: 0.68rem;
+  line-height: 1.15;
+}
+
+.group-standings-matches--match-detail .schedule-match-scoreline {
+  font-size: 0.75rem;
+}
+
+.group-standings-matches--match-detail .schedule-match-dense-pred {
+  padding: 0 10px 4px;
+  font-size: 0.62rem;
+  color: var(--dash-muted);
+  line-height: 1.2;
+}
+
+.schedule-match-live-dot {
+  display: block;
+  width: 6px;
+  height: 6px;
+  margin: 2px auto 0;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: schedule-live-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes schedule-live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.85); }
 }
 
 .match-detail-group-match--current .schedule-match-row {

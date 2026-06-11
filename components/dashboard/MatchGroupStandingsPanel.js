@@ -75,7 +75,7 @@ export default function MatchGroupStandingsPanel({
           </table>
         </div>
 
-        <div className="group-standings-matches group-standings-matches--match-detail">
+        <div className="group-standings-matches group-standings-matches--match-detail group-standings-matches--table">
           {group.matches.map(m => {
             const raw = rawById[m.id]
             const isCurrent = highlightMatchId != null && String(m.id) === String(highlightMatchId)
@@ -94,8 +94,7 @@ export default function MatchGroupStandingsPanel({
                   status={raw?.status}
                   liveMinute={raw?.liveTime?.short || (raw?.minute != null ? `${raw.minute}'` : null)}
                   userPred={userPreds[m.id]}
-                  compact
-                  showMatchDate
+                  denseTable
                 />
               </div>
             )

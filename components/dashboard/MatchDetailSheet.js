@@ -157,12 +157,12 @@ export default function MatchDetailSheet({
     [match, homeName, awayName],
   )
   const homeBench = useMemo(
-    () => annotateBenchPlayers(home.bench, substitutions, homeName),
-    [home.bench, substitutions, homeName],
+    () => annotateBenchPlayers(home.bench, substitutions, homeName, match),
+    [home.bench, substitutions, homeName, match],
   )
   const awayBench = useMemo(
-    () => annotateBenchPlayers(away.bench, substitutions, awayName),
-    [away.bench, substitutions, awayName],
+    () => annotateBenchPlayers(away.bench, substitutions, awayName, match),
+    [away.bench, substitutions, awayName, match],
   )
   const benchSubbedOn = homeBench.some(p => p.subOn) || awayBench.some(p => p.subOn)
   const liveClock = useMemo(
@@ -719,16 +719,24 @@ function CompareStatRow({ label, home, away, type }) {
 
 function BenchPlayerRow({ player }) {
   const subOn = player.subOn
+  const sentOff = player.sentOff
   return (
-    <li className={`match-detail-bench-player${subOn ? ' match-detail-bench-player--on' : ''}`}>
+    <li className={[
+      'match-detail-bench-player',
+      subOn ? 'match-detail-bench-player--on' : '',
+      sentOff ? 'match-detail-bench-player--sent-off' : '',
+    ].filter(Boolean).join(' ')}>
       <div className="match-detail-bench-avatar-wrap">
         {player.photoUrl ? (
           <img className="match-detail-bench-avatar" src={player.photoUrl} alt="" loading="lazy" />
         ) : (
           <span className="match-detail-bench-avatar match-detail-bench-avatar--placeholder" aria-hidden="true" />
         )}
-        {subOn && (
+        {subOn && !sentOff && (
           <span className="match-detail-bench-arrow" aria-hidden="true">→</span>
+        )}
+        {sentOff && (
+          <span className="match-detail-bench-card match-detail-bench-card--red" aria-hidden="true" />
         )}
       </div>
       <div className="match-detail-bench-body">
@@ -747,6 +755,9 @@ function BenchPlayerRow({ player }) {
               {subOn.replaced?.name || '—'}
             </span>
           </p>
+        )}
+        {sentOff && !subOn && (
+          <p className="match-detail-bench-sub match-detail-bench-sub--sent-off">Expulsado</p>
         )}
       </div>
     </li>

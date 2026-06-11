@@ -124,6 +124,7 @@ export default function LiveResultRow({
   liveMinute,
   userPred,
   compact = false,
+  denseTable = false,
   onGoToPrediction,
   onOpenDetail,
   matchRef,
@@ -146,12 +147,76 @@ export default function LiveResultRow({
       </span>
     )
   }
-  const crestSize = compact ? 22 : 28
+  const crestSize = denseTable ? 16 : compact ? 22 : 28
 
   const hasFooter = userPred || onGoToPrediction
   const clickable = typeof onOpenDetail === 'function'
 
   const rowClass = [
+    'schedule-match-row',
+    compact ? 'schedule-match-row--compact' : '',
+    denseTable ? 'schedule-match-row--dense-table' : '',
+    isLive ? 'schedule-match-row--live' : '',
+    clickable ? 'schedule-match-row--clickable' : '',
+  ].filter(Boolean).join(' ')
+
+  if (denseTable) {
+    const scoreLabel = hasScore
+      ? `${score.home} - ${score.away}`
+      : '– : –'
+    const rowInnerDense = (
+      <>
+        <div className="schedule-match-team schedule-match-team--home">
+          <TeamCrest src={homeCrest} alt={home} size={crestSize} />
+          <span className="schedule-match-team-name">{home}</span>
+        </div>
+        <div className="schedule-match-center">
+          <span className="schedule-match-scoreline" aria-label={`Resultado ${scoreLabel}`}>
+            {hasScore ? (
+              <>
+                <span>{score.home}</span>
+                <span className="schedule-match-score-sep" aria-hidden>:</span>
+                <span>{score.away}</span>
+              </>
+            ) : (
+              <span className="schedule-match-scoreline--pending">–</span>
+            )}
+          </span>
+          {isLive && hasScore && (
+            <span className="schedule-match-live-dot" aria-label="En juego" />
+          )}
+        </div>
+        <div className="schedule-match-team schedule-match-team--away">
+          <TeamCrest src={awayCrest} alt={away} size={crestSize} />
+          <span className="schedule-match-team-name">{away}</span>
+        </div>
+      </>
+    )
+
+    return (
+      <div className="schedule-match-row-wrap schedule-match-row-wrap--dense" ref={matchRef}>
+        {clickable ? (
+          <button
+            type="button"
+            className={rowClass}
+            onClick={onOpenDetail}
+            aria-label={`Ver detalle: ${home} contra ${away}`}
+          >
+            {rowInnerDense}
+          </button>
+        ) : (
+          <div className={rowClass}>{rowInnerDense}</div>
+        )}
+        {userPred && (
+          <div className="schedule-match-dense-pred">
+            Tu porra: {userPred.home ?? '?'}-{userPred.away ?? '?'}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const rowClassDefault = [
     'schedule-match-row',
     compact ? 'schedule-match-row--compact' : '',
     isLive ? 'schedule-match-row--live' : '',
@@ -198,14 +263,14 @@ export default function LiveResultRow({
       {clickable ? (
         <button
           type="button"
-          className={rowClass}
+          className={rowClassDefault}
           onClick={onOpenDetail}
           aria-label={`Ver detalle: ${home} contra ${away}`}
         >
           {rowInner}
         </button>
       ) : (
-        <div className={rowClass}>{rowInner}</div>
+        <div className={rowClassDefault}>{rowInner}</div>
       )}
       {hasFooter && (
         <div className="schedule-match-live-footer">
