@@ -13,6 +13,7 @@ import { groupMatchesByKnockoutRound } from '../../lib/knockoutBracketDisplay'
 
 import DayTabs from './DayTabs'
 import { indexApiMatches } from '../../lib/apiMatchScores'
+import { isLiveMatchStatus } from '../../lib/matchDetail'
 import MatchRow from './MatchRow'
 import { resolveKnockoutTeamsForScoring } from '../../lib/knockoutMatchScoring'
 
@@ -41,6 +42,7 @@ export default function MatchDaySchedule({
   publishedResults = {},
   knockoutScoringCtx = null,
   apiMatches = [],
+  onOpenMatch,
 }) {
   const rawById = useMemo(() => indexApiMatches(apiMatches), [apiMatches])
   const knockoutAdvanceDefault = schedulePhase === 'knockout'
@@ -152,6 +154,11 @@ export default function MatchDaySchedule({
         publishedResult={publishedResult}
         knockoutScoringTeams={scoringTeams}
         apiRaw={rawById[m.id]}
+        onOpenLiveDetail={
+          onOpenMatch && rawById[m.id] && isLiveMatchStatus(rawById[m.id].status)
+            ? () => onOpenMatch(m)
+            : undefined
+        }
       />
     )
   }

@@ -572,6 +572,23 @@ function PredictionsTab({
   apiMatches = [],
 }) {
   const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
+  const [detailMatch, setDetailMatch] = useState(null)
+
+  function openMatchDetail(m) {
+    const userPred =
+      groupPreds[m.id] ?? koPreds[m.id] ?? inicioKoPreds[m.id]
+    setDetailMatch({
+      id: m.id,
+      home: m.home,
+      away: m.away,
+      homeCrest: m.homeCrest,
+      awayCrest: m.awayCrest,
+      utcDate: m.utcDate,
+      group: m.group,
+      stage: m.stage,
+      userPred,
+    })
+  }
 
   function handleScheduleViewMode(mode) {
     setScheduleViewMode(mode)
@@ -687,6 +704,7 @@ function PredictionsTab({
           loadError={wcApiError}
           onRetry={onReloadWc}
           apiMatches={apiMatches}
+          onOpenMatch={openMatchDetail}
         />
       )}
       {predPhase === 'knockout' && (
@@ -709,6 +727,7 @@ function PredictionsTab({
             participant={user}
             groupMatches={groupMatches}
             apiMatches={apiMatches}
+            onOpenMatch={openMatchDetail}
           />
         </>
       )}
@@ -724,6 +743,19 @@ function PredictionsTab({
       <button type="button" className="dash-save-manual" style={s.saveBtn} onClick={onSave}>
         <SaveButtonLabel saving={saving}>Guardar ahora</SaveButtonLabel>
       </button>
+
+      {detailMatch && (
+        <MatchDetailSheet
+          matchId={detailMatch.id}
+          summary={detailMatch}
+          liveSnapshot={apiMatches.find(x => String(x.id) === String(detailMatch.id))}
+          userPred={detailMatch.userPred}
+          groupMatches={groupMatches}
+          apiMatches={apiMatches}
+          userPreds={groupPreds}
+          onClose={() => setDetailMatch(null)}
+        />
+      )}
     </div>
   )
 }
@@ -731,7 +763,7 @@ function PredictionsTab({
 function GroupPhasePreds({
   preds, setPreds, inicioKoPreds, setInicioKoPreds,
   locked, matches = [], knockoutMatches = [], matchRefs, viewMode = 'daily', group,
-  loadError, onRetry, apiMatches = [],
+  loadError, onRetry, apiMatches = [], onOpenMatch,
 }) {
   const publishedResults = useMemo(
     () => buildPublishedResultsMap(group?.results, 'group'),
@@ -837,6 +869,7 @@ function GroupPhasePreds({
           publishedResults={publishedResults}
           knockoutMatches={knockoutMatches}
           apiMatches={apiMatches}
+          onOpenMatch={onOpenMatch}
         />
       ) : viewMode === 'bracket' ? (
         <>
@@ -855,6 +888,7 @@ function GroupPhasePreds({
             error={inicioKo.error}
             publishedResults={publishedResults}
             apiMatches={apiMatches}
+            onOpenMatch={onOpenMatch}
           />
         </>
       ) : viewMode === 'daily' ? (
@@ -886,6 +920,7 @@ function GroupPhasePreds({
             getSectionLabel={sectionLabel}
             publishedResults={publishedResults}
             apiMatches={apiMatches}
+            onOpenMatch={onOpenMatch}
           />
         </>
       ) : (
@@ -902,6 +937,7 @@ function GroupPhasePreds({
             getSectionLabel={m => `Grupo ${m.group}`}
             publishedResults={publishedResults}
             apiMatches={apiMatches}
+            onOpenMatch={onOpenMatch}
           />
           <PredictedKnockoutSection
             groupMatches={matches}
@@ -938,7 +974,7 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
 function KnockoutPreds({
   preds, setPreds, phaseLocked, koDeadlinePassed,
   matches = [], teamOptions = [], matchRefs, viewMode = 'daily', group,
-  participant, groupMatches = [], apiMatches = [],
+  participant, groupMatches = [], apiMatches = [], onOpenMatch,
 }) {
   const scheduleMatches = useMemo(
     () => buildEliminatoriasKnockoutSchedule(matches, preds),
@@ -994,6 +1030,7 @@ function KnockoutPreds({
           publishedResults={publishedResults}
           knockoutScoringCtx={knockoutScoringCtx}
           apiMatches={apiMatches}
+          onOpenMatch={onOpenMatch}
         />
       </>
     )
@@ -1019,6 +1056,7 @@ function KnockoutPreds({
           publishedResults={publishedResults}
           knockoutScoringCtx={knockoutScoringCtx}
           apiMatches={apiMatches}
+          onOpenMatch={onOpenMatch}
         />
       </>
     )

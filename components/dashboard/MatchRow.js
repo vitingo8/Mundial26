@@ -156,6 +156,9 @@ export default function MatchRow({
   /** Partido crudo de la API (marcador y estado en vivo). */
   apiRaw = null,
 
+  /** Abre el detalle en vivo del partido. */
+  onOpenLiveDetail,
+
 }) {
 
   const rowRef = useRef(null)
@@ -257,6 +260,7 @@ export default function MatchRow({
         score={liveScore}
         status={apiRaw.status}
         liveMinute={apiRaw.liveTime?.short || (apiRaw.minute != null ? `${apiRaw.minute}'` : null)}
+        onOpenDetail={onOpenLiveDetail}
       />
     )}
     <div

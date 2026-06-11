@@ -8,6 +8,7 @@ import {
   lookupQualificationPoints,
 } from '../../lib/groupQualificationScoring.js'
 import { indexApiMatches } from '../../lib/apiMatchScores'
+import { isLiveMatchStatus } from '../../lib/matchDetail'
 import TeamCrest from '../TeamCrest'
 import MatchRow from './MatchRow'
 import BestThirdPlacesTable from './BestThirdPlacesTable'
@@ -23,6 +24,7 @@ export default function GroupStandingsView({
   publishedResults = {},
   knockoutMatches = [],
   apiMatches = [],
+  onOpenMatch,
 }) {
   const rawById = useMemo(() => indexApiMatches(apiMatches), [apiMatches])
   const groups = useMemo(
@@ -122,6 +124,11 @@ export default function GroupStandingsView({
                 showMatchDate={!denseMatches}
                 publishedResult={publishedResults[m.id]}
                 apiRaw={rawById[m.id]}
+                onOpenLiveDetail={
+                  onOpenMatch && rawById[m.id] && isLiveMatchStatus(rawById[m.id].status)
+                    ? () => onOpenMatch(m)
+                    : undefined
+                }
               />
             ))}
           </div>

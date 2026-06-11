@@ -1937,12 +1937,35 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
+  width: 100%;
   padding: 5px 10px 4px;
   font-size: 0.6rem;
   font-weight: 700;
   line-height: 1.2;
   color: var(--dash-muted);
   text-align: center;
+}
+
+button.porra-live-strip {
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--dash-muted);
+}
+
+.porra-live-strip--clickable:hover {
+  background: rgba(200, 245, 66, 0.14);
+}
+
+.porra-live-strip--clickable:focus-visible {
+  outline: 2px solid var(--dash-lime, #c8f542);
+  outline-offset: -2px;
 }
 
 .porra-live-strip__team {
@@ -1979,6 +2002,15 @@
   text-transform: uppercase;
   color: var(--dash-accent-deep);
   flex-shrink: 0;
+}
+
+.porra-live-strip__chevron {
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.porra-live-strip--clickable:hover .porra-live-strip__chevron {
+  opacity: 1;
 }
 
 .bracket-slot .porra-live-strip {

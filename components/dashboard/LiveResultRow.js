@@ -14,16 +14,18 @@ function normalizeLiveMinute(raw) {
 }
 
 /** Cabecera minimalista en Porra: Local 1:0 Visitante · min · Vivo */
-export function PorraLiveHeader({ home, away, score, status, liveMinute }) {
+export function PorraLiveHeader({ home, away, score, status, liveMinute, onOpenDetail }) {
   const isLive = LIVE_STATUSES.has(status)
   const isPaused = status === 'PAUSED'
   if (!isLive && !isPaused) return null
   if (score?.home == null || score?.away == null) return null
 
   const minute = !isPaused ? normalizeLiveMinute(liveMinute) : null
+  const label = isPaused ? 'Descanso' : 'Vivo'
+  const stripClass = `porra-live-strip${onOpenDetail ? ' porra-live-strip--clickable' : ''}`
 
-  return (
-    <div className="porra-live-strip" role="status">
+  const inner = (
+    <>
       <span className="porra-live-strip__team">{home}</span>
       <span className="porra-live-strip__score">{score.home}:{score.away}</span>
       <span className="porra-live-strip__team">{away}</span>
@@ -34,8 +36,30 @@ export function PorraLiveHeader({ home, away, score, status, liveMinute }) {
         ) : (
           <Icon name="signal" size={11} className="live-score-block__live-icon" />
         )}
-        <span>{isPaused ? 'Descanso' : 'Vivo'}</span>
+        <span>{label}</span>
+        {onOpenDetail && (
+          <Icon name="chevronRight" size={11} className="porra-live-strip__chevron" aria-hidden />
+        )}
       </span>
+    </>
+  )
+
+  if (onOpenDetail) {
+    return (
+      <button
+        type="button"
+        className={stripClass}
+        onClick={onOpenDetail}
+        aria-label={`Abrir directo: ${home} ${score.home}:${score.away} ${away} · ${label}`}
+      >
+        {inner}
+      </button>
+    )
+  }
+
+  return (
+    <div className={stripClass} role="status">
+      {inner}
     </div>
   )
 }

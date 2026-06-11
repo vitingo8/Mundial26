@@ -31,6 +31,7 @@ export default function KnockoutBracketView({
   onGoToPrediction,
   publishedResults = {},
   knockoutScoringCtx = null,
+  onOpenMatch,
 }) {
   const isMobile = useIsMobileBracket()
 
@@ -61,6 +62,7 @@ export default function KnockoutBracketView({
     rawById,
     publishedResults,
     knockoutScoringCtx,
+    onOpenMatch,
   }
 
   if (isMobile) {

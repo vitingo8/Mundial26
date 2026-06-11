@@ -69,6 +69,7 @@ export default function BracketMatchSlot({
   matchRef,
   publishedResults = {},
   knockoutScoringCtx = null,
+  onOpenMatch,
 }) {
   if (!match) return <div className="bracket-slot bracket-slot--empty" />
 
@@ -157,6 +158,7 @@ export default function BracketMatchSlot({
           score={apiScore}
           status={apiRaw.status}
           liveMinute={apiRaw.liveTime?.short || (apiRaw.minute != null ? `${apiRaw.minute}'` : null)}
+          onOpenDetail={showLiveHeader && onOpenMatch ? () => onOpenMatch(match) : undefined}
         />
       )}
       <div className="bracket-slot-tag">P{match.matchNumber}</div>
