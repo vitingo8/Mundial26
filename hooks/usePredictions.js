@@ -5,11 +5,23 @@ import { getStoredWriteToken, clearStoredWriteToken } from '../lib/sessionToken'
 import { isPredPhaseEditable } from '../lib/phaseLock'
 import { normalizeInicioKoPreds } from '../lib/knockoutBridge'
 import { normalizePredictions } from '../lib/predictionMirror'
+import { migrateParticipantPredictions } from '../lib/matchIdMap'
 
 const AUTOSAVE_MS = 2000
+const EMPTY_BONUSES = { topScorer: '', topKeeper: '', topAssists: '', mvp: '' }
 
 function predictionsEqual(a, b) {
   return JSON.stringify(a) === JSON.stringify(b)
+}
+
+function hydratePredictions(raw, groupMatches, knockoutMatches) {
+  const migrated = migrateParticipantPredictions(raw || {}, groupMatches, knockoutMatches)
+  return {
+    group: migrated.group || {},
+    knockout: migrated.knockout || {},
+    inicioKnockout: normalizeInicioKoPreds(raw?.inicioKnockout || {}),
+    bonuses: { ...EMPTY_BONUSES, ...(raw?.bonuses || {}) },
+  }
 }
 
 export function usePredictions({
@@ -21,15 +33,20 @@ export function usePredictions({
   setCurrentUser,
   isAdmin,
   adminOverride = false,
+  groupMatches = [],
   knockoutMatches = [],
 }) {
-  const [groupPreds, setGroupPreds] = useState(user.predictions?.group || {})
-  const [koPreds, setKoPreds] = useState(user.predictions?.knockout || {})
-  const [inicioKoPreds, setInicioKoPreds] = useState(() =>
-    normalizeInicioKoPreds(user.predictions?.inicioKnockout || {}),
+  const [groupPreds, setGroupPreds] = useState(() =>
+    hydratePredictions(user.predictions, groupMatches, knockoutMatches).group,
   )
-  const [bonusPreds, setBonusPreds] = useState(
-    user.predictions?.bonuses || { topScorer: '', topKeeper: '', topAssists: '', mvp: '' }
+  const [koPreds, setKoPreds] = useState(() =>
+    hydratePredictions(user.predictions, groupMatches, knockoutMatches).knockout,
+  )
+  const [inicioKoPreds, setInicioKoPreds] = useState(() =>
+    hydratePredictions(user.predictions, groupMatches, knockoutMatches).inicioKnockout,
+  )
+  const [bonusPreds, setBonusPreds] = useState(() =>
+    hydratePredictions(user.predictions, groupMatches, knockoutMatches).bonuses,
   )
   const [savingManual, setSavingManual] = useState(false)
   const [saveStatus, setSaveStatus] = useState('saved')
@@ -58,14 +75,13 @@ export function usePredictions({
       return
     }
     if (pendingRef.current || saveInFlight.current) return
-    setGroupPreds(user.predictions?.group || {})
-    setKoPreds(user.predictions?.knockout || {})
-    setInicioKoPreds(normalizeInicioKoPreds(user.predictions?.inicioKnockout || {}))
-    setBonusPreds(user.predictions?.bonuses || {
-      topScorer: '', topKeeper: '', topAssists: '', mvp: '',
-    })
+    const next = hydratePredictions(user.predictions, groupMatches, knockoutMatches)
+    setGroupPreds(next.group)
+    setKoPreds(next.knockout)
+    setInicioKoPreds(next.inicioKnockout)
+    setBonusPreds(next.bonuses)
     skipAutoSave.current = true
-  }, [user.id, user.updated_at])
+  }, [user.id, user.updated_at, groupMatches, knockoutMatches])
 
   const runSave = useCallback(async (manual = false) => {
     if (saveInFlight.current) {
@@ -77,7 +93,12 @@ export function usePredictions({
       return false
     }
 
-    const predictions = predsRef.current
+    const predictions = {
+      group: predsRef.current.group,
+      knockout: predsRef.current.knockout,
+      inicioKnockout: predsRef.current.inicioKnockout,
+      bonuses: predsRef.current.bonuses,
+    }
     saveInFlight.current = true
     if (manual) {
       setSavingManual(true)
@@ -151,7 +172,7 @@ export function usePredictions({
       setSavingManual(false)
     }
     return true
-  }, [user, group, predPhase, isAdmin, adminOverride, notify, setCurrentUser])
+  }, [user, group, predPhase, isAdmin, adminOverride, notify, setCurrentUser, knockoutMatches])
 
   const runSaveRef = useRef(runSave)
   runSaveRef.current = runSave
@@ -166,7 +187,7 @@ export function usePredictions({
 
   const persistPredictions = useCallback(
     (manual = false) => runSave(manual),
-    [runSave]
+    [runSave],
   )
 
   const flushSave = useCallback(() => {
@@ -220,16 +241,17 @@ export function usePredictions({
   const importPredictions = useCallback(
     async (raw, manual = true) => {
       const norm = normalizePredictions(raw)
-      setGroupPreds(norm.group)
-      setKoPreds(norm.knockout)
-      setInicioKoPreds(norm.inicioKnockout)
-      setBonusPreds(norm.bonuses)
-      predsRef.current = norm
+      const migrated = hydratePredictions(norm, groupMatches, knockoutMatches)
+      setGroupPreds(migrated.group)
+      setKoPreds(migrated.knockout)
+      setInicioKoPreds(migrated.inicioKnockout)
+      setBonusPreds(migrated.bonuses)
+      predsRef.current = migrated
       skipAutoSave.current = true
       pendingRef.current = true
       return runSave(manual)
     },
-    [runSave],
+    [runSave, groupMatches, knockoutMatches],
   )
 
   return {

@@ -49,7 +49,7 @@ export default function MatchPointsBubble({
         aria-describedby={open ? tipId : undefined}
         aria-label={
           provisional
-            ? `~${points} puntos esperados (en vivo). Pulsa para ver el desglose`
+            ? `${points} puntos esperados (en vivo). Pulsa para ver el desglose`
             : `${points} puntos. Pulsa para ver el desglose`
         }
         onClick={e => {
@@ -57,7 +57,7 @@ export default function MatchPointsBubble({
           setOpen(v => !v)
         }}
       >
-        {provisional ? '~' : ''}+{points}
+        +{points}
       </button>
       {open && (
         <div id={tipId} className="match-points-tooltip" role="tooltip">

@@ -112,10 +112,14 @@ export default function GroupDashboard({
     inicioKoPreds, setInicioKoPreds, bonusPreds, setBonusPreds,
     saving, saveStatus, persistPredictions, flushSave, importPredictions,
   } = usePredictions({
-    user, group: currentGroup, predPhase, tab, notify, setCurrentUser, isAdmin, knockoutMatches,
+    user, group: currentGroup, predPhase, tab, notify, setCurrentUser, isAdmin,
+    groupMatches, knockoutMatches,
   })
 
-  const orphanGroupKeys = useMemo(() => countOrphanPredKeys(groupPreds, groupMatches), [groupPreds, groupMatches])
+  const orphanGroupKeys = useMemo(
+    () => countOrphanPredKeys(user.predictions?.group, groupMatches),
+    [user.predictions?.group, groupMatches],
+  )
   const scoringOpts = useMemo(
     () => ({ groupMatches, knockoutMatches }),
     [groupMatches, knockoutMatches],
@@ -160,14 +164,6 @@ export default function GroupDashboard({
 
   useEffect(() => { const t = setInterval(handleRefresh, 60000); return () => clearInterval(t) }, [currentGroup.id])
   useEffect(() => { setPredPhase(getDefaultPredPhase(currentGroup.phase)) }, [currentGroup.phase])
-
-  useEffect(() => {
-    if (!groupMatches.length) return
-    const { migrated: g } = migratePredictionMap(user.predictions?.group || {}, groupMatches)
-    const { migrated: k } = migratePredictionMap(user.predictions?.knockout || {}, knockoutMatches)
-    setGroupPreds(g)
-    setKoPreds(k)
-  }, [groupMatches, knockoutMatches, user.id, user.updated_at])
 
   useEffect(() => {
     if (tab === 'live' && apiStatus === 'idle' && wcMatches.length > 0) { setLiveData(wcMatches); setApiStatus('ok') }
