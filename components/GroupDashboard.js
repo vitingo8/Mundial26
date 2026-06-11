@@ -167,7 +167,7 @@ export default function GroupDashboard({
     const { migrated: k } = migratePredictionMap(user.predictions?.knockout || {}, knockoutMatches)
     setGroupPreds(g)
     setKoPreds(k)
-  }, [groupMatches.length, knockoutMatches.length])
+  }, [groupMatches, knockoutMatches, user.id, user.updated_at])
 
   useEffect(() => {
     if (tab === 'live' && apiStatus === 'idle' && wcMatches.length > 0) { setLiveData(wcMatches); setApiStatus('ok') }
@@ -616,7 +616,7 @@ function PredictionsTab({
     <div className="dash-tab-panel">
       {orphanGroupKeys > 0 && (
         <div className="dash-banner dash-banner--info">
-          {orphanGroupKeys} predicción(es) con formato antiguo — se reindexan al guardar.
+          {orphanGroupKeys} predicción(es) no se pudieron enlazar al calendario actual.
         </div>
       )}
 
