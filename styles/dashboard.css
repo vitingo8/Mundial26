@@ -322,6 +322,27 @@
   animation: dashFadeIn 0.35s ease both;
 }
 
+.live-ptr {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  margin: -8px 0 -4px;
+  color: var(--dash-muted);
+  transition: height 0.15s ease;
+}
+
+.live-ptr-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding-bottom: 6px;
+}
+
+.live-ptr--refreshing {
+  height: 40px;
+}
+
 @keyframes dashFadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

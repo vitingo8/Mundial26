@@ -6,6 +6,7 @@ import { getStoredWriteToken } from '../lib/sessionToken'
 import { migratePredictionMap, countOrphanPredKeys, migrateGroupResults } from '../lib/matchIdMap'
 import { isPhaseLocked, msUntilDeadline, formatCountdown } from '../lib/phaseLock'
 import { usePredictions } from '../hooks/usePredictions'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { useWcMatches } from '../hooks/useWcMatches'
 import { useAutoSyncResults } from '../hooks/useAutoSyncResults'
 
@@ -84,7 +85,7 @@ import {
   formatMadridDateTime,
 } from '../lib/madridTime'
 import {
-  Icon, IconLabel, RankDisplay, SaveButtonLabel, RefreshButtonLabel,
+  Icon, IconLabel, RankDisplay, SaveButtonLabel,
   RoundHeader, TAB_ICONS, PHASE_ICONS, BONUS_FIELD_ICONS,
 } from './icons'
 
@@ -1271,6 +1272,9 @@ function LiveTab({
   const phasePreds = livePhase === 'group' ? (userPreds?.group || {}) : (userPreds?.knockout || {})
   const showFallback = apiStatus === 'unavailable' || (apiStatus === 'idle' && !wcLoading && liveData.length === 0)
   const hasSchedule = liveData.length > 0 && !showFallback
+  const { pull, refreshing: pullRefreshing, hint: pullHint } = usePullToRefresh(onFetch, {
+    enabled: !detailMatch,
+  })
 
   const livePhases = [
     { id: 'group', label: 'Fase de grupos', icon: PHASE_ICONS.group },
@@ -1278,23 +1282,20 @@ function LiveTab({
   ]
 
   return (
-    <div className="dash-tab-panel">
-      <div style={s.liveHeader}>
-        <SectionTitle icon="signal">Resultados en Vivo</SectionTitle>
-        <button
-          type="button"
-          style={s.fetchBtn}
-          onClick={onFetch}
-          disabled={apiStatus === 'loading'}
-          aria-label="Actualizar resultados"
+    <div className="dash-tab-panel dash-tab-panel--live">
+      {(pull > 0 || pullRefreshing) && (
+        <div
+          className={`live-ptr${pullRefreshing ? ' live-ptr--refreshing' : ''}`}
+          style={{ height: pullRefreshing ? 40 : Math.max(pull, 0) }}
+          aria-live="polite"
         >
-          <RefreshButtonLabel loading={apiStatus === 'loading'} />
-        </button>
-      </div>
+          {pullHint && <span className="live-ptr-label">{pullHint}</span>}
+        </div>
+      )}
 
       {apiStatus === 'idle' && !wcLoading && liveData.length === 0 && (
         <div style={s.apiCard}>
-          <div style={s.apiMsg}>Pulsa actualizar para cargar resultados en vivo</div>
+          <div style={s.apiMsg}>Cargando resultados en vivo…</div>
         </div>
       )}
       {wcLoading && apiStatus !== 'loading' && (
@@ -1929,13 +1930,6 @@ const s = {
   lbBreak: { color: 'var(--muted)', fontSize: 11, marginTop: 1 },
   lbTotal: {
     fontSize: 22, fontWeight: 900, color: 'var(--accent-dark)', flexShrink: 0
-  },
-  liveHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  fetchBtn: {
-    background: 'var(--card)', border: '1px solid var(--border)',
-    color: 'var(--accent-dark)', borderRadius: 8, padding: '7px 12px',
-    fontSize: 13, fontWeight: 700, cursor: 'pointer',
-    display: 'flex', alignItems: 'center', gap: 6
   },
   apiCard: {
     background: 'var(--card)', border: '1px solid var(--border)',

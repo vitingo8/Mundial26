@@ -355,9 +355,10 @@ export default function PlayerDetailSheet({
 }) {
   const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState('destacados')
+  const [loadedTabs, setLoadedTabs] = useState(() => new Set())
   const [heatmapCircles, setHeatmapCircles] = useState(null)
   const [heatmapTemplate, setHeatmapTemplate] = useState(null)
-  const [heatmapLoading, setHeatmapLoading] = useState(true)
+  const [heatmapLoading, setHeatmapLoading] = useState(false)
   const bodyRef = useRef(null)
 
   const lineupPlayer = useMemo(
@@ -382,15 +383,31 @@ export default function PlayerDetailSheet({
 
   useEffect(() => {
     setActiveTab('destacados')
+    setLoadedTabs(new Set())
+    setHeatmapCircles(null)
+    setHeatmapTemplate(null)
+    setHeatmapLoading(false)
   }, [playerId])
+
+  function activateTab(tabId) {
+    setActiveTab(tabId)
+    setLoadedTabs(prev => {
+      if (prev.has(tabId)) return prev
+      const next = new Set(prev)
+      next.add(tabId)
+      return next
+    })
+  }
 
   useEffect(() => {
     const el = bodyRef.current
     if (el) el.scrollTop = 0
   }, [activeTab, playerId])
 
+  const loadDestacados = loadedTabs.has('destacados')
+
   useEffect(() => {
-    if (!playerId || !matchId) return
+    if (!playerId || !matchId || !loadDestacados) return
     let cancelled = false
     setHeatmapLoading(true)
     setHeatmapCircles(null)
@@ -418,7 +435,7 @@ export default function PlayerDetailSheet({
         if (!cancelled) setHeatmapLoading(false)
       })
     return () => { cancelled = true }
-  }, [matchId, playerId, match?.heatmapPubUrl, player?.optaId])
+  }, [matchId, playerId, match?.heatmapPubUrl, player?.optaId, loadDestacados])
 
   useEffect(() => {
     if (!playerId) return
@@ -515,7 +532,7 @@ export default function PlayerDetailSheet({
                 role="tab"
                 aria-selected={activeTab === tab.id}
                 className={`player-detail-tab${activeTab === tab.id ? ' player-detail-tab--active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => activateTab(tab.id)}
               >
                 {tab.label}
               </button>
@@ -525,7 +542,13 @@ export default function PlayerDetailSheet({
 
         <div className="player-detail-body" ref={bodyRef}>
           <div className="player-detail-tab-panel">
-            {activeTab === 'destacados' && (
+            {!loadedTabs.has(activeTab) && (
+              <p className="player-detail-hint">
+                Pulsa la pestaña para cargar el contenido.
+              </p>
+            )}
+
+            {loadedTabs.has('destacados') && activeTab === 'destacados' && (
               <>
                 {heatmapLoading ? (
                   <p className="player-detail-hint">Cargando mapa de calor…</p>
@@ -541,7 +564,7 @@ export default function PlayerDetailSheet({
               </>
             )}
 
-            {activeTab === 'estadisticas' && (
+            {loadedTabs.has('estadisticas') && activeTab === 'estadisticas' && (
               <PlayerStatSections sections={player.statSections} />
             )}
           </div>
