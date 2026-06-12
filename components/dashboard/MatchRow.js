@@ -288,6 +288,9 @@ export default function MatchRow({
         status={apiRaw.status}
         liveMinute={apiRaw.liveTime?.short || (apiRaw.minute != null ? `${apiRaw.minute}'` : null)}
         onOpenDetail={onOpenLiveDetail}
+        apiRaw={isApiFinished ? apiRaw : null}
+        homeLabel={home}
+        awayLabel={away}
       />
     )}
     <div

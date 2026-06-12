@@ -2029,11 +2029,17 @@
   gap: 5px;
   flex: 1 1 auto;
   min-width: 0;
-  padding-right: 2.75rem;
+}
+
+.porra-live-strip__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .porra-live-strip--clickable .porra-live-strip__match {
-  padding-right: 3.35rem;
+  padding-right: 0;
 }
 
 button.porra-live-strip {
@@ -2085,10 +2091,8 @@ button.porra-live-strip {
 }
 
 .porra-live-strip__badge {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+  position: static;
+  transform: none;
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -2113,20 +2117,8 @@ button.porra-live-strip {
 }
 
 .porra-live-strip__chevron {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
   opacity: 0.7;
   flex-shrink: 0;
-}
-
-.porra-live-strip--clickable .porra-live-strip__badge {
-  right: 22px;
-}
-
-.porra-live-strip--clickable .porra-live-strip__chevron {
-  right: 8px;
 }
 
 .porra-live-strip--clickable:hover .porra-live-strip__chevron {
@@ -2135,6 +2127,201 @@ button.porra-live-strip {
 
 .porra-live-strip--finished .porra-live-strip__badge:not(.porra-live-strip__badge--ft) {
   color: var(--dash-muted);
+}
+
+.schedule-match-center-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.fifa-highlights-btn--strip {
+  padding: 1px;
+}
+
+.fifa-highlights-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 4px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 184, 255, 0.12);
+  color: #0088cc;
+  cursor: pointer;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.fifa-highlights-btn:hover {
+  background: rgba(0, 184, 255, 0.22);
+  color: #006da3;
+}
+
+.fifa-highlights-btn:focus-visible {
+  outline: 2px solid #00b8ff;
+  outline-offset: 2px;
+}
+
+.fifa-highlights-btn--compact {
+  padding: 2px;
+}
+
+.fifa-highlights-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(16px, var(--safe-top)) 16px max(16px, var(--safe-bottom));
+  background: rgba(29, 49, 38, 0.58);
+  isolation: isolate;
+}
+
+.fifa-highlights-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(960px, 100%);
+  max-height: min(90dvh, 640px);
+  background: var(--white);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(29, 49, 38, 0.28);
+}
+
+.fifa-highlights-sheet__close {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--dash-text, #1d3126);
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+
+.fifa-highlights-sheet__media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #020f2a;
+}
+
+.fifa-highlights-sheet__thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fifa-highlights-sheet__thumb--empty {
+  background: linear-gradient(135deg, #020f2a 0%, #1a3a5c 100%);
+}
+
+.fifa-highlights-sheet__player {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.fifa-highlights-sheet__play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: rgba(2, 15, 42, 0.35);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.fifa-highlights-sheet__play:hover {
+  background: rgba(2, 15, 42, 0.5);
+}
+
+.fifa-highlights-sheet__body {
+  padding: 16px 18px 20px;
+}
+
+.fifa-highlights-sheet__title {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--dash-text, #1d3126);
+}
+
+.fifa-highlights-sheet__hint {
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--dash-muted);
+}
+
+.fifa-highlights-sheet__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 999px;
+  background: #00b8ff;
+  color: #020f2a;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fifa-highlights-sheet__cta:hover {
+  background: #33c9ff;
+}
+
+.fifa-highlights-sheet__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fifa-highlights-sheet__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dash-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fifa-highlights-sheet__link:hover {
+  color: var(--dash-text, #1d3126);
+  background: rgba(29, 49, 38, 0.06);
 }
 
 .match-status-label-row {
@@ -2179,11 +2366,10 @@ button.porra-live-strip {
   .porra-live-strip__match {
     flex-wrap: wrap;
     row-gap: 2px;
-    padding-right: 2.5rem;
   }
 
   .porra-live-strip--clickable .porra-live-strip__match {
-    padding-right: 3.1rem;
+    padding-right: 0;
   }
 
   .porra-live-strip__team {

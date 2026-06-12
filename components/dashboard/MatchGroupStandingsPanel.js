@@ -101,6 +101,7 @@ export default function MatchGroupStandingsPanel({
                       ? () => onOpenMatch(m)
                       : undefined
                   }
+                  apiRaw={raw}
                 />
               </div>
             )

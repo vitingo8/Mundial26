@@ -2,12 +2,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../lib/supabase'
-import { SCORING } from '../lib/gameData'
 import { isValidEmail, normalizeEmail } from '../lib/emailUtils'
 import { findParticipantsByEmail } from '../lib/participantLookup'
 import { getSavedEmail, saveEmail } from '../lib/savedEmail'
 import { InputActionRow } from './InputRow'
-import { Icon, IconLabel } from './icons'
+import { Icon } from './icons'
 import LeagueLogo from './LeagueLogo'
 
 export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJoinNewUser, notify, onRecovered }) {
@@ -128,8 +127,6 @@ export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJo
 
       </div>
 
-      <ScoringCard />
-
       <p className="on-pattern-muted" style={s.privacy}>
         Si ya tienes cuenta, entras con tu email. Si es nuevo, crearás tu perfil y luego el código del grupo.
       </p>
@@ -149,39 +146,6 @@ function PickGroupHero() {
       <img src="/logo-wc26.png" alt="FIFA World Cup 2026" style={s.logo} width={200} height={200} />
       <h1 className="home-title on-pattern" style={s.title}>PORRA<br /><span style={s.year}>MUNDIAL<br />2026</span></h1>
       <p className="on-pattern-muted" style={s.sub}>EE. UU. · Canadá · México · {new Date().getFullYear()}</p>
-    </div>
-  )
-}
-
-function ScoringCard() {
-  return (
-    <div style={s.scoringCard} className="animate-in">
-      <div style={{ ...s.cardTitle, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Icon name="clipboardList" size="md" /> Puntuación
-      </div>
-      <div style={s.scoreGrid}>
-        <ScoreRow icon="checkCircle" label="Resultado correcto (G/E/P)" pts={`+${SCORING.correctOutcome}`} />
-        <ScoreRow icon="viewfinderCircle" label="Marcador exacto (bonus)" pts={`+${SCORING.exactScore}`} />
-        <ScoreRow icon="bolt" label="Eliminatorias: G/E/P y exacto si el cruce cuadra" pts={`+${SCORING.correctOutcome} / +${SCORING.exactScore}`} />
-        <ScoreRow icon="bolt" label="Eliminatorias: acierto quién pasa" pts={`+${SCORING.knockoutAdvance}`} />
-        <ScoreRow icon="user" label="Máximo goleador" pts={`+${SCORING.topScorer}`} />
-        <ScoreRow icon="shieldCheck" label="Mejor portero" pts={`+${SCORING.topKeeper}`} />
-        <ScoreRow icon="arrowTrendingUp" label="Máximo asistente" pts={`+${SCORING.topAssists}`} />
-        <ScoreRow icon="star" label="MVP del torneo" pts={`+${SCORING.mvp}`} />
-      </div>
-    </div>
-  )
-}
-
-function ScoreRow({ icon, label, pts }) {
-  return (
-    <div style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: 13,
-      color: 'var(--muted)',
-    }}>
-      <IconLabel icon={icon} iconSize="sm">{label}</IconLabel>
-      <span style={{ color: 'var(--accent-dark)', fontWeight: 700, fontSize: 16 }}>{pts} pts</span>
     </div>
   )
 }
@@ -222,18 +186,6 @@ const s = {
   btnLink: {
     background: 'none', border: 'none', color: '#fff',
     cursor: 'pointer', fontSize: 13, padding: 8, textAlign: 'center',
-  },
-  scoringCard: {
-    background: 'var(--card)', border: '1px solid var(--border)',
-    borderRadius: 18, padding: 20, animationDelay: '0.2s', boxShadow: 'var(--card-shadow)',
-  },
-  cardTitle: { fontSize: 18, fontWeight: 800, marginBottom: 14, letterSpacing: 0.5 },
-  scoreGrid: { display: 'flex', flexDirection: 'column' },
-  weights: { display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' },
-  weightPill: {
-    flex: 1, textAlign: 'center', background: 'var(--accent-dim)',
-    border: '1px solid var(--accent-glow)', borderRadius: 20,
-    padding: '6px 12px', fontSize: 13, color: 'var(--muted)',
   },
   privacy: { fontSize: 11, textAlign: 'center', lineHeight: 1.5, padding: '0 8px' },
   guideLink: {

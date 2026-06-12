@@ -187,6 +187,9 @@ export default function BracketMatchSlot({
           status={apiRaw.status}
           liveMinute={apiRaw.liveTime?.short || (apiRaw.minute != null ? `${apiRaw.minute}'` : null)}
           onOpenDetail={onOpenMatch ? () => onOpenMatch(match) : undefined}
+          apiRaw={isApiFinished ? apiRaw : null}
+          homeLabel={match.home}
+          awayLabel={match.away}
         />
       )}
       <div className="bracket-slot-tag">P{match.matchNumber}</div>

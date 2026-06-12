@@ -78,6 +78,7 @@ export default function LiveGroupStandingsView({
                   showMatchDate
                   onGoToPrediction={onGoToPrediction ? () => onGoToPrediction(m.id) : undefined}
                   onOpenDetail={onOpenMatch ? () => onOpenMatch(m) : undefined}
+                  apiRaw={raw}
                 />
               )
             })}

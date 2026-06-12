@@ -96,6 +96,7 @@ export default function LiveMatchDaySchedule({
         compact={compact}
         onGoToPrediction={onGoToPrediction ? () => onGoToPrediction(m.id) : undefined}
         onOpenDetail={onOpenMatch ? () => onOpenMatch(m) : undefined}
+        apiRaw={raw}
       />
     )
   }

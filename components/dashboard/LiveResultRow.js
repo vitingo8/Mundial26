@@ -2,6 +2,7 @@
 
 import TeamCrest from '../TeamCrest'
 import { Icon, MatchStatus } from '../icons'
+import FifaHighlightsButton from './FifaHighlightsButton'
 import { formatMatchKickoff, formatMatchShortDate } from '../../lib/matchSchedule'
 
 const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
@@ -14,7 +15,17 @@ function normalizeLiveMinute(raw) {
 }
 
 /** Cabecera minimalista en Porra: Local 1:0 Visitante · min · Vivo / FT (etiqueta a la derecha) */
-export function PorraLiveHeader({ home, away, score, status, liveMinute, onOpenDetail }) {
+export function PorraLiveHeader({
+  home,
+  away,
+  score,
+  status,
+  liveMinute,
+  onOpenDetail,
+  apiRaw = null,
+  homeLabel,
+  awayLabel,
+}) {
   const isFinished = status === 'FINISHED'
   const isLive = LIVE_STATUSES.has(status)
   const isPaused = status === 'PAUSED'
@@ -38,19 +49,30 @@ export function PorraLiveHeader({ home, away, score, status, liveMinute, onOpenD
         <span className="porra-live-strip__team">{away}</span>
         {minute && <span className="porra-live-strip__minute">{minute}</span>}
       </span>
-      <span className={`porra-live-strip__badge${isFinished ? ' porra-live-strip__badge--ft' : ''}`}>
-        {!isFinished && (
-          isPaused ? (
-            <Icon name="pauseCircle" size={11} />
-          ) : (
-            <Icon name="signal" size={11} className="live-score-block__live-icon" />
-          )
+      <span className="porra-live-strip__actions">
+        <span className={`porra-live-strip__badge${isFinished ? ' porra-live-strip__badge--ft' : ''}`}>
+          {!isFinished && (
+            isPaused ? (
+              <Icon name="pauseCircle" size={11} />
+            ) : (
+              <Icon name="signal" size={11} className="live-score-block__live-icon" />
+            )
+          )}
+          <span>{label}</span>
+        </span>
+        {isFinished && (
+          <FifaHighlightsButton
+            apiRaw={apiRaw}
+            homeLabel={homeLabel ?? home}
+            awayLabel={awayLabel ?? away}
+            compact
+            className="fifa-highlights-btn--strip"
+          />
         )}
-        <span>{label}</span>
+        {onOpenDetail && (
+          <Icon name="chevronRight" size={11} className="porra-live-strip__chevron" aria-hidden />
+        )}
       </span>
-      {onOpenDetail && (
-        <Icon name="chevronRight" size={11} className="porra-live-strip__chevron" aria-hidden />
-      )}
     </>
   )
 
@@ -131,6 +153,7 @@ export default function LiveResultRow({
   onOpenDetail,
   matchRef,
   showMatchDate = false,
+  apiRaw = null,
 }) {
   const isLive = LIVE_STATUSES.has(status)
   const isFinished = status === 'FINISHED'
@@ -174,20 +197,34 @@ export default function LiveResultRow({
           <span className="schedule-match-team-name">{home}</span>
         </div>
         <div className="schedule-match-center">
-          <span className="schedule-match-scoreline" aria-label={`Resultado ${scoreLabel}`}>
-            {hasScore ? (
-              <>
-                <span>{score.home}</span>
-                <span className="schedule-match-score-sep" aria-hidden>:</span>
-                <span>{score.away}</span>
-              </>
-            ) : (
-              <span className="schedule-match-scoreline--pending">–</span>
+          <span className="schedule-match-center-actions">
+            <span className="schedule-match-scoreline" aria-label={`Resultado ${scoreLabel}`}>
+              {hasScore ? (
+                <>
+                  <span>{score.home}</span>
+                  <span className="schedule-match-score-sep" aria-hidden>:</span>
+                  <span>{score.away}</span>
+                </>
+              ) : (
+                <span className="schedule-match-scoreline--pending">–</span>
+              )}
+            </span>
+            {isLive && hasScore && (
+              <span className="schedule-match-live-dot" aria-label="En juego" />
+            )}
+            {isFinished && (
+              <FifaHighlightsButton
+                apiRaw={apiRaw}
+                homeLabel={home}
+                awayLabel={away}
+                compact
+                className="fifa-highlights-btn--strip"
+              />
+            )}
+            {clickable && isFinished && (
+              <Icon name="chevronRight" size={11} className="match-status-label__chevron" aria-hidden />
             )}
           </span>
-          {isLive && hasScore && (
-            <span className="schedule-match-live-dot" aria-label="En juego" />
-          )}
         </div>
         <div className="schedule-match-team schedule-match-team--away">
           <TeamCrest src={awayCrest} alt={away} size={crestSize} />
@@ -242,12 +279,26 @@ export default function LiveResultRow({
             </div>
             {!isFinished && renderKickoff()}
             {status && (
-              <MatchStatus
-                status={status}
-                highlight={false}
-                upcoming={isUpcoming}
-                withChevron={clickable && isFinished}
-              />
+              <span className="match-status-label-row">
+                <MatchStatus
+                  status={status}
+                  highlight={false}
+                  upcoming={isUpcoming}
+                  withChevron={false}
+                />
+                {isFinished && (
+                  <FifaHighlightsButton
+                    apiRaw={apiRaw}
+                    homeLabel={home}
+                    awayLabel={away}
+                    compact
+                    className="fifa-highlights-btn--strip"
+                  />
+                )}
+                {clickable && isFinished && (
+                  <Icon name="chevronRight" size={11} className="match-status-label__chevron" aria-hidden />
+                )}
+              </span>
             )}
           </>
         ) : (
