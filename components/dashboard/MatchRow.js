@@ -4,6 +4,7 @@ import { useMemo, useRef } from 'react'
 
 import TeamCrest from '../TeamCrest'
 import { summarizeMatchPoints } from '../../lib/matchPointsDisplay'
+import { isExactScoreHit } from '../../lib/gameData'
 import MatchPointsBubble from './MatchPointsBubble'
 
 import { formatMatchKickoff, formatMatchShortDate } from '../../lib/matchSchedule'
@@ -217,6 +218,12 @@ export default function MatchRow({
     return summarizeMatchPoints(predRow, apiScore, scoringOpts)
   }, [isApiFinished, apiScore, publishedResult, homeVal, awayVal, advancesVal, scoringOpts])
 
+  const resultForCompare = publishedResult || apiScore || null
+  const isExactHit = useMemo(
+    () => isExactScoreHit(predRow, resultForCompare, scoringOpts),
+    [predRow, resultForCompare, scoringOpts],
+  )
+
   function setRowRef(el) {
 
     rowRef.current = el
@@ -351,8 +358,8 @@ export default function MatchRow({
           <span className="schedule-match-scores-wrap">
             {pointsBubble}
             <span
-              className="schedule-match-scoreline"
-              aria-label={`${home} ${homeVal === '' ? 'sin marcar' : homeVal}, ${away} ${awayVal === '' ? 'sin marcar' : awayVal}`}
+              className={`schedule-match-scoreline${isExactHit ? ' schedule-match-scoreline--exact' : ''}`}
+              aria-label={`${home} ${homeVal === '' ? 'sin marcar' : homeVal}, ${away} ${awayVal === '' ? 'sin marcar' : awayVal}${isExactHit ? ' · marcador exacto' : ''}`}
             >
               <span>{homeVal === '' ? '–' : homeVal}</span>
               <span className="schedule-match-score-sep" aria-hidden>:</span>
@@ -366,7 +373,7 @@ export default function MatchRow({
 
             <div className="schedule-match-scores-wrap">
             {pointsBubble}
-            <div className="schedule-match-scores">
+            <div className={`schedule-match-scores${isExactHit ? ' schedule-match-scores--exact' : ''}`}>
 
               <ScoreInput
 

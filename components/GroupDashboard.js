@@ -394,6 +394,7 @@ export default function GroupDashboard({
                   groupResults={provisionalResults}
                   groupMatches={groupMatches}
                   knockoutMatches={knockoutMatches}
+                  wcMatches={wcMatches}
                   onLeave={onLeave}
                   currentUserId={user.id}
                 />
@@ -474,7 +475,7 @@ export default function GroupDashboard({
 }
 
 // ─── GROUP TAB ────────────────────────────────────────────────────────────────
-function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupMatches, knockoutMatches, onLeave, currentUserId }) {
+function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupMatches, knockoutMatches, wcMatches = [], onLeave, currentUserId }) {
   const [view, setView] = useState('ranking')
   const [viewingParticipant, setViewingParticipant] = useState(null)
   const scoringOpts = useMemo(
@@ -484,6 +485,10 @@ function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupM
   const scoringGroup = useMemo(
     () => ({ ...group, results: groupResults }),
     [group, groupResults],
+  )
+  const participantPublishedResults = useMemo(
+    () => buildPublishedResultsMap(groupResults, 'group', groupMatches),
+    [groupResults, groupMatches],
   )
   const tableRows = useMemo(
     () => enrichLeaderboardWithStats(leaderboard, scoringGroup, scoringOpts),
@@ -605,6 +610,8 @@ function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupM
           participant={viewingParticipant}
           groupMatches={groupMatches}
           knockoutMatches={knockoutMatches}
+          publishedResults={participantPublishedResults}
+          apiMatches={wcMatches}
           currentUserId={currentUserId}
           bonusActuals={group.actuals}
           onClose={() => setViewingParticipant(null)}

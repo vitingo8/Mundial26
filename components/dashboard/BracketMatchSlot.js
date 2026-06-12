@@ -8,12 +8,14 @@ import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
 import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
 import { PorraLiveHeader } from './LiveResultRow'
 import { summarizeMatchPoints } from '../../lib/matchPointsDisplay'
+import { isExactScoreHit } from '../../lib/gameData'
 import { resolveKnockoutTeamsForScoring } from '../../lib/knockoutMatchScoring'
 import MatchPointsBubble from './MatchPointsBubble'
 import { MatchStatus } from '../icons'
 
 function BracketTeam({
   name, crest, score, pred, side, onScore, onAdvance, locked, readOnly, pickable, eliminated,
+  scoreExact = false,
 }) {
   const inner = (
     <>
@@ -22,7 +24,7 @@ function BracketTeam({
       </span>
       <span className="bracket-slot-name" title={name}>{name}</span>
       {!readOnly ? (
-        <span className="bracket-slot-score-wrap">
+        <span className={`bracket-slot-score-wrap${scoreExact ? ' bracket-slot-score-wrap--exact' : ''}`}>
           <ScoreInput
             value={pred ?? ''}
             onChange={v => onScore?.(side, v)}
@@ -114,6 +116,9 @@ export default function BracketMatchSlot({
     isApiFinished && apiScore && !publishedResult
       ? summarizeMatchPoints(predRow, apiScore, knockoutScoringOpts)
       : null
+
+  const resultForCompare = publishedResult || apiScore || null
+  const isExactHit = isExactScoreHit(predRow, resultForCompare, knockoutScoringOpts)
 
   const pointsBubble = (() => {
     if (pointsSummary?.pts > 0) {
@@ -207,6 +212,7 @@ export default function BracketMatchSlot({
         readOnly={readOnly}
         pickable={!!pickAdvance}
         eliminated={pickAdvance && pred.advances === 'away'}
+        scoreExact={isExactHit}
       />
 
       <BracketTeam
@@ -221,6 +227,7 @@ export default function BracketMatchSlot({
         readOnly={readOnly}
         pickable={!!pickAdvance}
         eliminated={pickAdvance && pred.advances === 'home'}
+        scoreExact={isExactHit}
       />
 
       {readOnly && apiRaw?.status && (

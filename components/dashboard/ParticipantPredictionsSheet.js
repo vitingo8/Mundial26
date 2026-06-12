@@ -21,6 +21,8 @@ export default function ParticipantPredictionsSheet({
   groupMatches,
   knockoutMatches = [],
   bonusActuals = {},
+  publishedResults = {},
+  apiMatches = [],
   onClose,
   currentUserId,
 }) {
@@ -131,6 +133,8 @@ export default function ParticipantPredictionsSheet({
                 onScore={() => {}}
                 gridClassName="group-standings-grid--participant"
                 knockoutMatches={knockoutMatches}
+                publishedResults={publishedResults}
+                apiMatches={apiMatches}
               />
             )
           ) : view === 'bonuses' ? (
@@ -149,6 +153,8 @@ export default function ParticipantPredictionsSheet({
               onScore={() => {}}
               onAdvance={() => {}}
               error={inicioKo.error}
+              publishedResults={publishedResults}
+              apiMatches={apiMatches}
             />
           )}
         </div>
