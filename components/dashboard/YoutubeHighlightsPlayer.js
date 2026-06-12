@@ -4,10 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 
 let ytApiPromise = null
 
-/** YouTube elige calidad según el tamaño del iframe; 1920×1080 fuerza stream 1080p. */
-const RENDER_WIDTH = 1920
-const RENDER_HEIGHT = 1080
+/** Tamaño interno alto para pedir 1080p en pantallas anchas. */
+const MAX_RENDER_WIDTH = 1920
+const MAX_RENDER_HEIGHT = 1080
 const SUGGESTED_QUALITY = 'hd1080'
+
+/** Por debajo de este scale los controles de YouTube quedan demasiado pequeños. */
+const MIN_COMFORTABLE_SCALE = 0.72
 
 function loadYoutubeIframeApi() {
   if (typeof window === 'undefined') return Promise.reject(new Error('SSR'))
@@ -39,23 +42,47 @@ function loadYoutubeIframeApi() {
   return ytApiPromise
 }
 
+function computeLayout(containerWidth) {
+  if (containerWidth <= 0) {
+    return { mode: 'native', width: 640, height: 360, scale: 1 }
+  }
+
+  const scaledScale = containerWidth / MAX_RENDER_WIDTH
+  if (scaledScale >= MIN_COMFORTABLE_SCALE) {
+    return {
+      mode: 'scaled',
+      width: MAX_RENDER_WIDTH,
+      height: MAX_RENDER_HEIGHT,
+      scale: scaledScale,
+    }
+  }
+
+  const width = Math.round(containerWidth)
+  const height = Math.round((width * 9) / 16)
+  return { mode: 'native', width, height, scale: 1 }
+}
+
 export default function YoutubeHighlightsPlayer({ videoId, title, className = '' }) {
   const wrapRef = useRef(null)
   const hostRef = useRef(null)
   const playerRef = useRef(null)
-  const [scale, setScale] = useState(1)
+  const [layout, setLayout] = useState(() => computeLayout(0))
 
   useEffect(() => {
     const el = wrapRef.current
     if (!el) return undefined
 
-    const updateScale = () => {
-      const width = el.clientWidth
-      if (width > 0) setScale(width / RENDER_WIDTH)
+    const updateLayout = () => {
+      const next = computeLayout(el.clientWidth)
+      setLayout(prev =>
+        prev.mode === next.mode && prev.width === next.width && prev.height === next.height
+          ? prev
+          : next,
+      )
     }
 
-    updateScale()
-    const ro = new ResizeObserver(updateScale)
+    updateLayout()
+    const ro = new ResizeObserver(updateLayout)
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
@@ -68,8 +95,8 @@ export default function YoutubeHighlightsPlayer({ videoId, title, className = ''
         if (cancelled || !hostRef.current) return
 
         playerRef.current = new YT.Player(hostRef.current, {
-          width: RENDER_WIDTH,
-          height: RENDER_HEIGHT,
+          width: layout.width,
+          height: layout.height,
           host: 'https://www.youtube-nocookie.com',
           playerVars: {
             autoplay: 1,
@@ -81,11 +108,10 @@ export default function YoutubeHighlightsPlayer({ videoId, title, className = ''
           events: {
             onReady: e => {
               const player = e.target
-              // suggestedQuality sigue siendo la única pista oficial al cargar el vídeo
               player.loadVideoById({
                 videoId,
                 startSeconds: 0,
-                suggestedQuality: SUGGESTED_QUALITY,
+                suggestedQuality: layout.mode === 'scaled' ? SUGGESTED_QUALITY : 'hd720',
               })
             },
           },
@@ -102,22 +128,28 @@ export default function YoutubeHighlightsPlayer({ videoId, title, className = ''
       }
       playerRef.current = null
     }
-  }, [videoId])
+  }, [videoId, layout.mode, layout.width, layout.height])
+
+  const isNative = layout.mode === 'native'
 
   return (
     <div
       ref={wrapRef}
-      className={`youtube-highlights-player${className ? ` ${className}` : ''}`}
+      className={`youtube-highlights-player${isNative ? ' youtube-highlights-player--native' : ''}${className ? ` ${className}` : ''}`}
       title={title}
       aria-label={title}
     >
       <div
         className="youtube-highlights-player__stage"
-        style={{
-          width: RENDER_WIDTH,
-          height: RENDER_HEIGHT,
-          transform: `scale(${scale})`,
-        }}
+        style={
+          isNative
+            ? undefined
+            : {
+                width: layout.width,
+                height: layout.height,
+                transform: `scale(${layout.scale})`,
+              }
+        }
       >
         <div ref={hostRef} className="youtube-highlights-player__host" />
       </div>

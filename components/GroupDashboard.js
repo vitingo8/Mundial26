@@ -166,6 +166,18 @@ export default function GroupDashboard({
   useEffect(() => { setPredPhase(getDefaultPredPhase(currentGroup.phase)) }, [currentGroup.phase])
 
   useEffect(() => {
+    function openLiveTab() {
+      setTab('live')
+    }
+    window.addEventListener('porra:open-live', openLiveTab)
+    if (sessionStorage.getItem('porra_open_live')) {
+      sessionStorage.removeItem('porra_open_live')
+      setTab('live')
+    }
+    return () => window.removeEventListener('porra:open-live', openLiveTab)
+  }, [])
+
+  useEffect(() => {
     if (tab === 'live' && apiStatus === 'idle' && wcMatches.length > 0) { setLiveData(wcMatches); setApiStatus('ok') }
   }, [tab, wcMatches, apiStatus])
 

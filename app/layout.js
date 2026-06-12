@@ -4,6 +4,7 @@ import '../styles/dashboard.css'
 import { Analytics } from '@vercel/analytics/next'
 import PwaRegister from '../components/PwaRegister'
 import SiteFooter from '../components/SiteFooter'
+import LiveFloatingButtons from '../components/LiveFloatingButtons'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,6 +44,7 @@ export default function RootLayout({ children }) {
       <body>
         <PwaRegister />
         {children}
+        <LiveFloatingButtons />
         <SiteFooter />
         <Analytics />
       </body>

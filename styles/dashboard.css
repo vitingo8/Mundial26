@@ -3606,12 +3606,30 @@ button.schedule-match-row:focus-visible {
   will-change: transform;
 }
 
+.youtube-highlights-player--native .youtube-highlights-player__stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  will-change: auto;
+}
+
 .youtube-highlights-player__host,
 .youtube-highlights-player__host iframe {
   display: block;
+  border: none;
+}
+
+.youtube-highlights-player:not(.youtube-highlights-player--native) .youtube-highlights-player__host,
+.youtube-highlights-player:not(.youtube-highlights-player--native) .youtube-highlights-player__host iframe {
   width: 1920px;
   height: 1080px;
-  border: none;
+}
+
+.youtube-highlights-player--native .youtube-highlights-player__host,
+.youtube-highlights-player--native .youtube-highlights-player__host iframe {
+  width: 100%;
+  height: 100%;
 }
 
 .feed-card {
@@ -7837,4 +7855,113 @@ button.schedule-match-team:disabled {
     padding: 8px 4px;
     letter-spacing: -0.02em;
   }
+}
+
+/* Live floating buttons (global) */
+.live-floating-wrap {
+  position: fixed;
+  right: max(12px, var(--safe-right));
+  bottom: calc(12px + var(--safe-bottom));
+  z-index: 58;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.live-floating-wrap--dashboard {
+  bottom: calc(72px + var(--safe-bottom));
+}
+
+@media (min-width: 768px) {
+  .live-floating-wrap--dashboard {
+    bottom: calc(16px + var(--safe-bottom));
+  }
+}
+
+.live-floating-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(29, 49, 38, 0.92);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 4px 16px rgba(29, 49, 38, 0.28);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-tap-highlight-color: transparent;
+  max-width: min(240px, calc(100vw - 24px));
+}
+
+.live-floating-btn:hover {
+  background: rgba(29, 49, 38, 0.98);
+}
+
+.live-floating-btn:focus-visible {
+  outline: 2px solid var(--wc-lime, #d6df23);
+  outline-offset: 2px;
+}
+
+.live-floating-btn__pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--wc-lime, #d6df23);
+  flex-shrink: 0;
+  animation: live-floating-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes live-floating-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.live-floating-btn--paused .live-floating-btn__pulse {
+  display: none;
+}
+
+.live-floating-btn__score {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.live-floating-btn__team {
+  max-width: 3.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+
+.live-floating-btn__nums {
+  font-weight: 900;
+  font-size: 0.78rem;
+  letter-spacing: -0.02em;
+  color: var(--wc-lime, #d6df23);
+}
+
+.live-floating-btn__min {
+  font-weight: 800;
+  font-size: 0.68rem;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.live-floating-btn__icon {
+  color: var(--wc-lime, #d6df23);
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.live-floating-btn--paused .live-floating-btn__min {
+  color: #f0c674;
 }
