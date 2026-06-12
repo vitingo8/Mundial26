@@ -22,6 +22,7 @@ import {
   getMatchDetailScore,
   getUnifiedSubstitutions,
   annotateBenchPlayers,
+  enrichPlayerMatchEvents,
   isLiveMatchStatus,
   pickStatsComparison,
   pickTeamStatistics,
@@ -283,6 +284,14 @@ export default function MatchDetailSheet({
     () => getUnifiedSubstitutions(match, homeName, awayName),
     [match, homeName, awayName],
   )
+  const homeLineup = useMemo(
+    () => (home.lineup || []).map(p => enrichPlayerMatchEvents(p, match, homeName)),
+    [home.lineup, match, homeName],
+  )
+  const awayLineup = useMemo(
+    () => (away.lineup || []).map(p => enrichPlayerMatchEvents(p, match, awayName)),
+    [away.lineup, match, awayName],
+  )
   const homeBench = useMemo(
     () => annotateBenchPlayers(home.bench, substitutions, homeName, match),
     [home.bench, substitutions, homeName, match],
@@ -513,7 +522,7 @@ export default function MatchDetailSheet({
               )}
 
               {activeTab === 'eventos' && (
-                <MatchEventsTimeline items={eventsTimeline} />
+                <MatchEventsTimeline items={eventsTimeline} onPlayerClick={openPlayer} />
               )}
 
               {activeTab === 'directo' && (
@@ -554,8 +563,8 @@ export default function MatchDetailSheet({
                     awayFormation={away.formation}
                     homeRating={home.rating}
                     awayRating={away.rating}
-                    homeLineup={home.lineup}
-                    awayLineup={away.lineup}
+                    homeLineup={homeLineup}
+                    awayLineup={awayLineup}
                     availableFilters={match?.lineupFilters}
                     onPlayerClick={openPlayer}
                   />
@@ -919,6 +928,10 @@ function CompareStatRow({ label, home, away, type }) {
 function BenchPlayerRow({ player, onPlayerClick }) {
   const subOn = player.subOn
   const sentOff = player.sentOff
+  const hasGoal = player.events?.includes('goal')
+  const hasAssist = player.events?.includes('assist')
+  const hasYellow = player.events?.includes('yellowCard')
+  const hasRed = player.events?.includes('redCard') || sentOff
   const clickable = typeof onPlayerClick === 'function' && player.id != null
   const rowClass = [
     'match-detail-bench-player',
@@ -938,9 +951,22 @@ function BenchPlayerRow({ player, onPlayerClick }) {
         {subOn && !sentOff && (
           <span className="match-detail-bench-arrow" aria-hidden="true">→</span>
         )}
-        {sentOff && (
-          <span className="match-detail-bench-card match-detail-bench-card--red" aria-hidden="true" />
-        )}
+        <div className="match-detail-bench-events">
+          {hasGoal && (
+            <span className="match-detail-bench-event match-detail-bench-event--goal" title="Gol" aria-hidden="true">
+              <Icon name="goal" size={10} />
+            </span>
+          )}
+          {hasAssist && (
+            <span className="match-detail-bench-event match-detail-bench-event--assist" title="Asistencia" aria-hidden="true">A</span>
+          )}
+          {hasYellow && !hasRed && (
+            <span className="match-detail-bench-event match-detail-bench-event--yellow" aria-hidden="true" />
+          )}
+          {hasRed && (
+            <span className="match-detail-bench-event match-detail-bench-event--red" aria-hidden="true" />
+          )}
+        </div>
       </div>
       <div className="match-detail-bench-body">
         <div className="match-detail-bench-name-row">
@@ -957,6 +983,11 @@ function BenchPlayerRow({ player, onPlayerClick }) {
               {subOn.replaced?.shirtNumber != null && `${subOn.replaced.shirtNumber} `}
               {subOn.replaced?.name || '—'}
             </span>
+          </p>
+        )}
+        {(hasGoal || hasAssist) && (
+          <p className="match-detail-bench-sub match-detail-bench-sub--contributions">
+            {hasGoal && hasAssist ? 'Gol y asistencia' : hasGoal ? 'Gol' : 'Asistencia'}
           </p>
         )}
         {sentOff && !subOn && (

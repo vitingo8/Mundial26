@@ -7,6 +7,7 @@ import { migratePredictionMap, countOrphanPredKeys, migrateGroupResults } from '
 import { isPhaseLocked, msUntilDeadline, formatCountdown } from '../lib/phaseLock'
 import { usePredictions } from '../hooks/usePredictions'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
+import { useSwipeTabs } from '../hooks/useSwipeTabs'
 import { useWcMatches } from '../hooks/useWcMatches'
 import { useAutoSyncResults } from '../hooks/useAutoSyncResults'
 
@@ -241,6 +242,13 @@ export default function GroupDashboard({
     { id: 'live', label: 'En Vivo', navLabel: 'Vivo' },
     ...(isAdmin ? [{ id: 'admin', label: 'Organización', navLabel: 'Org.' }] : []),
   ]
+  const swipeTabIds = useMemo(() => {
+    const ids = ['group', 'predictions', 'live']
+    if (isAdmin) ids.push('admin')
+    return ids
+  }, [isAdmin])
+
+  useSwipeTabs(swipeTabIds, tab, changeTab, { enabled: !profileMenuOpen })
 
   function tabNavLabel(t, compact = false) {
     return compact && t.navLabel ? t.navLabel : t.label

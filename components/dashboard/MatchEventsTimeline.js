@@ -8,21 +8,60 @@ function formatScoreLabel(score) {
   return `${score.home} - ${score.away}`
 }
 
-function EventPlayerAvatar({ photoUrl, name, card }) {
+function EventPlayerAvatar({ photoUrl, name, card, onClick, playerId }) {
   if (!photoUrl) return null
   const cardClass = card === 'RED'
     ? ' match-events-avatar--red'
     : card === 'YELLOW'
       ? ' match-events-avatar--yellow'
       : ''
+  const clickable = typeof onClick === 'function' && playerId != null
+  const img = (
+    <img src={photoUrl} alt={name || ''} loading="lazy" />
+  )
+
+  if (clickable) {
+    return (
+      <button
+        type="button"
+        className={`match-events-avatar match-events-avatar--clickable${cardClass}`}
+        onClick={() => onClick({ id: playerId, name })}
+        aria-label={name ? `Ver ficha de ${name}` : 'Ver ficha del jugador'}
+      >
+        {img}
+      </button>
+    )
+  }
+
   return (
     <span className={`match-events-avatar${cardClass}`}>
-      <img src={photoUrl} alt={name || ''} loading="lazy" />
+      {img}
     </span>
   )
 }
 
-function EventGoalContent({ item, side }) {
+function EventPlayerName({ name, playerId, onPlayerClick, className = 'match-events-primary' }) {
+  const clickable = typeof onPlayerClick === 'function' && playerId != null && name
+  if (!name) return null
+  if (clickable) {
+    return (
+      <button
+        type="button"
+        className={`${className} match-events-name-btn`}
+        onClick={() => onPlayerClick({ id: playerId, name })}
+      >
+        <strong>{name}</strong>
+      </button>
+    )
+  }
+  return (
+    <p className={className}>
+      <strong>{name}</strong>
+    </p>
+  )
+}
+
+function EventGoalContent({ item, side, onPlayerClick }) {
   const scoreLabel = formatScoreLabel(item.score)
   return (
     <div className={`match-events-event match-events-event--goal match-events-event--${side}`}>
@@ -31,12 +70,21 @@ function EventGoalContent({ item, side }) {
           <Icon name={goalIconName(item.goalType)} size={16} />
         </span>
       )}
-      <EventPlayerAvatar photoUrl={item.photoUrl} name={item.playerName} />
+      <EventPlayerAvatar
+        photoUrl={item.photoUrl}
+        name={item.playerName}
+        playerId={item.playerId}
+        onClick={onPlayerClick}
+      />
       <div className="match-events-event-body">
-        <p className="match-events-primary">
-          <strong>{item.playerName}</strong>
-          {scoreLabel && <span className="match-events-score"> ({scoreLabel})</span>}
-        </p>
+        <EventPlayerName
+          name={item.playerName}
+          playerId={item.playerId}
+          onPlayerClick={onPlayerClick}
+        />
+        {scoreLabel && (
+          <p className="match-events-score-inline">({scoreLabel})</p>
+        )}
         {item.subtext && (
           <p className="match-events-sub">{item.subtext}</p>
         )}
@@ -50,7 +98,44 @@ function EventGoalContent({ item, side }) {
   )
 }
 
-function EventSubContent({ item, side }) {
+function SubPlayerLine({ player, direction, onPlayerClick }) {
+  if (!player?.name) return null
+  const clickable = typeof onPlayerClick === 'function' && player.id != null
+  const className = direction === 'in' ? 'match-events-sub-in' : 'match-events-sub-out'
+  const inner = (
+    <>
+      {player.photoUrl && (
+        <EventPlayerAvatar
+          photoUrl={player.photoUrl}
+          name={player.name}
+          playerId={player.id}
+          onClick={onPlayerClick}
+        />
+      )}
+      <span>
+        {player.shirtNumber != null && `${player.shirtNumber} `}
+        {player.name}
+      </span>
+    </>
+  )
+
+  if (clickable) {
+    return (
+      <button
+        type="button"
+        className={`${className} match-events-sub-player--clickable`}
+        onClick={() => onPlayerClick(player)}
+        aria-label={`Ver ficha de ${player.name}`}
+      >
+        {inner}
+      </button>
+    )
+  }
+
+  return <p className={className}>{inner}</p>
+}
+
+function EventSubContent({ item, side, onPlayerClick }) {
   return (
     <div className={`match-events-event match-events-event--sub match-events-event--${side}`}>
       {side === 'away' && (
@@ -62,12 +147,8 @@ function EventSubContent({ item, side }) {
         </span>
       )}
       <div className="match-events-event-body">
-        {item.playerIn && (
-          <p className="match-events-sub-in">{item.playerIn}</p>
-        )}
-        {item.playerOut && (
-          <p className="match-events-sub-out">{item.playerOut}</p>
-        )}
+        <SubPlayerLine player={item.playerIn} direction="in" onPlayerClick={onPlayerClick} />
+        <SubPlayerLine player={item.playerOut} direction="out" onPlayerClick={onPlayerClick} />
       </div>
       {side === 'home' && (
         <span className="match-events-icon match-events-icon--sub" aria-hidden="true">
@@ -81,7 +162,7 @@ function EventSubContent({ item, side }) {
   )
 }
 
-function EventCardContent({ item, side }) {
+function EventCardContent({ item, side, onPlayerClick }) {
   const isRed = item.card === 'RED'
   return (
     <div className={`match-events-event match-events-event--card match-events-event--${side}`}>
@@ -91,10 +172,19 @@ function EventCardContent({ item, side }) {
           aria-hidden="true"
         />
       )}
-      <EventPlayerAvatar photoUrl={item.photoUrl} name={item.playerName} card={item.card} />
-      <p className="match-events-primary">
-        <strong>{item.playerName}</strong>
-      </p>
+      <EventPlayerAvatar
+        photoUrl={item.photoUrl}
+        name={item.playerName}
+        card={item.card}
+        playerId={item.playerId}
+        onClick={onPlayerClick}
+      />
+      <EventPlayerName
+        name={item.playerName}
+        playerId={item.playerId}
+        onPlayerClick={onPlayerClick}
+        className="match-events-primary match-events-primary--inline"
+      />
       {side === 'home' && (
         <span
           className={`match-events-card-dot${isRed ? ' match-events-card-dot--red' : ' match-events-card-dot--yellow'}`}
@@ -105,12 +195,12 @@ function EventCardContent({ item, side }) {
   )
 }
 
-function EventSideContent({ item }) {
+function EventSideContent({ item, onPlayerClick }) {
   if (item.isHome == null) return null
   const side = item.isHome ? 'home' : 'away'
-  if (item.kind === 'goal') return <EventGoalContent item={item} side={side} />
-  if (item.kind === 'sub') return <EventSubContent item={item} side={side} />
-  if (item.kind === 'card') return <EventCardContent item={item} side={side} />
+  if (item.kind === 'goal') return <EventGoalContent item={item} side={side} onPlayerClick={onPlayerClick} />
+  if (item.kind === 'sub') return <EventSubContent item={item} side={side} onPlayerClick={onPlayerClick} />
+  if (item.kind === 'card') return <EventCardContent item={item} side={side} onPlayerClick={onPlayerClick} />
   return null
 }
 
@@ -138,7 +228,7 @@ function CenterMarkerRow({ item }) {
   return null
 }
 
-export default function MatchEventsTimeline({ items }) {
+export default function MatchEventsTimeline({ items, onPlayerClick }) {
   if (!items.length) {
     return (
       <p className="match-detail-hint">
@@ -159,7 +249,7 @@ export default function MatchEventsTimeline({ items }) {
           return (
             <li key={item.id} className="match-events-row">
               <div className="match-events-col match-events-col--home">
-                {item.isHome === true && <EventSideContent item={item} />}
+                {item.isHome === true && <EventSideContent item={item} onPlayerClick={onPlayerClick} />}
               </div>
               <div className="match-events-col match-events-col--time">
                 {minuteLabel !== '—' && (
@@ -167,7 +257,7 @@ export default function MatchEventsTimeline({ items }) {
                 )}
               </div>
               <div className="match-events-col match-events-col--away">
-                {item.isHome === false && <EventSideContent item={item} />}
+                {item.isHome === false && <EventSideContent item={item} onPlayerClick={onPlayerClick} />}
               </div>
             </li>
           )
