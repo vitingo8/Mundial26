@@ -63,14 +63,6 @@ function HighlightsPreviewSheet({ data, homeLabel, awayLabel, onClose, startPlay
         aria-labelledby="fifa-highlights-title"
         onClick={e => e.stopPropagation()}
       >
-        <button
-          type="button"
-          className="fifa-highlights-sheet__close"
-          onClick={onClose}
-          aria-label="Cerrar"
-        >
-          <Icon name="chevronLeft" size={18} aria-hidden />
-        </button>
         <div className="fifa-highlights-sheet__media">
           {playing && data.youtubeId ? (
             <YoutubeHighlightsPlayer
@@ -120,14 +112,6 @@ function HighlightsPreviewSheet({ data, homeLabel, awayLabel, onClose, startPlay
                 </p>
               )}
             </div>
-            <button
-              type="button"
-              className="fifa-highlights-sheet__link"
-              onClick={() => openFifaHighlightsWindow(fifaUrl)}
-            >
-              <Icon name="arrowTopRightOnSquare" size={14} aria-hidden />
-              {data.watchUrl ? 'Ver en FIFA.com' : 'Ver artículo en FIFA.com'}
-            </button>
           </div>
           {!playing && hasEmbed && (
             <button type="button" className="fifa-highlights-sheet__cta" onClick={handlePlay}>

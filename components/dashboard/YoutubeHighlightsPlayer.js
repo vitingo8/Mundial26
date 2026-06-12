@@ -1,8 +1,13 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 let ytApiPromise = null
+
+/** YouTube elige calidad según el tamaño del iframe; 1920×1080 fuerza stream 1080p. */
+const RENDER_WIDTH = 1920
+const RENDER_HEIGHT = 1080
+const SUGGESTED_QUALITY = 'hd1080'
 
 function loadYoutubeIframeApi() {
   if (typeof window === 'undefined') return Promise.reject(new Error('SSR'))
@@ -27,7 +32,6 @@ function loadYoutubeIframeApi() {
       tag.async = true
       document.head.appendChild(tag)
     } else {
-      // La API puede estar cargando ya
       queueMicrotask(finish)
     }
   })
@@ -35,28 +39,26 @@ function loadYoutubeIframeApi() {
   return ytApiPromise
 }
 
-const QUALITY_1080 = 'hd1080'
-
-/** Pide 1080p; si no existe, la mejor calidad HD disponible. */
-function request1080p(player) {
-  if (!player?.setPlaybackQuality) return
-  try {
-    const levels = player.getAvailableQualityLevels?.() || []
-    if (levels.includes(QUALITY_1080)) {
-      player.setPlaybackQuality(QUALITY_1080)
-    } else if (levels.includes('highres')) {
-      player.setPlaybackQuality('highres')
-    } else if (levels.includes('hd720')) {
-      player.setPlaybackQuality('hd720')
-    }
-  } catch {
-    // YouTube puede ignorar la petición según red o dispositivo
-  }
-}
-
 export default function YoutubeHighlightsPlayer({ videoId, title, className = '' }) {
+  const wrapRef = useRef(null)
   const hostRef = useRef(null)
   const playerRef = useRef(null)
+  const [scale, setScale] = useState(1)
+
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return undefined
+
+    const updateScale = () => {
+      const width = el.clientWidth
+      if (width > 0) setScale(width / RENDER_WIDTH)
+    }
+
+    updateScale()
+    const ro = new ResizeObserver(updateScale)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -66,9 +68,8 @@ export default function YoutubeHighlightsPlayer({ videoId, title, className = ''
         if (cancelled || !hostRef.current) return
 
         playerRef.current = new YT.Player(hostRef.current, {
-          videoId,
-          width: '100%',
-          height: '100%',
+          width: RENDER_WIDTH,
+          height: RENDER_HEIGHT,
           host: 'https://www.youtube-nocookie.com',
           playerVars: {
             autoplay: 1,
@@ -79,13 +80,13 @@ export default function YoutubeHighlightsPlayer({ videoId, title, className = ''
           },
           events: {
             onReady: e => {
-              request1080p(e.target)
-              e.target.playVideo?.()
-            },
-            onStateChange: e => {
-              if (e.data === YT.PlayerState.PLAYING) {
-                request1080p(e.target)
-              }
+              const player = e.target
+              // suggestedQuality sigue siendo la única pista oficial al cargar el vídeo
+              player.loadVideoById({
+                videoId,
+                startSeconds: 0,
+                suggestedQuality: SUGGESTED_QUALITY,
+              })
             },
           },
         })
@@ -105,10 +106,21 @@ export default function YoutubeHighlightsPlayer({ videoId, title, className = ''
 
   return (
     <div
-      ref={hostRef}
-      className={className}
+      ref={wrapRef}
+      className={`youtube-highlights-player${className ? ` ${className}` : ''}`}
       title={title}
       aria-label={title}
-    />
+    >
+      <div
+        className="youtube-highlights-player__stage"
+        style={{
+          width: RENDER_WIDTH,
+          height: RENDER_HEIGHT,
+          transform: `scale(${scale})`,
+        }}
+      >
+        <div ref={hostRef} className="youtube-highlights-player__host" />
+      </div>
+    </div>
   )
 }
