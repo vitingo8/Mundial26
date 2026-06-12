@@ -91,7 +91,7 @@ import {
 export default function GroupDashboard({
   group, user, refreshGroup, setCurrentUser, notify, onLeave, onGoHome, onSwitchGroup,
 }) {
-  const [tab, setTab] = useState('group')
+  const [tab, setTab] = useState('live')
   const [predPhase, setPredPhase] = useState('group')
   const [scrollToMatchId, setScrollToMatchId] = useState(null)
   const [liveData, setLiveData] = useState([])
@@ -453,8 +453,10 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
     setViewingParticipant(p)
   }
 
+  const leader = tableRows[0]
+
   return (
-    <div className="dash-tab-panel">
+    <div className="dash-tab-panel dash-tab-panel--ranking">
       <div className="group-view-toggle" role="tablist" aria-label="Vista de participantes">
         <button
           type="button"
@@ -463,6 +465,7 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
           className={`group-view-btn${view === 'ranking' ? ' group-view-btn--active' : ''}`}
           onClick={() => setView('ranking')}
         >
+          <Icon name="trophy" size="sm" />
           Ranking
         </button>
         <button
@@ -472,14 +475,14 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
           className={`group-view-btn${view === 'table' ? ' group-view-btn--active' : ''}`}
           onClick={() => setView('table')}
         >
+          <Icon name="chartBar" size="sm" />
           Tabla
         </button>
       </div>
 
       {view === 'table' ? (
         <>
-          <SectionTitle>Tabla de puntuación · {leaderboard.length}</SectionTitle>
-          <p className="group-preds-hint">Toca un jugador para ver su clasificación y cuadro.</p>
+          <p className="ranking-hint">Toca un jugador para ver su clasificación y cuadro.</p>
           <GroupStatsTable
             rows={tableRows}
             currentUserId={currentUserId}
@@ -488,47 +491,73 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
         </>
       ) : (
         <>
-          <SectionTitle>Participantes · {leaderboard.length}</SectionTitle>
-          <p className="group-preds-hint">Toca un jugador para ver su clasificación y cuadro.</p>
-          {tableRows.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              className={`dash-player-row dash-player-row--clickable${p.id === currentUserId ? ' dash-player-row--you' : ''}${i === 0 ? ' dash-player-row--leader' : ''}`}
-              onClick={() => openParticipantPreds(p)}
-              aria-label={`Ver porra de ${p.team_name?.trim() || p.name}`}
-            >
-              <div className="dash-player-leading">
-                <div className={`dash-rank${i > 2 ? ' dash-rank--num' : ''}`}>
-                  <RankDisplay index={i} />
-                </div>
-                <ParticipantAvatar participant={p} size={40} />
-              </div>
-              <div className="dash-player-info">
-                <ParticipantDisplay
-                  participant={p}
-                  isYou={p.id === currentUserId}
-                  showAdmin
-                />
-              </div>
-              <div className="dash-points">
-                <span className="dash-points-total" title={`${p.total ?? 0} de ${SCORING_COLUMN_LIMITS.total} pts`}>
-                  {formatPtsOfMax(p.total, SCORING_COLUMN_LIMITS.total)}
-                </span>
-                <span className="dash-points-unit"> pts</span>
-                <span className="dash-points-of-max">
-                  Inicio {formatPtsOfMax(p.inicioPts, SCORING_COLUMN_LIMITS.inicioPts)}
-                  {' · '}
-                  KO {formatPtsOfMax(p.knockoutPts, SCORING_COLUMN_LIMITS.knockoutPts)}
-                </span>
-                <span className="dash-points-of-max">
-                  Esp. {formatPtsOfMax(p.especialPts, SCORING_COLUMN_LIMITS.especialPts)}
-                  {' · '}
-                  MVP {formatPtsOfMax(p.mvpPts, SCORING_COLUMN_LIMITS.mvpPts)}
+          {leader && (
+            <div className="ranking-podium" aria-hidden="true">
+              <div className="ranking-podium-glow" />
+              <div className="ranking-podium-inner">
+                <Icon name="trophy" size={18} style={{ color: '#c9a227' }} />
+                <span className="ranking-podium-label">Líder</span>
+                <span className="ranking-podium-name">{leader.team_name?.trim() || leader.name}</span>
+                <span className="ranking-podium-pts">
+                  {formatPtsOfMax(leader.total, SCORING_COLUMN_LIMITS.total)} pts
                 </span>
               </div>
-            </button>
-          ))}
+            </div>
+          )}
+          <p className="ranking-hint">Toca un jugador para ver su porra completa.</p>
+          <div className="ranking-board">
+            <div className="ranking-list">
+              {tableRows.map((p, i) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={[
+                    'ranking-row',
+                    p.id === currentUserId && 'ranking-row--you',
+                    i === 0 && 'ranking-row--leader',
+                    i < 3 && `ranking-row--podium-${i + 1}`,
+                  ].filter(Boolean).join(' ')}
+                  onClick={() => openParticipantPreds(p)}
+                  aria-label={`Ver porra de ${p.team_name?.trim() || p.name}`}
+                >
+                  <div className={`ranking-rank${i > 2 ? ' ranking-rank--num' : ''}`}>
+                    <RankDisplay index={i} />
+                  </div>
+                  <ParticipantAvatar participant={p} size={32} />
+                  <div className="ranking-info">
+                    <ParticipantDisplay
+                      participant={p}
+                      isYou={p.id === currentUserId}
+                      showAdmin
+                      compact
+                    />
+                  </div>
+                  <div className="ranking-score">
+                    <span
+                      className="ranking-pts"
+                      title={`${p.total ?? 0} de ${SCORING_COLUMN_LIMITS.total} pts`}
+                    >
+                      {formatPtsOfMax(p.total, SCORING_COLUMN_LIMITS.total)}
+                    </span>
+                    <div className="ranking-chips">
+                      <span className="ranking-chip ranking-chip--inicio" title="Inicio">
+                        {formatPtsOfMax(p.inicioPts, SCORING_COLUMN_LIMITS.inicioPts)}
+                      </span>
+                      <span className="ranking-chip ranking-chip--ko" title="Eliminatorias">
+                        {formatPtsOfMax(p.knockoutPts, SCORING_COLUMN_LIMITS.knockoutPts)}
+                      </span>
+                      <span className="ranking-chip ranking-chip--esp" title="Especiales">
+                        {formatPtsOfMax(p.especialPts, SCORING_COLUMN_LIMITS.especialPts)}
+                      </span>
+                      <span className="ranking-chip ranking-chip--mvp" title="MVP">
+                        {formatPtsOfMax(p.mvpPts, SCORING_COLUMN_LIMITS.mvpPts)}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         </>
       )}
 
@@ -1200,7 +1229,7 @@ function LiveTab({
   group, groupMatches, knockoutMatches, userPreds, onGoToPrediction,
 }) {
   const [livePhase, setLivePhase] = useState('group')
-  const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
+  const [scheduleViewMode, setScheduleViewMode] = useState('daily')
   const [detailMatch, setDetailMatch] = useState(null)
 
   function openMatchDetail(m) {
@@ -1277,7 +1306,7 @@ function LiveTab({
 
       {hasSchedule && (
         <>
-          <div className="dash-phase-picker" role="tablist" style={{ marginBottom: 12 }}>
+          <div className="dash-phase-picker" role="tablist">
             {livePhases.map(p => (
               <button
                 key={p.id}

@@ -203,7 +203,7 @@ export function RoundHeader({ roundId, label, icon: iconOverride }) {
 const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
 const UPCOMING_STATUSES = new Set(['SCHEDULED', 'TIMED'])
 
-export function MatchStatus({ status, highlight, upcoming }) {
+export function MatchStatus({ status, highlight, upcoming, withChevron = false }) {
   if (highlight || status === 'IN_PLAY' || status === 'LIVE') {
     return <IconLabel icon="signal" iconSize="sm">EN JUEGO</IconLabel>
   }
@@ -214,7 +214,14 @@ export function MatchStatus({ status, highlight, upcoming }) {
     return null
   }
   if (status === 'FINISHED') {
-    return <IconLabel icon="checkCircle" iconSize="sm">Finalizado</IconLabel>
+    return (
+      <span className="match-status-label-row">
+        <span className="match-status-label match-status-label--finished">FT</span>
+        {withChevron && (
+          <Icon name="chevronRight" size={11} className="match-status-label__chevron" aria-hidden />
+        )}
+      </span>
+    )
   }
   if (status === 'POSTPONED') {
     return <IconLabel icon="pauseCircle" iconSize="sm">Aplazado</IconLabel>

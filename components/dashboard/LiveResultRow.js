@@ -13,7 +13,7 @@ function normalizeLiveMinute(raw) {
   return digits ? `${digits}'` : String(raw).trim()
 }
 
-/** Cabecera minimalista en Porra: Local 1:0 Visitante · min · Vivo / Finalizado */
+/** Cabecera minimalista en Porra: Local 1:0 Visitante · min · Vivo / FT (etiqueta a la derecha) */
 export function PorraLiveHeader({ home, away, score, status, liveMinute, onOpenDetail }) {
   const isFinished = status === 'FINISHED'
   const isLive = LIVE_STATUSES.has(status)
@@ -22,7 +22,7 @@ export function PorraLiveHeader({ home, away, score, status, liveMinute, onOpenD
   if (score?.home == null || score?.away == null) return null
 
   const minute = isLive && !isPaused ? normalizeLiveMinute(liveMinute) : null
-  const label = isFinished ? 'Finalizado' : isPaused ? 'Descanso' : 'Vivo'
+  const label = isFinished ? 'FT' : isPaused ? 'Descanso' : 'Vivo'
   const stripClass = [
     'porra-live-strip',
     onOpenDetail ? 'porra-live-strip--clickable' : '',
@@ -32,23 +32,25 @@ export function PorraLiveHeader({ home, away, score, status, liveMinute, onOpenD
 
   const inner = (
     <>
-      <span className="porra-live-strip__team">{home}</span>
-      <span className="porra-live-strip__score">{score.home}:{score.away}</span>
-      <span className="porra-live-strip__team">{away}</span>
-      {minute && <span className="porra-live-strip__minute">{minute}</span>}
-      <span className="porra-live-strip__live">
-        {isFinished ? (
-          <Icon name="checkCircle" size={11} />
-        ) : isPaused ? (
-          <Icon name="pauseCircle" size={11} />
-        ) : (
-          <Icon name="signal" size={11} className="live-score-block__live-icon" />
+      <span className="porra-live-strip__match">
+        <span className="porra-live-strip__team">{home}</span>
+        <span className="porra-live-strip__score">{score.home}:{score.away}</span>
+        <span className="porra-live-strip__team">{away}</span>
+        {minute && <span className="porra-live-strip__minute">{minute}</span>}
+      </span>
+      <span className={`porra-live-strip__badge${isFinished ? ' porra-live-strip__badge--ft' : ''}`}>
+        {!isFinished && (
+          isPaused ? (
+            <Icon name="pauseCircle" size={11} />
+          ) : (
+            <Icon name="signal" size={11} className="live-score-block__live-icon" />
+          )
         )}
         <span>{label}</span>
-        {onOpenDetail && (
-          <Icon name="chevronRight" size={11} className="porra-live-strip__chevron" aria-hidden />
-        )}
       </span>
+      {onOpenDetail && (
+        <Icon name="chevronRight" size={11} className="porra-live-strip__chevron" aria-hidden />
+      )}
     </>
   )
 
@@ -60,7 +62,7 @@ export function PorraLiveHeader({ home, away, score, status, liveMinute, onOpenD
         onClick={onOpenDetail}
         aria-label={
           isFinished
-            ? `Ver partido: ${home} ${score.home}:${score.away} ${away} · Finalizado`
+            ? `Ver partido: ${home} ${score.home}:${score.away} ${away} · FT`
             : `Abrir directo: ${home} ${score.home}:${score.away} ${away} · ${label}`
         }
       >
@@ -131,6 +133,7 @@ export default function LiveResultRow({
   showMatchDate = false,
 }) {
   const isLive = LIVE_STATUSES.has(status)
+  const isFinished = status === 'FINISHED'
   const isUpcoming = UPCOMING_STATUSES.has(status)
   const hasScore = score?.home != null && score?.away != null
   const kickoff = formatMatchKickoff(utcDate)
@@ -237,9 +240,14 @@ export default function LiveResultRow({
             <div className="schedule-match-result">
               <span className="schedule-match-result-score">{score.home} - {score.away}</span>
             </div>
-            {renderKickoff()}
+            {!isFinished && renderKickoff()}
             {status && (
-              <MatchStatus status={status} highlight={false} upcoming={isUpcoming} />
+              <MatchStatus
+                status={status}
+                highlight={false}
+                upcoming={isUpcoming}
+                withChevron={clickable && isFinished}
+              />
             )}
           </>
         ) : (

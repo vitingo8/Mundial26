@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import TeamCrest from '../TeamCrest'
 import { Icon } from '../icons'
+import { teamCrestUrl } from '../../lib/fotmob.js'
 
 const FILTERS = [
   { id: 'match', label: 'Nota' },
@@ -74,21 +75,48 @@ function playerLabel(player) {
   return num ? `${num} ${last}` : last
 }
 
-function PitchPlayer({ player, isHome, filterId, vertical }) {
+function teamIndicatorFromLineup(lineup, filterId, teamRating) {
+  switch (filterId) {
+    case 'marketValue': {
+      const total = (lineup || []).reduce(
+        (sum, p) => sum + (Number(p.marketValue) || 0),
+        0,
+      )
+      if (total <= 0) return null
+      return { text: formatMarketValue(total), tone: 'neutral', wide: true }
+    }
+    case 'age': {
+      const ages = (lineup || [])
+        .map(p => p.age)
+        .filter(a => a != null && Number.isFinite(Number(a)))
+      if (!ages.length) return null
+      const avg = ages.reduce((sum, age) => sum + Number(age), 0) / ages.length
+      return { text: avg.toFixed(1), tone: 'neutral' }
+    }
+    case 'team':
+      return null
+    default:
+      if (teamRating == null) return null
+      return { text: Number(teamRating).toFixed(1), tone: ratingTone(teamRating) }
+  }
+}
+
+function PitchPlayer({ player, isHome, filterId, vertical, onPlayerClick }) {
   const pos = pitchPosition(player.layout, isHome, vertical)
+  const isClubFilter = filterId === 'team'
+  const clubCrest = isClubFilter && player.primaryTeamId
+    ? teamCrestUrl(player.primaryTeamId)
+    : null
   const tone = filterId === 'match' ? ratingTone(player.rating) : 'neutral'
   const badge = filterValue(player, filterId)
   const hasGoal = player.events?.includes('goal')
   const hasAssist = player.events?.includes('assist')
   const hasYellow = player.events?.includes('yellowCard')
   const hasRed = player.events?.includes('redCard')
+  const clickable = typeof onPlayerClick === 'function' && player.id != null
 
-  return (
-    <div
-      className={`lineup-pitch-player${hasRed ? ' lineup-pitch-player--sent-off' : ''}`}
-      style={{ left: pos.left, top: pos.top }}
-      title={player.name}
-    >
+  const inner = (
+    <>
       <div className="lineup-pitch-player-avatar-wrap">
         {player.photoUrl ? (
           <img
@@ -104,9 +132,13 @@ function PitchPlayer({ player, isHome, filterId, vertical }) {
             {player.shirtNumber ?? '?'}
           </span>
         )}
-        {badge !== '—' && (
+        {clubCrest ? (
+          <span className="lineup-pitch-badge lineup-pitch-badge--club" title={player.club || undefined}>
+            <TeamCrest src={clubCrest} alt={player.club || ''} size={16} />
+          </span>
+        ) : badge !== '—' ? (
           <span className={`lineup-pitch-badge lineup-pitch-badge--${tone}`}>{badge}</span>
-        )}
+        ) : null}
         <div className="lineup-pitch-player-events">
           {player.isCaptain && <span className="lineup-pitch-event lineup-pitch-event--captain">C</span>}
           {hasGoal && <span className="lineup-pitch-event lineup-pitch-event--goal"><Icon name="goal" size={10} /></span>}
@@ -116,26 +148,53 @@ function PitchPlayer({ player, isHome, filterId, vertical }) {
         </div>
       </div>
       <span className="lineup-pitch-player-name">{playerLabel(player)}</span>
+    </>
+  )
+
+  const className = `lineup-pitch-player${hasRed ? ' lineup-pitch-player--sent-off' : ''}${clickable ? ' lineup-pitch-player--clickable' : ''}`
+
+  if (clickable) {
+    return (
+      <button
+        type="button"
+        className={className}
+        style={{ left: pos.left, top: pos.top }}
+        title={player.name}
+        aria-label={`Ver ficha de ${player.name}`}
+        onClick={() => onPlayerClick(player)}
+      >
+        {inner}
+      </button>
+    )
+  }
+
+  return (
+    <div
+      className={className}
+      style={{ left: pos.left, top: pos.top }}
+      title={player.name}
+    >
+      {inner}
     </div>
   )
 }
 
-function TeamPitchHeader({ teamName, crest, formation, rating, align }) {
+function TeamPitchHeader({ teamName, crest, formation, indicator, align }) {
+  const ratingClass = indicator
+    ? `lineup-pitch-team-rating lineup-pitch-team-rating--${indicator.tone}${indicator.wide ? ' lineup-pitch-team-rating--wide' : ''}`
+    : null
+
   return (
     <div className={`lineup-pitch-team lineup-pitch-team--${align}`}>
-      {align === 'home' && rating != null && (
-        <span className={`lineup-pitch-team-rating lineup-pitch-team-rating--${ratingTone(rating)}`}>
-          {Number(rating).toFixed(1)}
-        </span>
+      {align === 'home' && indicator && (
+        <span className={ratingClass}>{indicator.text}</span>
       )}
       {align === 'home' && <TeamCrest src={crest} alt={teamName} size={20} />}
       <span className="lineup-pitch-team-name">{teamName}</span>
       {formation && <span className="lineup-pitch-formation">{formation}</span>}
       {align === 'away' && <TeamCrest src={crest} alt={teamName} size={20} />}
-      {align === 'away' && rating != null && (
-        <span className={`lineup-pitch-team-rating lineup-pitch-team-rating--${ratingTone(rating)}`}>
-          {Number(rating).toFixed(1)}
-        </span>
+      {align === 'away' && indicator && (
+        <span className={ratingClass}>{indicator.text}</span>
       )}
     </div>
   )
@@ -153,6 +212,7 @@ export default function LineupPitchView({
   homeLineup = [],
   awayLineup = [],
   availableFilters,
+  onPlayerClick,
 }) {
   const allowedFilters = useMemo(() => {
     const ids = availableFilters?.length ? availableFilters : ['match', 'marketValue', 'age', 'team']
@@ -162,6 +222,14 @@ export default function LineupPitchView({
   const [filterId, setFilterId] = useState('match')
   const activeFilter = allowedFilters.some(f => f.id === filterId) ? filterId : 'match'
   const verticalPitch = useVerticalLineupPitch()
+  const homeIndicator = useMemo(
+    () => teamIndicatorFromLineup(homeLineup, activeFilter, homeRating),
+    [homeLineup, activeFilter, homeRating],
+  )
+  const awayIndicator = useMemo(
+    () => teamIndicatorFromLineup(awayLineup, activeFilter, awayRating),
+    [awayLineup, activeFilter, awayRating],
+  )
 
   return (
     <div className="lineup-pitch-wrap">
@@ -170,7 +238,7 @@ export default function LineupPitchView({
           teamName={homeName}
           crest={homeCrest}
           formation={homeFormation}
-          rating={homeRating}
+          indicator={homeIndicator}
           align="home"
         />
         {allowedFilters.length > 1 && (
@@ -193,7 +261,7 @@ export default function LineupPitchView({
           teamName={awayName}
           crest={awayCrest}
           formation={awayFormation}
-          rating={awayRating}
+          indicator={awayIndicator}
           align="away"
         />
       </div>
@@ -204,10 +272,10 @@ export default function LineupPitchView({
           <span className="lineup-pitch-box lineup-pitch-box--right" />
         </div>
         {homeLineup.map(p => (
-          <PitchPlayer key={`h-${p.id}`} player={p} isHome filterId={activeFilter} vertical={verticalPitch} />
+          <PitchPlayer key={`h-${p.id}`} player={p} isHome filterId={activeFilter} vertical={verticalPitch} onPlayerClick={onPlayerClick} />
         ))}
         {awayLineup.map(p => (
-          <PitchPlayer key={`a-${p.id}`} player={p} isHome={false} filterId={activeFilter} vertical={verticalPitch} />
+          <PitchPlayer key={`a-${p.id}`} player={p} isHome={false} filterId={activeFilter} vertical={verticalPitch} onPlayerClick={onPlayerClick} />
         ))}
       </div>
     </div>

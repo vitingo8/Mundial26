@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import {
   catalogMatchesFallback,
   getFotmobMatchDetail,
+  getFotmobPlayerHeatmap,
   getWcMatchesSafe,
   invalidateLiveCaches,
 } from '../../../lib/fotmobServerCache'
@@ -31,6 +32,16 @@ export async function GET(request) {
         }
         const data = await getFotmobMatchDetail(id, { force })
         return NextResponse.json(data)
+      }
+      case 'player-heatmap': {
+        const matchId = searchParams.get('matchId')
+        const playerId = searchParams.get('playerId')
+        const heatmapPubUrl = searchParams.get('heatmapPubUrl') || undefined
+        if (!matchId || !playerId) {
+          return NextResponse.json({ error: 'matchId y playerId requeridos' }, { status: 400 })
+        }
+        const svg = await getFotmobPlayerHeatmap(matchId, playerId, { heatmapPubUrl })
+        return NextResponse.json({ svg })
       }
       case 'competition':
         return NextResponse.json({

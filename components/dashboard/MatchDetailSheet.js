@@ -1,13 +1,17 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import TeamCrest from '../TeamCrest'
 import { Icon, MatchStatus, goalIconName } from '../icons'
 import LineupPitchView from './LineupPitchView'
 import MatchGroupStandingsPanel from './MatchGroupStandingsPanel'
+import MatchEventsTimeline from './MatchEventsTimeline'
+import PlayerDetailSheet from './PlayerDetailSheet'
 import { fetchWcMatchClient, formatStageLabel } from '../../lib/footballData'
+import { collectMatchPlayerRoster } from '../../lib/playerMatchStats'
 import {
+  buildMatchEventsTabItems,
   formatEventMinute,
   formatLiveClock,
   formatMatchHeaderDate,
@@ -25,6 +29,7 @@ const LIVE_POLL_MS = 12_000
 
 const DETAIL_TABS = [
   { id: 'directo', label: 'Directo' },
+  { id: 'eventos', label: 'Eventos' },
   { id: 'alineacion', label: 'Alineación' },
   { id: 'clasificacion', label: 'Clasificación', groupOnly: true },
   { id: 'stats', label: 'Estadísticas' },
@@ -48,6 +53,36 @@ function mergeLiveIntoMatch(prev, snap) {
   }
 }
 
+function makeSheetEntry(matchId, summary, userPred, activeTab = 'directo') {
+  return {
+    matchId: String(matchId),
+    summary,
+    userPred,
+    activeTab,
+  }
+}
+
+function summaryFromGroupMatch(m, userPred) {
+  return {
+    id: m.id,
+    home: m.home,
+    away: m.away,
+    homeCrest: m.homeCrest,
+    awayCrest: m.awayCrest,
+    utcDate: m.utcDate,
+    group: m.group,
+    stage: m.stage || 'GROUP_STAGE',
+    userPred,
+  }
+}
+
+function formatHeroGoalLabel(g) {
+  const minute = g.minute && g.minute !== '—' ? g.minute : null
+  if (!minute && !g.assist) return g.name
+  const detail = [minute, g.assist ? `asist. ${g.assist}` : null].filter(Boolean).join(', ')
+  return `${g.name} (${detail})`
+}
+
 export default function MatchDetailSheet({
   matchId,
   summary,
@@ -58,31 +93,54 @@ export default function MatchDetailSheet({
   userPreds = {},
   onClose,
 }) {
-  const [match, setMatch] = useState(() => liveSnapshotFromSummary(summary) || liveSnapshot || null)
+  const [stack, setStack] = useState(() => [makeSheetEntry(matchId, summary, userPred)])
+  const currentEntry = stack[stack.length - 1]
+  const currentMatchId = currentEntry?.matchId
+  const currentSummary = currentEntry?.summary
+  const currentUserPred = currentEntry?.userPred
+  const canGoBack = stack.length > 1
+  const currentLiveSnapshot = useMemo(
+    () => apiMatches.find(x => String(x.id) === String(currentMatchId)) || liveSnapshot,
+    [apiMatches, currentMatchId, liveSnapshot],
+  )
+
+  const [match, setMatch] = useState(
+    () => liveSnapshotFromSummary(summary) || liveSnapshot || null,
+  )
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState('directo')
+  const [selectedPlayerId, setSelectedPlayerId] = useState(null)
+  const bodyRef = useRef(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  useEffect(() => {
+    setStack([makeSheetEntry(matchId, summary, userPred)])
+    setActiveTab('directo')
+    setSelectedPlayerId(null)
+  }, [matchId])
+
   const load = useCallback(async (force = false) => {
-    if (!matchId) return
+    if (!currentMatchId) return
     setError(null)
     try {
-      const data = await fetchWcMatchClient(matchId, { force })
+      const data = await fetchWcMatchClient(currentMatchId, { force })
       setMatch(data)
     } catch (e) {
       setError(e.message || 'No se pudo cargar el partido')
     } finally {
       setLoading(false)
     }
-  }, [matchId])
+  }, [currentMatchId])
 
-  const isGroupStage = match?.stage === 'GROUP_STAGE' || summary?.stage === 'GROUP_STAGE'
-    || Boolean(match?.group || summary?.group)
+  const isGroupStage = match?.stage === 'GROUP_STAGE' || currentSummary?.stage === 'GROUP_STAGE'
+    || Boolean(match?.group || currentSummary?.group)
   const showGroupStandings = isGroupStage && groupMatches.length > 0
   const detailTabs = useMemo(
     () => DETAIL_TABS.filter(tab => !tab.groupOnly || showGroupStandings),
@@ -90,15 +148,11 @@ export default function MatchDetailSheet({
   )
 
   useEffect(() => {
-    setMatch(liveSnapshotFromSummary(summary) || liveSnapshot || null)
+    setMatch(liveSnapshotFromSummary(currentSummary) || currentLiveSnapshot || null)
     setLoading(true)
     setError(null)
     load(true)
-  }, [load, matchId])
-
-  useEffect(() => {
-    setActiveTab('directo')
-  }, [matchId])
+  }, [load, currentMatchId])
 
   useEffect(() => {
     if (detailTabs.some(t => t.id === activeTab)) return
@@ -106,30 +160,70 @@ export default function MatchDetailSheet({
   }, [detailTabs, activeTab])
 
   useEffect(() => {
-    if (!liveSnapshot) return
-    setMatch(prev => mergeLiveIntoMatch(prev, liveSnapshot))
-  }, [
-    liveSnapshot,
-    liveSnapshot?.score?.fullTime?.home,
-    liveSnapshot?.score?.fullTime?.away,
-    liveSnapshot?.status,
-    liveSnapshot?.minute,
-    liveSnapshot?.liveTime?.short,
-  ])
+    const el = bodyRef.current
+    if (el) el.scrollTop = 0
+  }, [activeTab, currentMatchId])
 
   useEffect(() => {
-    if (!matchId) return
+    if (!currentLiveSnapshot) return
+    setMatch(prev => mergeLiveIntoMatch(prev, currentLiveSnapshot))
+  }, [
+    currentLiveSnapshot,
+    currentLiveSnapshot?.score?.fullTime?.home,
+    currentLiveSnapshot?.score?.fullTime?.away,
+    currentLiveSnapshot?.status,
+    currentLiveSnapshot?.minute,
+    currentLiveSnapshot?.liveTime?.short,
+  ])
+
+  const handleClose = useCallback(() => {
+    setStack(prev => {
+      if (prev.length > 1) {
+        const previous = prev[prev.length - 2]
+        setActiveTab(previous.activeTab || 'directo')
+        return prev.slice(0, -1)
+      }
+      onCloseRef.current()
+      return prev
+    })
+  }, [])
+
+  const handleCloseRef = useRef(handleClose)
+  handleCloseRef.current = handleClose
+
+  function openGroupMatch(m) {
+    if (String(m.id) === String(currentMatchId)) return
+    const pred = userPreds[m.id]
+    setStack(prev => [
+      ...prev.slice(0, -1),
+      { ...prev[prev.length - 1], activeTab },
+      makeSheetEntry(m.id, summaryFromGroupMatch(m, pred), pred),
+    ])
+    setActiveTab('directo')
+  }
+
+  function selectTab(tabId) {
+    setActiveTab(tabId)
+    setStack(prev => {
+      const next = [...prev]
+      next[next.length - 1] = { ...next[next.length - 1], activeTab: tabId }
+      return next
+    })
+  }
+
+  useEffect(() => {
+    if (!currentMatchId) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     function onKey(e) {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') handleCloseRef.current()
     }
     document.addEventListener('keydown', onKey)
     return () => {
       document.body.style.overflow = prev
       document.removeEventListener('keydown', onKey)
     }
-  }, [matchId, onClose])
+  }, [currentMatchId])
 
   useEffect(() => {
     if (!match || !isLiveMatchStatus(match.status)) return
@@ -139,10 +233,10 @@ export default function MatchDetailSheet({
 
   const home = match?.homeTeam || {}
   const away = match?.awayTeam || {}
-  const homeName = home.shortName || home.name || summary?.home || 'Local'
-  const awayName = away.shortName || away.name || summary?.away || 'Visitante'
-  const homeCrest = home.crest || summary?.homeCrest
-  const awayCrest = away.crest || summary?.awayCrest
+  const homeName = home.shortName || home.name || currentSummary?.home || 'Local'
+  const awayName = away.shortName || away.name || currentSummary?.away || 'Visitante'
+  const homeCrest = home.crest || currentSummary?.homeCrest
+  const awayCrest = away.crest || currentSummary?.awayCrest
   const score = useMemo(() => (match ? getMatchDetailScore(match) : null), [match])
   const liveCommentary = match?.liveCommentary || []
   const homeStats = pickTeamStatistics(home.statistics)
@@ -173,10 +267,20 @@ export default function MatchDetailSheet({
     () => getHeaderGoalScorers(match, homeName, awayName),
     [match, homeName, awayName],
   )
+  const eventsTimeline = useMemo(
+    () => buildMatchEventsTabItems(match, homeName, awayName),
+    [match, homeName, awayName],
+  )
+  const playerRoster = useMemo(() => collectMatchPlayerRoster(match), [match])
+
+  function openPlayer(player) {
+    if (player?.id == null) return
+    setSelectedPlayerId(player.id)
+  }
   const roundLabel = match?.roundLabel || formatMatchRoundLabel(match)
     || (match?.stage && match.stage !== 'GROUP_STAGE' ? formatStageLabel(match.stage) : null)
   const referee = match?.referees?.find(r => r.type === 'REFEREE' || !r.type)?.name
-  const headerDate = formatMatchHeaderDate(match?.utcDate || summary?.utcDate)
+  const headerDate = formatMatchHeaderDate(match?.utcDate || currentSummary?.utcDate)
   const isLive = isLiveMatchStatus(match?.status)
   const headerStyle = match?.teamColors
     ? {
@@ -186,24 +290,26 @@ export default function MatchDetailSheet({
     : undefined
   const titleId = 'match-detail-title'
 
-  if (!matchId || !mounted) return null
+  if (!currentMatchId || !mounted) return null
 
-  return createPortal(
+  return (
+    <>
+      {createPortal(
     <div
       className="match-detail-backdrop"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onClick={e => { if (e.target === e.currentTarget) handleClose() }}
     >
       <div className="match-detail-sheet">
         <header className="match-detail-header" style={headerStyle}>
           <div className="match-detail-header-bg" aria-hidden="true" />
 
           <div className="match-detail-nav">
-            <button type="button" className="match-detail-nav-back" onClick={onClose}>
+            <button type="button" className="match-detail-nav-back" onClick={handleClose}>
               <Icon name="chevronLeft" size="sm" />
-              <span>Partidos</span>
+              <span>{canGoBack ? 'Volver' : 'Partidos'}</span>
             </button>
             <div className="match-detail-nav-comp">
               <Icon name="trophy" size="sm" />
@@ -257,7 +363,7 @@ export default function MatchDetailSheet({
                 <ul className="match-detail-hero-goals">
                   {goalScorers.home.map((g, i) => (
                     <li key={`hg-${i}`} className="match-detail-hero-goal">
-                      {g.name} {g.minute}
+                      {formatHeroGoalLabel(g)}
                       <Icon name={goalIconName(g.type)} size={14} className="match-detail-hero-goal-icon" />
                     </li>
                   ))}
@@ -303,7 +409,7 @@ export default function MatchDetailSheet({
                   {goalScorers.away.map((g, i) => (
                     <li key={`ag-${i}`} className="match-detail-hero-goal">
                       <Icon name={goalIconName(g.type)} size={14} className="match-detail-hero-goal-icon" />
-                      {g.name} {g.minute}
+                      {formatHeroGoalLabel(g)}
                     </li>
                   ))}
                 </ul>
@@ -311,9 +417,9 @@ export default function MatchDetailSheet({
             </div>
           </h2>
 
-          {userPred && (
+          {currentUserPred && (
             <p className="match-detail-pred">
-              Tu porra: {userPred.home ?? '?'}-{userPred.away ?? '?'}
+              Tu porra: {currentUserPred.home ?? '?'}-{currentUserPred.away ?? '?'}
             </p>
           )}
 
@@ -325,7 +431,7 @@ export default function MatchDetailSheet({
                 role="tab"
                 aria-selected={activeTab === tab.id}
                 className={`match-detail-tab${activeTab === tab.id ? ' match-detail-tab--active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => selectTab(tab.id)}
               >
                 {tab.label}
               </button>
@@ -333,7 +439,7 @@ export default function MatchDetailSheet({
           </div>
         </header>
 
-        <div className="match-detail-body">
+        <div className="match-detail-body" ref={bodyRef}>
           {loading && !match && (
             <p className="match-detail-empty">Cargando datos en vivo…</p>
           )}
@@ -373,12 +479,16 @@ export default function MatchDetailSheet({
                 </section>
               )}
 
+              {activeTab === 'eventos' && (
+                <MatchEventsTimeline items={eventsTimeline} />
+              )}
+
               {activeTab === 'directo' && (
                 <section className="match-detail-section match-detail-section--directo">
                   {liveCommentary.length > 0 ? (
                     <ul className="match-detail-feed">
                       {liveCommentary.map(item => (
-                        <LiveFeedItem key={item.id} item={item} />
+                        <LiveFeedItem key={item.id} item={item} onPlayerClick={openPlayer} />
                       ))}
                     </ul>
                   ) : (
@@ -403,6 +513,7 @@ export default function MatchDetailSheet({
                     homeLineup={home.lineup}
                     awayLineup={away.lineup}
                     availableFilters={match?.lineupFilters}
+                    onPlayerClick={openPlayer}
                   />
                   {(homeBench.length > 0 || awayBench.length > 0) && (
                     <>
@@ -416,6 +527,7 @@ export default function MatchDetailSheet({
                           formation={null}
                           lineup={[]}
                           bench={homeBench}
+                          onPlayerClick={openPlayer}
                         />
                         <LineupColumn
                           teamName={awayName}
@@ -423,6 +535,7 @@ export default function MatchDetailSheet({
                           formation={null}
                           lineup={[]}
                           bench={awayBench}
+                          onPlayerClick={openPlayer}
                         />
                       </div>
                     </>
@@ -436,11 +549,12 @@ export default function MatchDetailSheet({
 
               {activeTab === 'clasificacion' && showGroupStandings && (
                 <MatchGroupStandingsPanel
-                  groupKey={match?.group || summary?.group}
+                  groupKey={match?.group || currentSummary?.group}
                   groupMatches={groupMatches}
                   apiMatches={apiMatches}
                   userPreds={userPreds}
-                  highlightMatchId={matchId}
+                  highlightMatchId={currentMatchId}
+                  onOpenMatch={openGroupMatch}
                 />
               )}
 
@@ -462,17 +576,29 @@ export default function MatchDetailSheet({
       </div>
     </div>,
     document.body,
+      )}
+      {selectedPlayerId && (
+        <PlayerDetailSheet
+          match={match}
+          matchId={currentMatchId}
+          playerId={selectedPlayerId}
+          roster={playerRoster}
+          onClose={() => setSelectedPlayerId(null)}
+          onChangePlayer={setSelectedPlayerId}
+        />
+      )}
+    </>
   )
 }
 
-function LiveFeedItem({ item }) {
+function LiveFeedItem({ item, onPlayerClick }) {
   if (item.feedType === 'fan-take' || item.feedType === 'expert-take') {
     return <TakeFeedCard item={item} />
   }
   if (item.feedType === 'poll') {
     return <PollFeedCard item={item} />
   }
-  return <EventFeedCard item={item} />
+  return <EventFeedCard item={item} onPlayerClick={onPlayerClick} />
 }
 
 function FeedMinuteBadge({ minute, injuryTime, variant = 'default' }) {
@@ -557,7 +683,7 @@ function PollFeedCard({ item }) {
   )
 }
 
-function EventFeedCard({ item }) {
+function EventFeedCard({ item, onPlayerClick }) {
   const variant = item.variant || 'comment'
   const minuteLabel = formatEventMinute(item.minute, item.injuryTime)
   const showHeader = item.title || variant !== 'comment'
@@ -589,13 +715,14 @@ function EventFeedCard({ item }) {
         )}
 
         {item.isSubstitution && item.substitution && (
-          <SubstitutionBox sub={item.substitution} />
+          <SubstitutionBox sub={item.substitution} onPlayerClick={onPlayerClick} />
         )}
 
         {!item.isSubstitution && item.players?.length > 0 && (
           <PlayerHighlightRow
             player={item.players[0]}
             cardType={variant === 'red-card' ? 'red' : variant === 'yellow-card' ? 'yellow' : null}
+            onPlayerClick={onPlayerClick}
           />
         )}
 
@@ -615,10 +742,11 @@ function EventFeedCard({ item }) {
   )
 }
 
-function PlayerHighlightRow({ player, cardType }) {
+function PlayerHighlightRow({ player, cardType, onPlayerClick }) {
   if (!player) return null
-  return (
-    <div className="feed-player-row">
+  const clickable = typeof onPlayerClick === 'function' && player.id != null
+  const inner = (
+    <>
       <div className="feed-player-info">
         {player.teamCrest && (
           <img className="feed-player-team-crest" src={player.teamCrest} alt="" loading="lazy" />
@@ -640,17 +768,32 @@ function PlayerHighlightRow({ player, cardType }) {
           {cardType === 'yellow' && <span className="feed-card-badge feed-card-badge--yellow" aria-hidden="true" />}
         </div>
       )}
-    </div>
+    </>
   )
+
+  if (clickable) {
+    return (
+      <button
+        type="button"
+        className="feed-player-row feed-player-row--clickable"
+        onClick={() => onPlayerClick(player)}
+        aria-label={`Ver ficha de ${player.name}`}
+      >
+        {inner}
+      </button>
+    )
+  }
+
+  return <div className="feed-player-row">{inner}</div>
 }
 
-function SubstitutionBox({ sub }) {
+function SubstitutionBox({ sub, onPlayerClick }) {
   const teamCrest = sub.playerIn?.teamCrest || sub.playerOut?.teamCrest
   return (
     <div className="feed-sub-box">
       <div className="feed-sub-players">
-        <SubstitutionPlayerRow player={sub.playerIn} direction="in" />
-        <SubstitutionPlayerRow player={sub.playerOut} direction="out" />
+        <SubstitutionPlayerRow player={sub.playerIn} direction="in" onPlayerClick={onPlayerClick} />
+        <SubstitutionPlayerRow player={sub.playerOut} direction="out" onPlayerClick={onPlayerClick} />
       </div>
       {teamCrest && (
         <img className="feed-sub-team-crest" src={teamCrest} alt="" loading="lazy" />
@@ -659,10 +802,11 @@ function SubstitutionBox({ sub }) {
   )
 }
 
-function SubstitutionPlayerRow({ player, direction }) {
+function SubstitutionPlayerRow({ player, direction, onPlayerClick }) {
   if (!player) return null
-  return (
-    <div className={`feed-sub-player feed-sub-player--${direction}`}>
+  const clickable = typeof onPlayerClick === 'function' && player.id != null
+  const inner = (
+    <>
       <div className="feed-sub-avatar-wrap">
         {player.photoUrl ? (
           <img className="feed-sub-avatar" src={player.photoUrl} alt="" loading="lazy" />
@@ -677,6 +821,25 @@ function SubstitutionPlayerRow({ player, direction }) {
         {player.shirtNumber != null && <span>{player.shirtNumber} </span>}
         {player.name}
       </p>
+    </>
+  )
+
+  if (clickable) {
+    return (
+      <button
+        type="button"
+        className={`feed-sub-player feed-sub-player--${direction} feed-sub-player--clickable`}
+        onClick={() => onPlayerClick(player)}
+        aria-label={`Ver ficha de ${player.name}`}
+      >
+        {inner}
+      </button>
+    )
+  }
+
+  return (
+    <div className={`feed-sub-player feed-sub-player--${direction}`}>
+      {inner}
     </div>
   )
 }
@@ -717,15 +880,19 @@ function CompareStatRow({ label, home, away, type }) {
   )
 }
 
-function BenchPlayerRow({ player }) {
+function BenchPlayerRow({ player, onPlayerClick }) {
   const subOn = player.subOn
   const sentOff = player.sentOff
-  return (
-    <li className={[
-      'match-detail-bench-player',
-      subOn ? 'match-detail-bench-player--on' : '',
-      sentOff ? 'match-detail-bench-player--sent-off' : '',
-    ].filter(Boolean).join(' ')}>
+  const clickable = typeof onPlayerClick === 'function' && player.id != null
+  const rowClass = [
+    'match-detail-bench-player',
+    subOn ? 'match-detail-bench-player--on' : '',
+    sentOff ? 'match-detail-bench-player--sent-off' : '',
+    clickable ? 'match-detail-bench-player--clickable' : '',
+  ].filter(Boolean).join(' ')
+
+  const inner = (
+    <>
       <div className="match-detail-bench-avatar-wrap">
         {player.photoUrl ? (
           <img className="match-detail-bench-avatar" src={player.photoUrl} alt="" loading="lazy" />
@@ -760,11 +927,32 @@ function BenchPlayerRow({ player }) {
           <p className="match-detail-bench-sub match-detail-bench-sub--sent-off">Expulsado</p>
         )}
       </div>
+    </>
+  )
+
+  if (clickable) {
+    return (
+      <li>
+        <button
+          type="button"
+          className={rowClass}
+          onClick={() => onPlayerClick(player)}
+          aria-label={`Ver ficha de ${player.name}`}
+        >
+          {inner}
+        </button>
+      </li>
+    )
+  }
+
+  return (
+    <li className={rowClass}>
+      {inner}
     </li>
   )
 }
 
-function LineupColumn({ teamName, crest, formation, lineup = [], bench = [], rating }) {
+function LineupColumn({ teamName, crest, formation, lineup = [], bench = [], rating, onPlayerClick }) {
   if (!lineup.length && !bench.length) return null
   return (
     <div className="match-detail-lineup-col">
@@ -793,7 +981,7 @@ function LineupColumn({ teamName, crest, formation, lineup = [], bench = [], rat
           {lineup.length > 0 && <p className="match-detail-bench-label">Suplentes</p>}
           <ul className="match-detail-players match-detail-players--bench">
             {bench.map(p => (
-              <BenchPlayerRow key={p.id} player={p} />
+              <BenchPlayerRow key={p.id} player={p} onPlayerClick={onPlayerClick} />
             ))}
           </ul>
         </>

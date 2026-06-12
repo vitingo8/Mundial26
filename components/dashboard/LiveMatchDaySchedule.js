@@ -35,6 +35,7 @@ export default function LiveMatchDaySchedule({
   )
   const today = todayDateKey()
   const anchor = scheduleAnchorDateKey(schedulePhase)
+  const dayScrollCenter = days.some(d => d.key === today) ? today : anchor
   const [selectedDay, setSelectedDay] = useState(null)
 
   useEffect(() => {
@@ -107,7 +108,7 @@ export default function LiveMatchDaySchedule({
             days={days}
             selectedKey={selectedDay}
             onSelect={setSelectedDay}
-            centerKey={anchor}
+            centerKey={dayScrollCenter}
           />
         </div>
       )}

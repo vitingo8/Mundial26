@@ -17,6 +17,7 @@ export default function MatchGroupStandingsPanel({
   apiMatches = [],
   userPreds = {},
   highlightMatchId,
+  onOpenMatch,
 }) {
   const normalizedKey = normalizeGroupKey(groupKey)
   const groupOnlyMatches = useMemo(
@@ -95,6 +96,11 @@ export default function MatchGroupStandingsPanel({
                   liveMinute={raw?.liveTime?.short || (raw?.minute != null ? `${raw.minute}'` : null)}
                   userPred={userPreds[m.id]}
                   denseTable
+                  onOpenDetail={
+                    onOpenMatch && String(m.id) !== String(highlightMatchId)
+                      ? () => onOpenMatch(m)
+                      : undefined
+                  }
                 />
               </div>
             )
