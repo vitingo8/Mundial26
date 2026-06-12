@@ -520,21 +520,14 @@ export default function MatchDetailSheet({
                       <h3 className="match-detail-section-title match-detail-section-title--bench">
                         {benchSubbedOn ? 'Suplentes y cambios' : 'Suplentes'}
                       </h3>
-                      <div className="match-detail-lineups">
-                        <LineupColumn
-                          teamName={homeName}
-                          crest={homeCrest}
-                          formation={null}
-                          lineup={[]}
-                          bench={homeBench}
-                          onPlayerClick={openPlayer}
-                        />
-                        <LineupColumn
-                          teamName={awayName}
-                          crest={awayCrest}
-                          formation={null}
-                          lineup={[]}
-                          bench={awayBench}
+                      <div className="match-detail-bench-grid">
+                        <BenchGrid
+                          homeName={homeName}
+                          awayName={awayName}
+                          homeCrest={homeCrest}
+                          awayCrest={awayCrest}
+                          homeBench={homeBench}
+                          awayBench={awayBench}
                           onPlayerClick={openPlayer}
                         />
                       </div>
@@ -543,7 +536,7 @@ export default function MatchDetailSheet({
                 </section>
               ) : (
                 <p className="match-detail-hint">
-                  Las alineaciones aparecen cuando FotMob las publica (normalmente cerca del pitido).
+                  Las alineaciones aparecen cuando estén disponibles (normalmente cerca del pitido).
                 </p>
               ))}
 
@@ -569,7 +562,6 @@ export default function MatchDetailSheet({
               )}
 
 
-              <p className="match-detail-source">Datos en vivo vía FotMob</p>
             </>
           )}
         </div>
@@ -952,41 +944,59 @@ function BenchPlayerRow({ player, onPlayerClick }) {
   )
 }
 
-function LineupColumn({ teamName, crest, formation, lineup = [], bench = [], rating, onPlayerClick }) {
-  if (!lineup.length && !bench.length) return null
+function BenchGrid({
+  homeName,
+  awayName,
+  homeCrest,
+  awayCrest,
+  homeBench,
+  awayBench,
+  onPlayerClick,
+}) {
+  const homeSubs = homeBench.filter(p => p.subOn)
+  const homeRest = homeBench.filter(p => !p.subOn)
+  const awaySubs = awayBench.filter(p => p.subOn)
+  const awayRest = awayBench.filter(p => !p.subOn)
+  const showDivider = (homeSubs.length > 0 || awaySubs.length > 0)
+    && (homeRest.length > 0 || awayRest.length > 0)
+
   return (
-    <div className="match-detail-lineup-col">
-      {(lineup.length > 0 || formation || rating != null || bench.length > 0) && (
-        <div className="match-detail-lineup-head">
-          <TeamCrest src={crest} alt={teamName} size={22} />
-          <span>{teamName}</span>
-          {formation && <span className="match-detail-formation">{formation}</span>}
-          {rating != null && <span className="match-detail-team-rating">{Number(rating).toFixed(1)}</span>}
-        </div>
+    <>
+      <div className="match-detail-lineup-head match-detail-bench-team-head">
+        <TeamCrest src={homeCrest} alt={homeName} size={22} />
+        <span>{homeName}</span>
+      </div>
+      <div className="match-detail-lineup-head match-detail-bench-team-head">
+        <TeamCrest src={awayCrest} alt={awayName} size={22} />
+        <span>{awayName}</span>
+      </div>
+
+      <ul className="match-detail-players match-detail-players--bench match-detail-bench-subs">
+        {homeSubs.map(p => (
+          <BenchPlayerRow key={p.id} player={p} onPlayerClick={onPlayerClick} />
+        ))}
+      </ul>
+      <ul className="match-detail-players match-detail-players--bench match-detail-bench-subs">
+        {awaySubs.map(p => (
+          <BenchPlayerRow key={p.id} player={p} onPlayerClick={onPlayerClick} />
+        ))}
+      </ul>
+
+      {showDivider && (
+        <div className="match-detail-bench-divider-row" aria-hidden="true" />
       )}
-      {lineup.length > 0 && (
-        <ul className="match-detail-players">
-          {lineup.map(p => (
-            <li key={p.id}>
-              <span className="match-detail-shirt">{p.shirtNumber ?? '—'}</span>
-              <span className="match-detail-player-name">{p.name}</span>
-              {p.rating != null && <span className="match-detail-player-rating">{Number(p.rating).toFixed(1)}</span>}
-              {p.position && <span className="match-detail-player-pos">{shortPosition(p.position)}</span>}
-            </li>
-          ))}
-        </ul>
-      )}
-      {bench.length > 0 && (
-        <>
-          {lineup.length > 0 && <p className="match-detail-bench-label">Suplentes</p>}
-          <ul className="match-detail-players match-detail-players--bench">
-            {bench.map(p => (
-              <BenchPlayerRow key={p.id} player={p} onPlayerClick={onPlayerClick} />
-            ))}
-          </ul>
-        </>
-      )}
-    </div>
+
+      <ul className="match-detail-players match-detail-players--bench match-detail-bench-rest">
+        {homeRest.map(p => (
+          <BenchPlayerRow key={p.id} player={p} onPlayerClick={onPlayerClick} />
+        ))}
+      </ul>
+      <ul className="match-detail-players match-detail-players--bench match-detail-bench-rest">
+        {awayRest.map(p => (
+          <BenchPlayerRow key={p.id} player={p} onPlayerClick={onPlayerClick} />
+        ))}
+      </ul>
+    </>
   )
 }
 
@@ -1005,24 +1015,4 @@ function StatsColumn({ teamName, stats }) {
       </dl>
     </div>
   )
-}
-
-function shortPosition(pos) {
-  if (!pos) return ''
-  const map = {
-    Goalkeeper: 'POR',
-    Defender: 'DEF',
-    Midfielder: 'MC',
-    Forward: 'DEL',
-    'Centre-Back': 'DFC',
-    'Left-Back': 'LI',
-    'Right-Back': 'LD',
-    'Defensive Midfield': 'MCD',
-    'Central Midfield': 'MC',
-    'Attacking Midfield': 'MP',
-    'Left Winger': 'EI',
-    'Right Winger': 'ED',
-    'Centre-Forward': 'DC',
-  }
-  return map[pos] || pos.split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase()
 }

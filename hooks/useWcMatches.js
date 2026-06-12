@@ -63,8 +63,8 @@ export function useWcMatches() {
       if (data._source === 'catalog' || data._source === 'stale') {
         setApiError(
           data._source === 'stale'
-            ? 'Calendario en caché (FotMob temporalmente no disponible)'
-            : 'Calendario provisional (FotMob no disponible)',
+            ? 'Calendario en caché (fuente en vivo temporalmente no disponible)'
+            : 'Calendario provisional (fuente en vivo no disponible)',
         )
       } else if (data._source === 'fotmob' || data._source === 'cache') {
         setApiError(null)

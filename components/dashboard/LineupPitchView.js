@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import TeamCrest from '../TeamCrest'
 import { Icon } from '../icons'
-import { teamCrestUrl } from '../../lib/fotmob.js'
+import { teamCrestUrl } from '../../lib/mediaUrls.js'
 
 const FILTERS = [
   { id: 'match', label: 'Nota' },

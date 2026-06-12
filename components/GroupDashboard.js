@@ -1282,7 +1282,7 @@ function LiveTab({
 
       {apiStatus === 'idle' && !wcLoading && liveData.length === 0 && (
         <div style={s.apiCard}>
-          <div style={s.apiMsg}>Pulsa actualizar para cargar resultados en vivo (FotMob)</div>
+          <div style={s.apiMsg}>Pulsa actualizar para cargar resultados en vivo</div>
         </div>
       )}
       {wcLoading && apiStatus !== 'loading' && (
@@ -1296,7 +1296,7 @@ function LiveTab({
             <Icon name="exclamationTriangle" size="sm" /> API en vivo no disponible
           </div>
           <div style={s.apiSub}>
-            {apiError || 'No se pudo conectar con FotMob. Mostrando resultados del organizador si existen.'}
+            {apiError || 'No se pudo conectar con la fuente de datos en vivo. Mostrando resultados del organizador si existen.'}
           </div>
         </div>
       )}

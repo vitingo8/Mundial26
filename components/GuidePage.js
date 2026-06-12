@@ -296,7 +296,7 @@ export default function GuidePage() {
             </p>
             <p>
               Si tocas un partido, verás el detalle en vivo: <strong>xG</strong>, estadísticas,
-              goles, tarjetas, alineaciones y minuto a minuto (datos FotMob).
+              goles, tarjetas, alineaciones y minuto a minuto.
             </p>
             <p>
               También puedes ir a la Porra en ese encuentro para revisar o corregir tu predicción
@@ -305,7 +305,7 @@ export default function GuidePage() {
           </div>
           <Tip>
             En Vivo se refresca solo cada 30 s mientras haya partidos en juego. Usa Actualizar
-            para forzar datos nuevos. Si FotMob no responde, verás resultados del organizador.
+            para forzar datos nuevos. Si la fuente en vivo no responde, verás resultados del organizador.
           </Tip>
         </Section>
 

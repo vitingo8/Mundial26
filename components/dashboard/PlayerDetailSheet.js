@@ -1,10 +1,32 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Icon } from '../icons'
 import TeamCrest from '../TeamCrest'
-import { buildPlayerDetailView } from '../../lib/playerMatchStats'
+import {
+  buildPlayerDetailView,
+  buildPlayerHeatmapSvg,
+  formatShotMinute,
+  formatShotSituation,
+  formatShotTooltip,
+  formatShotType,
+  formatShotXg,
+  getShotMapColor,
+  getShotMapFill,
+  getShotMapLineColor,
+  miniGoalShotToSvg,
+  shouldShowShotGoalDot,
+  shotGoalFaceToSvg,
+  shotTrajectoryEndSvg,
+  SHOT_MAP_GOAL,
+  SHOT_MAP_GOAL_AREA,
+  SHOT_MAP_PENALTY_ARC,
+  SHOT_MAP_PENALTY_BOX,
+  SHOT_MAP_VIEW_HEIGHT,
+  SHOT_MAP_VIEW_WIDTH,
+  shotPitchToSvg,
+} from '../../lib/playerMatchStats'
 import { fetchWcResource } from '../../lib/footballData'
 
 const PLAYER_TABS = [
@@ -19,7 +41,26 @@ function ratingTone(rating) {
   return 'low'
 }
 
-function PlayerHeatmap({ svg, touches }) {
+function HeatmapPitch() {
+  return (
+    <svg className="player-detail-heatmap-pitch" viewBox="0 0 105 68" aria-hidden="true">
+      <rect width="105" height="68" fill="#fff" />
+      <rect x="0.5" y="0.5" width="104" height="67" fill="none" stroke="#e5e7eb" strokeWidth="0.7" />
+      <line x1="52.5" y1="0" x2="52.5" y2="68" stroke="#e5e7eb" strokeWidth="0.7" />
+      <circle cx="52.5" cy="34" r="9" fill="none" stroke="#e5e7eb" strokeWidth="0.7" />
+      <rect x="0.5" y="17" width="16" height="34" fill="none" stroke="#e5e7eb" strokeWidth="0.7" />
+      <rect x="88.5" y="17" width="16" height="34" fill="none" stroke="#e5e7eb" strokeWidth="0.7" />
+    </svg>
+  )
+}
+
+function PlayerHeatmap({ circles, template, touches }) {
+  const reactId = useId().replace(/:/g, '')
+  const markup = useMemo(
+    () => buildPlayerHeatmapSvg(template, circles, `player-heat-${reactId}`),
+    [template, circles, reactId],
+  )
+
   return (
     <section className="player-detail-section">
       <div className="player-detail-section-head">
@@ -28,34 +69,240 @@ function PlayerHeatmap({ svg, touches }) {
           <span className="player-detail-section-meta">Toques {touches}</span>
         )}
       </div>
-      {svg ? (
+      {markup ? (
         <div className="player-detail-heatmap">
-          <svg
-            className="player-detail-heatmap-svg"
-            viewBox="0 0 105 68"
-            preserveAspectRatio="xMidYMid meet"
-            aria-hidden="true"
-          >
-            <defs>
-              <radialGradient id="player-heat-gradient" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#fef08a" stopOpacity="0.95" />
-                <stop offset="55%" stopColor="#fb923c" stopOpacity="0.85" />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity="0.75" />
-              </radialGradient>
-            </defs>
-            <rect x="0" y="0" width="105" height="68" fill="#dcfce7" rx="2" />
-            <rect x="0" y="0" width="52.5" height="68" fill="rgba(255,255,255,0.18)" />
-            <circle cx="52.5" cy="34" r="9" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="0.8" />
-            <rect x="0" y="17" width="16" height="34" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="0.8" />
-            <rect x="89" y="17" width="16" height="34" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="0.8" />
-            <g className="player-detail-heatmap-dots" dangerouslySetInnerHTML={{ __html: svg }} />
-          </svg>
+          <HeatmapPitch />
+          <div
+            className="player-detail-heatmap-cloud"
+            dangerouslySetInnerHTML={{ __html: markup }}
+          />
         </div>
       ) : (
         <p className="player-detail-hint player-detail-hint--inline">
           Mapa de calor no disponible para este jugador.
         </p>
       )}
+    </section>
+  )
+}
+
+function ShotPitchSvg({ shots, selectedId, onSelect }) {
+  const viewW = SHOT_MAP_VIEW_WIDTH
+  const viewH = SHOT_MAP_VIEW_HEIGHT
+
+  return (
+    <svg
+      className="player-detail-shotmap-svg"
+      viewBox={`0 0 ${viewW} ${viewH}`}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden="true"
+    >
+      <rect width={viewW} height={viewH} fill="#fff" />
+      <line x1="0" y1={viewH} x2={viewW} y2={viewH} stroke="#eef0f2" strokeWidth="0.45" />
+      <rect
+        x={SHOT_MAP_PENALTY_BOX.x}
+        y="0"
+        width={SHOT_MAP_PENALTY_BOX.width}
+        height={SHOT_MAP_PENALTY_BOX.height}
+        fill="none"
+        stroke="#eef0f2"
+        strokeWidth="0.45"
+      />
+      <rect
+        x={SHOT_MAP_GOAL_AREA.x}
+        y="0"
+        width={SHOT_MAP_GOAL_AREA.width}
+        height={SHOT_MAP_GOAL_AREA.height}
+        fill="none"
+        stroke="#eef0f2"
+        strokeWidth="0.45"
+      />
+      <path
+        d={`M ${SHOT_MAP_PENALTY_ARC.x1} ${SHOT_MAP_PENALTY_ARC.y} A 9 9 0 0 0 ${SHOT_MAP_PENALTY_ARC.x2} ${SHOT_MAP_PENALTY_ARC.y}`}
+        fill="none"
+        stroke="#eef0f2"
+        strokeWidth="0.45"
+      />
+      <rect
+        x={SHOT_MAP_GOAL.x}
+        y="0"
+        width={SHOT_MAP_GOAL.width}
+        height={SHOT_MAP_GOAL.height}
+        fill="#374151"
+      />
+
+      {shots.map(shot => {
+        const hasSelection = selectedId != null
+        const selected = hasSelection && String(shot.id) === String(selectedId)
+        const start = shotPitchToSvg(shot.x, shot.y)
+        const color = getShotMapColor(shot, selected)
+        const fill = getShotMapFill(shot)
+        const goalDot = shouldShowShotGoalDot(shot) ? shotGoalFaceToSvg(shot) : null
+        const title = formatShotTooltip(shot)
+
+        return (
+          <g
+            key={shot.id}
+            className={`player-detail-shot${selected ? ' player-detail-shot--selected' : ''}`}
+            onClick={() => onSelect?.(selected ? null : shot.id)}
+            style={{ cursor: onSelect ? 'pointer' : undefined }}
+          >
+            <circle
+              cx={start.sx}
+              cy={start.sy}
+              r={selected ? 1.45 : 1.15}
+              fill={selected ? '#fff' : fill}
+              stroke={color}
+              strokeWidth={selected ? 0.3 : 0.2}
+            />
+            {goalDot && (
+              <circle
+                cx={goalDot.sx}
+                cy={goalDot.sy}
+                r={selected ? 0.7 : 0.55}
+                fill={color}
+                stroke="#fff"
+                strokeWidth="0.15"
+              />
+            )}
+            <title>{title}</title>
+          </g>
+        )
+      })}
+
+      <g className="player-detail-shot-lines" pointerEvents="none">
+        {shots.map(shot => {
+          const hasSelection = selectedId != null
+          const selected = hasSelection && String(shot.id) === String(selectedId)
+          const showLine = !hasSelection || selected
+          if (!showLine) return null
+
+          const start = shotPitchToSvg(shot.x, shot.y)
+          const end = shotTrajectoryEndSvg(shot)
+          const color = getShotMapLineColor(shot, selected)
+          const lineLen = Math.hypot(end.sx - start.sx, end.sy - start.sy)
+          if (lineLen < 0.35) return null
+
+          return (
+            <line
+              key={`line-${shot.id}`}
+              x1={start.sx}
+              y1={start.sy}
+              x2={end.sx}
+              y2={end.sy}
+              stroke={color}
+              strokeWidth={selected ? 0.35 : 0.25}
+              strokeOpacity={selected ? 0.7 : 0.55}
+            />
+          )
+        })}
+      </g>
+    </svg>
+  )
+}
+
+function ShotMiniGoal({ shot }) {
+  const dot = shot?.onGoal ? miniGoalShotToSvg(shot.onGoal) : null
+  const color = getShotMapColor(shot, true)
+
+  return (
+    <div className="player-detail-shot-mini-goal">
+      <svg viewBox="0 0 68 24" aria-hidden="true">
+        <rect x="22" y="2" width="24" height="14" fill="none" stroke="#e5e7eb" strokeWidth="0.5" />
+        <line x1="22" y1="16" x2="46" y2="16" stroke="#374151" strokeWidth="0.8" />
+        {dot && (
+          <circle cx={dot.sx} cy={dot.sy} r="1.4" fill={color} />
+        )}
+      </svg>
+      <div className="player-detail-shot-xg-row">
+        <div>
+          <span className="player-detail-shot-xg-value">{formatShotXg(shot?.xG)}</span>
+          <span className="player-detail-shot-xg-label">xG</span>
+        </div>
+        <div>
+          <span className="player-detail-shot-xg-value">
+            {shot?.xGOT != null && shot.xGOT > 0 ? formatShotXg(shot.xGOT) : '—'}
+          </span>
+          <span className="player-detail-shot-xg-label">xGOT</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PlayerShotmap({ shots }) {
+  const [selectedId, setSelectedId] = useState(null)
+
+  useEffect(() => {
+    if (!shots?.length) {
+      setSelectedId(null)
+      return
+    }
+    if (selectedId != null && !shots.some(s => String(s.id) === String(selectedId))) {
+      setSelectedId(null)
+    }
+  }, [shots, selectedId])
+
+  if (!shots?.length) return null
+
+  const selected = selectedId != null
+    ? shots.find(s => String(s.id) === String(selectedId))
+    : null
+
+  return (
+    <section className="player-detail-section player-detail-section--shots">
+      <div className="player-detail-section-head">
+        <h3 className="player-detail-section-title">Tiros</h3>
+        <span className="player-detail-section-meta">{shots.length}</span>
+      </div>
+
+      <div className="player-detail-shotmap">
+        <div className="player-detail-shotmap-canvas">
+          <ShotPitchSvg
+            shots={shots}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+          />
+        </div>
+
+        <div className="player-detail-shot-pills" role="tablist" aria-label="Minutos de tiro">
+          {shots.map(shot => {
+            const active = selectedId != null && String(shot.id) === String(selectedId)
+            return (
+              <button
+                key={shot.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                className={`player-detail-shot-pill${active ? ' player-detail-shot-pill--active' : ''}${shot.isGoal ? ' player-detail-shot-pill--goal' : ''}`}
+                onClick={() => setSelectedId(active ? null : shot.id)}
+              >
+                {formatShotMinute(shot.minute, shot.minAdded)}
+              </button>
+            )
+          })}
+        </div>
+
+        {selected && (
+          <div className="player-detail-shot-detail">
+            <dl className="player-detail-shot-facts">
+              <div>
+                <dt>Tipo de tiro</dt>
+                <dd>{formatShotType(selected.shotType)}</dd>
+              </div>
+              <div>
+                <dt>Situación</dt>
+                <dd>{formatShotSituation(selected.situation)}</dd>
+              </div>
+              <div>
+                <dt>Resultado</dt>
+                <dd>{selected.eventLabel}</dd>
+              </div>
+            </dl>
+            <ShotMiniGoal shot={selected} />
+          </div>
+        )}
+      </div>
     </section>
   )
 }
@@ -108,7 +355,8 @@ export default function PlayerDetailSheet({
 }) {
   const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState('destacados')
-  const [heatmapSvg, setHeatmapSvg] = useState(null)
+  const [heatmapCircles, setHeatmapCircles] = useState(null)
+  const [heatmapTemplate, setHeatmapTemplate] = useState(null)
   const [heatmapLoading, setHeatmapLoading] = useState(true)
   const bodyRef = useRef(null)
 
@@ -145,24 +393,32 @@ export default function PlayerDetailSheet({
     if (!playerId || !matchId) return
     let cancelled = false
     setHeatmapLoading(true)
-    setHeatmapSvg(null)
+    setHeatmapCircles(null)
+    setHeatmapTemplate(null)
     const params = {
       matchId: String(matchId),
       playerId: String(playerId),
     }
     if (match?.heatmapPubUrl) params.heatmapPubUrl = match.heatmapPubUrl
+    if (player?.optaId != null) params.optaId = String(player.optaId)
     fetchWcResource('player-heatmap', params)
       .then(data => {
-        if (!cancelled) setHeatmapSvg(typeof data?.svg === 'string' ? data.svg : null)
+        if (!cancelled) {
+          setHeatmapCircles(typeof data?.svg === 'string' ? data.svg : null)
+          setHeatmapTemplate(typeof data?.template === 'string' ? data.template : null)
+        }
       })
       .catch(() => {
-        if (!cancelled) setHeatmapSvg(null)
+        if (!cancelled) {
+          setHeatmapCircles(null)
+          setHeatmapTemplate(null)
+        }
       })
       .finally(() => {
         if (!cancelled) setHeatmapLoading(false)
       })
     return () => { cancelled = true }
-  }, [matchId, playerId, match?.heatmapPubUrl])
+  }, [matchId, playerId, match?.heatmapPubUrl, player?.optaId])
 
   useEffect(() => {
     if (!playerId) return
@@ -274,8 +530,13 @@ export default function PlayerDetailSheet({
                 {heatmapLoading ? (
                   <p className="player-detail-hint">Cargando mapa de calor…</p>
                 ) : (
-                  <PlayerHeatmap svg={heatmapSvg} touches={player.touches} />
+                  <PlayerHeatmap
+                    circles={heatmapCircles}
+                    template={heatmapTemplate}
+                    touches={player.touches}
+                  />
                 )}
+                <PlayerShotmap shots={player.shots} />
                 <PlayerHighlights items={player.highlights} />
               </>
             )}

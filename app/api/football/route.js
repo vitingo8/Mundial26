@@ -37,18 +37,22 @@ export async function GET(request) {
         const matchId = searchParams.get('matchId')
         const playerId = searchParams.get('playerId')
         const heatmapPubUrl = searchParams.get('heatmapPubUrl') || undefined
+        const optaId = searchParams.get('optaId') || undefined
         if (!matchId || !playerId) {
           return NextResponse.json({ error: 'matchId y playerId requeridos' }, { status: 400 })
         }
-        const svg = await getFotmobPlayerHeatmap(matchId, playerId, { heatmapPubUrl })
-        return NextResponse.json({ svg })
+        const result = await getFotmobPlayerHeatmap(matchId, playerId, { heatmapPubUrl, optaId })
+        return NextResponse.json({
+          svg: result?.circles || null,
+          template: result?.template || null,
+        })
       }
       case 'competition':
         return NextResponse.json({
           name: 'FIFA World Cup',
           code: 'WC',
           season: '2026',
-          provider: 'fotmob',
+          provider: 'live',
         })
       default:
         return NextResponse.json({ error: 'Recurso no válido' }, { status: 400 })
@@ -58,7 +62,7 @@ export async function GET(request) {
       return NextResponse.json(catalogMatchesFallback(e.message))
     }
     return NextResponse.json(
-      { error: e.message || 'Error al consultar FotMob' },
+      { error: e.message || 'Error al consultar datos en vivo' },
       { status: 502 },
     )
   }
