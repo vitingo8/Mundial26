@@ -3,15 +3,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Icon } from '../icons'
+import YoutubeHighlightsPlayer from './YoutubeHighlightsPlayer'
 import {
   openFifaHighlightsWindow,
   resolveTeamNamesFromApiRaw,
 } from '../../lib/fifaHighlights'
 
 const clientCache = new Map()
+const CLIENT_CACHE_VERSION = 'v2'
 
 async function loadHighlights(homeTeam, awayTeam) {
-  const key = `${homeTeam}|${awayTeam}`
+  const key = `${CLIENT_CACHE_VERSION}|${homeTeam}|${awayTeam}`
   if (clientCache.has(key)) return clientCache.get(key)
 
   const params = new URLSearchParams({ home: homeTeam, away: awayTeam })
@@ -22,9 +24,9 @@ async function loadHighlights(homeTeam, awayTeam) {
   return promise
 }
 
-function HighlightsPreviewSheet({ data, homeLabel, awayLabel, onClose }) {
+function HighlightsPreviewSheet({ data, homeLabel, awayLabel, onClose, startPlaying = false }) {
   const hasEmbed = Boolean(data.youtubeId)
-  const [playing, setPlaying] = useState(false)
+  const [playing, setPlaying] = useState(startPlaying && hasEmbed)
 
   useEffect(() => {
     function onKey(e) {
@@ -39,7 +41,7 @@ function HighlightsPreviewSheet({ data, homeLabel, awayLabel, onClose }) {
     }
   }, [onClose])
 
-  const fifaUrl = data.urlEs || data.urlEn
+  const fifaUrl = data.watchUrl || data.urlEs || data.urlEn
 
   function handlePlay() {
     if (hasEmbed) {
@@ -49,6 +51,8 @@ function HighlightsPreviewSheet({ data, homeLabel, awayLabel, onClose }) {
     openFifaHighlightsWindow(fifaUrl)
     onClose()
   }
+
+  const youtubeTitle = `Resumen: ${homeLabel} vs ${awayLabel}`
 
   return createPortal(
     <div className="fifa-highlights-backdrop" role="presentation" onClick={onClose}>
@@ -68,13 +72,11 @@ function HighlightsPreviewSheet({ data, homeLabel, awayLabel, onClose }) {
           <Icon name="chevronLeft" size={18} aria-hidden />
         </button>
         <div className="fifa-highlights-sheet__media">
-          {playing && hasEmbed ? (
-            <iframe
+          {playing && data.youtubeId ? (
+            <YoutubeHighlightsPlayer
+              videoId={data.youtubeId}
+              title={youtubeTitle}
               className="fifa-highlights-sheet__player"
-              src={`https://www.youtube-nocookie.com/embed/${data.youtubeId}?autoplay=1&rel=0&playsinline=1`}
-              title={`Resumen: ${homeLabel} vs ${awayLabel}`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
             />
           ) : (
             <>
@@ -99,38 +101,40 @@ function HighlightsPreviewSheet({ data, homeLabel, awayLabel, onClose }) {
           )}
         </div>
         <div className="fifa-highlights-sheet__body">
-          <p id="fifa-highlights-title" className="fifa-highlights-sheet__title">
-            {data.title || `${homeLabel} vs ${awayLabel}`}
-          </p>
-          {hasEmbed ? (
-            <p className="fifa-highlights-sheet__hint">
-              {playing
-                ? data.youtubeChannel
-                  ? `Vídeo de ${data.youtubeChannel} (YouTube).`
-                  : 'Vídeo de YouTube.'
-                : 'El resumen se reproduce aquí mismo, sin salir de la app.'}
-            </p>
-          ) : (
-            <p className="fifa-highlights-sheet__hint">
-              Se abrirá el resumen oficial en FIFA.com (vídeo con goles al inicio).
-            </p>
-          )}
-          <div className="fifa-highlights-sheet__actions">
-            {!playing && (
-              <button type="button" className="fifa-highlights-sheet__cta" onClick={handlePlay}>
-                <Icon name="playCircle" size={18} aria-hidden />
-                Ver resumen
-              </button>
-            )}
+          <div className="fifa-highlights-sheet__footer">
+            <div className="fifa-highlights-sheet__meta">
+              <p id="fifa-highlights-title" className="fifa-highlights-sheet__title">
+                {data.title || `${homeLabel} vs ${awayLabel}`}
+              </p>
+              {hasEmbed ? (
+                <p className="fifa-highlights-sheet__hint">
+                  {playing && data.youtubeChannel
+                    ? `Vídeo de ${data.youtubeChannel} (YouTube).`
+                    : playing
+                      ? 'Vídeo de YouTube.'
+                      : 'El resumen se reproduce aquí mismo, sin salir de la app.'}
+                </p>
+              ) : (
+                <p className="fifa-highlights-sheet__hint">
+                  Se abrirá el resumen oficial en FIFA.com.
+                </p>
+              )}
+            </div>
             <button
               type="button"
               className="fifa-highlights-sheet__link"
               onClick={() => openFifaHighlightsWindow(fifaUrl)}
             >
               <Icon name="arrowTopRightOnSquare" size={14} aria-hidden />
-              Ver en FIFA.com
+              {data.watchUrl ? 'Ver en FIFA.com' : 'Ver artículo en FIFA.com'}
             </button>
           </div>
+          {!playing && hasEmbed && (
+            <button type="button" className="fifa-highlights-sheet__cta" onClick={handlePlay}>
+              <Icon name="playCircle" size={18} aria-hidden />
+              Ver resumen
+            </button>
+          )}
         </div>
       </div>
     </div>,
@@ -178,6 +182,10 @@ export default function FifaHighlightsButton({
       e.preventDefault()
       e.stopPropagation()
       if (!data) return
+      if (!data.youtubeId && (data.watchUrl || data.urlEs || data.urlEn)) {
+        openFifaHighlightsWindow(data.watchUrl || data.urlEs || data.urlEn)
+        return
+      }
       setOpen(true)
     },
     [data],
@@ -204,6 +212,7 @@ export default function FifaHighlightsButton({
           homeLabel={homeLabel || teams.home}
           awayLabel={awayLabel || teams.away}
           onClose={() => setOpen(false)}
+          startPlaying
         />
       )}
     </>

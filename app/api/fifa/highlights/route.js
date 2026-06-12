@@ -5,6 +5,7 @@ import {
   FIFA_WC26_BASE,
 } from '../../../../lib/fifaHighlights.js'
 import { findEmbeddableHighlights } from '../../../../lib/youtubeHighlights.js'
+import { findFifaWatchUrl } from '../../../../lib/fifaWatchUrl.js'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +13,8 @@ const CACHE = new Map()
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000
 /** Si aún no hay vídeo embebible, reintentar antes (suele tardar en subirse). */
 const CACHE_TTL_NO_VIDEO_MS = 30 * 60 * 1000
+/** Incrementar al cambiar la lógica de selección de YouTube (invalida caché en caliente). */
+const CACHE_KEY_VERSION = 'v2'
 
 function cacheGet(key) {
   const hit = CACHE.get(key)
@@ -33,7 +36,7 @@ async function fetchFifaHighlightsPage(home, away) {
     return { available: false, reason: 'invalid_teams' }
   }
 
-  const cacheKey = pagePath
+  const cacheKey = `${CACHE_KEY_VERSION}:${pagePath}`
   const cached = cacheGet(cacheKey)
   if (cached) return cached
 
@@ -58,10 +61,16 @@ async function fetchFifaHighlightsPage(home, away) {
   const enPath = data?.relativeUrl || pagePath
 
   let youtube = null
+  let watchUrl = null
   try {
     youtube = await findEmbeddableHighlights(home, away)
   } catch {
     // sin YouTube se mantiene el fallback a FIFA.com
+  }
+  try {
+    watchUrl = await findFifaWatchUrl(`${FIFA_WC26_BASE}${enPath}`)
+  } catch {
+    // sin watch URL se usa el artículo
   }
 
   const payload = {
@@ -70,6 +79,7 @@ async function fetchFifaHighlightsPage(home, away) {
     thumbnail: data?.meta?.image || null,
     urlEs: esPath ? `${FIFA_WC26_BASE}${esPath}` : null,
     urlEn: `${FIFA_WC26_BASE}${enPath}`,
+    watchUrl,
     youtubeId: youtube?.videoId || null,
     youtubeTitle: youtube?.title || null,
     youtubeChannel: youtube?.channel || null,
