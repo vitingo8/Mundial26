@@ -16,6 +16,9 @@ export default function ProfileTab({
   notify,
   onApplyMirror,
   onSwitchGroup,
+  isAdmin = false,
+  onOpenAdmin,
+  adminHasAlerts = false,
 }) {
   const [teamName, setTeamName] = useState(user.team_name || '')
   const [logo, setLogo] = useState(user.team_logo || '')
@@ -148,6 +151,18 @@ export default function ProfileTab({
           {saving ? 'Guardando…' : 'Guardar perfil'}
         </button>
       </form>
+
+      {isAdmin && onOpenAdmin && (
+        <button
+          type="button"
+          className="profile-admin-btn"
+          onClick={onOpenAdmin}
+        >
+          <Icon name="cog6Tooth" size="sm" />
+          Configuración del grupo
+          {adminHasAlerts && <span className="profile-admin-btn-dot" aria-label="Tareas pendientes" />}
+        </button>
+      )}
 
       {onApplyMirror && (
         <PredictionMirrorPanel

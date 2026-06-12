@@ -35,8 +35,8 @@ const DETAIL_TABS = [
   { id: 'directo', label: 'Directo' },
   { id: 'eventos', label: 'Eventos' },
   { id: 'alineacion', label: 'Alineación' },
-  { id: 'clasificacion', label: 'Clasificación', groupOnly: true },
-  { id: 'stats', label: 'Estadísticas' },
+  { id: 'clasificacion', label: 'Clas.', groupOnly: true },
+  { id: 'stats', label: 'Stats' },
 ]
 
 function liveSnapshotFromSummary(summary) {

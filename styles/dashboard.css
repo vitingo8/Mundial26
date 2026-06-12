@@ -2751,29 +2751,25 @@ button.schedule-match-row:focus-visible {
   display: flex;
   gap: 0;
   margin: 0 -16px;
-  padding: 0 8px;
+  padding: 0 4px;
   border-top: 1px solid var(--dash-border, #e8efe9);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.match-detail-tabs::-webkit-scrollbar {
-  display: none;
+  overflow: hidden;
 }
 
 .match-detail-tab {
-  flex: 1 0 auto;
+  flex: 1 1 0;
   min-width: 0;
-  padding: 12px 10px 10px;
+  padding: 12px 4px 10px;
   border: none;
   border-bottom: 2px solid transparent;
   background: none;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--dash-muted);
   cursor: pointer;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .match-detail-tab--active {
@@ -2786,9 +2782,18 @@ button.schedule-match-row:focus-visible {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  padding: 12px 16px max(20px, var(--safe-bottom));
+  padding: 12px 0 max(20px, var(--safe-bottom));
   display: flex;
   flex-direction: column;
+}
+
+.match-detail-empty,
+.match-detail-error {
+  padding: 0 16px;
+}
+
+.match-detail-swipe-viewport {
+  --swipe-panel-inset: 16px;
 }
 
 .match-detail-body > .swipe-tabs-root {
@@ -3314,9 +3319,13 @@ button.schedule-match-row:focus-visible {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-  padding: 0 16px 12px;
+  padding: 0 0 12px;
   display: flex;
   flex-direction: column;
+}
+
+.player-detail-swipe-viewport {
+  --swipe-panel-inset: 16px;
 }
 
 .player-detail-body > .swipe-tabs-root {
@@ -5274,7 +5283,16 @@ button.schedule-match-row:focus-visible {
   }
 
   .match-detail-body {
-    padding: 16px 24px max(24px, var(--safe-bottom));
+    padding: 16px 0 max(24px, var(--safe-bottom));
+  }
+
+  .match-detail-empty,
+  .match-detail-error {
+    padding: 0 24px;
+  }
+
+  .match-detail-swipe-viewport {
+    --swipe-panel-inset: 24px;
   }
 
   .match-detail-lineups {
@@ -6168,6 +6186,57 @@ button.schedule-match-row:focus-visible {
   cursor: wait;
 }
 
+.profile-admin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--dash-border, #e2ebe6);
+  border-radius: 12px;
+  background: var(--dash-surface, #fff);
+  color: var(--dash-text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+}
+
+.profile-admin-btn:hover {
+  background: var(--green-dim, #f0f7f3);
+  border-color: var(--dash-border-accent, #b8d4c4);
+}
+
+.profile-admin-btn-dot {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dash-warn, #e6a817);
+}
+
+.profile-admin-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 12px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--dash-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-admin-back:hover {
+  color: var(--dash-text);
+}
+
 /* Copiar porra desde otro grupo (aviso informativo) */
 .mirror-import-card {
   margin: 0 0 12px;
@@ -6348,6 +6417,33 @@ button.schedule-match-row:focus-visible {
 .profile-menu-group-go {
   flex-shrink: 0;
   color: var(--dash-muted);
+}
+
+.profile-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-menu-admin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--dash-border, #e2ebe6);
+  border-radius: 12px;
+  background: var(--dash-surface, #fff);
+  color: var(--dash-text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-menu-admin-btn:hover {
+  background: var(--green-dim, #f0f7f3);
+  border-color: var(--dash-border-accent, #b8d4c4);
 }
 
 .profile-menu-profile-btn {
@@ -8099,6 +8195,7 @@ button.schedule-match-team:disabled {
 
 /* Swipe tabs — carrusel horizontal estilo FotMob (móvil) */
 .swipe-tabs-root {
+  --swipe-panel-gap: 12px;
   width: 100%;
 }
 
@@ -8137,6 +8234,9 @@ button.schedule-match-team:disabled {
   flex-shrink: 0;
   width: 100%;
   min-height: 0;
+  box-sizing: border-box;
+  padding-left: var(--swipe-panel-inset, 0);
+  padding-right: var(--swipe-panel-inset, 0);
 }
 
 .swipe-tabs-panel--scroll {
@@ -8166,6 +8266,7 @@ button.schedule-match-team:disabled {
   .swipe-tabs-panel {
     display: none;
     width: 100% !important;
+    margin-right: 0 !important;
   }
 
   .swipe-tabs-panel[aria-hidden="false"] {

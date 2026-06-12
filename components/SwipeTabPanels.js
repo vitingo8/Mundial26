@@ -13,10 +13,11 @@ const NO_SWIPE_SELECTOR = [
   '.lineup-pitch-filters',
   '.group-view-toggle',
   '.dash-phase-picker',
-  '.match-events-list',
   '.knockout-bracket-tree-wrap',
   '.player-detail-shot-pills',
 ].join(', ')
+
+const DEFAULT_PANEL_GAP = 12
 
 function touchInNoSwipeZone(target) {
   return target?.closest?.(NO_SWIPE_SELECTOR) != null
@@ -50,6 +51,7 @@ export default function SwipeTabPanels({
   const activeTabRef = useRef(activeTab)
 
   const [width, setWidth] = useState(0)
+  const [panelGap, setPanelGap] = useState(DEFAULT_PANEL_GAP)
   const [dragX, setDragX] = useState(0)
   const [dragging, setDragging] = useState(false)
   const [animate, setAnimate] = useState(true)
@@ -67,6 +69,9 @@ export default function SwipeTabPanels({
     const measure = () => {
       const w = el.clientWidth
       if (w > 0) setWidth(w)
+      const rawGap = getComputedStyle(el).getPropertyValue('--swipe-panel-gap').trim()
+      const g = parseFloat(rawGap)
+      setPanelGap(Number.isFinite(g) && g >= 0 ? g : DEFAULT_PANEL_GAP)
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -169,7 +174,11 @@ export default function SwipeTabPanels({
     }
   }, [enabled, clampDrag])
 
-  const offset = width ? -activeIndex * width + dragX : 0
+  const step = width ? width + panelGap : 0
+  const trackWidth = width
+    ? tabs.length * width + Math.max(0, tabs.length - 1) * panelGap
+    : undefined
+  const offset = width ? -activeIndex * step + dragX : 0
   const trackClass = [
     'swipe-tabs-track',
     animate && !dragging ? 'swipe-tabs-track--animate' : '',
@@ -187,15 +196,18 @@ export default function SwipeTabPanels({
         <div
           className={trackClass}
           style={{
-            width: width ? `${tabs.length * width}px` : `${tabs.length * 100}%`,
+            width: trackWidth ? `${trackWidth}px` : `${tabs.length * 100}%`,
             transform: width ? `translate3d(${offset}px, 0, 0)` : `translate3d(-${activeIndex * 100}%, 0, 0)`,
           }}
         >
-          {tabs.map(tabId => (
+          {tabs.map((tabId, index) => (
             <div
               key={tabId}
               className={`swipe-tabs-panel${panelScroll ? ' swipe-tabs-panel--scroll' : ''}`}
-              style={width ? { width: `${width}px` } : undefined}
+              style={width ? {
+                width: `${width}px`,
+                marginRight: index < tabs.length - 1 ? `${panelGap}px` : undefined,
+              } : undefined}
               role="tabpanel"
               aria-hidden={activeTab !== tabId}
             >

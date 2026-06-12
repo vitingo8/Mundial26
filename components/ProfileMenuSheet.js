@@ -12,6 +12,7 @@ export default function ProfileMenuSheet({
   currentGroupId,
   groups = [],
   onOpenProfile,
+  onOpenAdmin,
   onSwitchGroup,
 }) {
   useEffect(() => {
@@ -106,17 +107,32 @@ export default function ProfileMenuSheet({
           })}
         </ul>
 
-        <button
-          type="button"
-          className="profile-menu-profile-btn"
-          onClick={() => {
-            onClose()
-            onOpenProfile()
-          }}
-        >
-          <Icon name="user" size="sm" />
-          Mi perfil
-        </button>
+        <div className="profile-menu-actions">
+          {onOpenAdmin && (
+            <button
+              type="button"
+              className="profile-menu-admin-btn"
+              onClick={() => {
+                onClose()
+                onOpenAdmin()
+              }}
+            >
+              <Icon name="cog6Tooth" size="sm" />
+              Configuración del grupo
+            </button>
+          )}
+          <button
+            type="button"
+            className="profile-menu-profile-btn"
+            onClick={() => {
+              onClose()
+              onOpenProfile()
+            }}
+          >
+            <Icon name="user" size="sm" />
+            Mi perfil
+          </button>
+        </div>
       </div>
     </div>
   )

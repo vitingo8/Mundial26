@@ -240,13 +240,8 @@ export default function GroupDashboard({
     { id: 'group', label: 'Ranking' },
     { id: 'predictions', label: 'Porra' },
     { id: 'live', label: 'En Vivo', navLabel: 'Vivo' },
-    ...(isAdmin ? [{ id: 'admin', label: 'Organización', navLabel: 'Org.' }] : []),
   ]
-  const swipeTabIds = useMemo(() => {
-    const ids = ['group', 'predictions', 'live']
-    if (isAdmin) ids.push('admin')
-    return ids
-  }, [isAdmin])
+  const swipeTabIds = useMemo(() => ['group', 'predictions', 'live'], [])
 
   function tabNavLabel(t, compact = false) {
     return compact && t.navLabel ? t.navLabel : t.label
@@ -302,9 +297,6 @@ export default function GroupDashboard({
               >
                 <span className="dash-tab-icon" aria-hidden="true"><Icon name={TAB_ICONS[t.id]} /></span>
                 <span className="dash-tab-label" aria-hidden="true">{tabNavLabel(t)}</span>
-                {t.id === 'admin' && adminBadges.some(b => b.type === 'warn') && (
-                  <span className="dash-tab-dot" aria-hidden="true" />
-                )}
               </button>
             ))}
           </nav>
@@ -326,7 +318,7 @@ export default function GroupDashboard({
               title={hasMultipleGroups ? 'Perfil y grupos' : 'Mi perfil'}
               aria-label={hasMultipleGroups ? 'Perfil y grupos' : 'Mi perfil'}
               aria-haspopup={hasMultipleGroups ? 'dialog' : undefined}
-              aria-selected={tab === 'profile'}
+              aria-selected={tab === 'profile' || tab === 'admin'}
               onClick={handleProfileClick}
             >
               <ParticipantAvatar participant={user} size={36} />
@@ -342,6 +334,7 @@ export default function GroupDashboard({
         currentGroupId={currentGroup.id}
         groups={userPorraGroups}
         onOpenProfile={() => changeTab('profile')}
+        onOpenAdmin={isAdmin ? () => changeTab('admin') : undefined}
         onSwitchGroup={onSwitchGroup}
       />
       <main className="dashboard-content dash-content app-container app-container--wide">
@@ -359,6 +352,19 @@ export default function GroupDashboard({
             onSwitchGroup={onSwitchGroup}
             onSaved={handleProfileSaved}
             notify={notify}
+            isAdmin={isAdmin}
+            onOpenAdmin={isAdmin ? () => changeTab('admin') : undefined}
+            adminHasAlerts={adminBadges.some(b => b.type === 'warn')}
+          />
+        ) : tab === 'admin' && isAdmin ? (
+          <AdminTab
+            group={currentGroup}
+            setGroup={setCurrentGroup}
+            refreshGroup={refreshGroup}
+            notify={notify}
+            wcMatches={wcMatches}
+            userId={user.id}
+            onBack={() => changeTab('profile')}
           />
         ) : (
           <SwipeTabPanels
@@ -419,16 +425,6 @@ export default function GroupDashboard({
                   onGoToPrediction={goToPrediction}
                 />
               ),
-              admin: isAdmin ? (
-                <AdminTab
-                  group={currentGroup}
-                  setGroup={setCurrentGroup}
-                  refreshGroup={refreshGroup}
-                  notify={notify}
-                  wcMatches={wcMatches}
-                  userId={user.id}
-                />
-              ) : null,
             }}
           />
         )}
@@ -456,9 +452,6 @@ export default function GroupDashboard({
           >
             <span className="bottom-nav-icon" aria-hidden="true"><Icon name={TAB_ICONS[t.id]} /></span>
             <span className="bottom-nav-label" aria-hidden="true">{tabNavLabel(t, true)}</span>
-            {t.id === 'admin' && adminBadges.some(b => b.type === 'warn') && (
-              <span className="bottom-nav-dot" aria-hidden="true" />
-            )}
           </button>
         ))}
       </nav>
@@ -1411,7 +1404,7 @@ function LiveTab({
 }
 
 // ─── ADMIN TAB ────────────────────────────────────────────────────────────────
-function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userId }) {
+function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userId, onBack }) {
   async function saveGroupSecure(updates) {
     const token = getStoredWriteToken(group.id, userId)
     if (token) {
@@ -1498,6 +1491,12 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
 
   return (
     <div className="dash-tab-panel admin-panel">
+      {onBack && (
+        <button type="button" className="profile-admin-back" onClick={onBack}>
+          <Icon name="chevronLeft" size="sm" />
+          Volver al perfil
+        </button>
+      )}
       <SectionTitle icon="cog6Tooth">Organización</SectionTitle>
 
       {adminAlerts.length > 0 && (
