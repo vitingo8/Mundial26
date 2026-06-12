@@ -518,11 +518,8 @@ export default function MatchDetailSheet({
 
               {activeTab === 'directo' && (
                 <section className="match-detail-section match-detail-section--directo">
-                  {liveCommentary.length > 0 ? (
+                  {liveCommentary.length > 0 || highlights?.youtubeId ? (
                     <ul className="match-detail-feed">
-                      {liveCommentary.map(item => (
-                        <LiveFeedItem key={item.id} item={item} onPlayerClick={openPlayer} />
-                      ))}
                       {highlights?.youtubeId && (
                         <li className="feed-card feed-card--highlights">
                           <div className="feed-highlights-player-wrap">
@@ -534,6 +531,9 @@ export default function MatchDetailSheet({
                           </div>
                         </li>
                       )}
+                      {liveCommentary.map(item => (
+                        <LiveFeedItem key={item.id} item={item} onPlayerClick={openPlayer} />
+                      ))}
                     </ul>
                   ) : (
                     <p className="match-detail-hint">
