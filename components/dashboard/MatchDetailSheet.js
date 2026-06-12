@@ -8,7 +8,9 @@ import LineupPitchView from './LineupPitchView'
 import MatchGroupStandingsPanel from './MatchGroupStandingsPanel'
 import MatchEventsTimeline from './MatchEventsTimeline'
 import PlayerDetailSheet from './PlayerDetailSheet'
+import YoutubeHighlightsPlayer from './YoutubeHighlightsPlayer'
 import { fetchWcMatchClient, formatStageLabel } from '../../lib/footballData'
+import { resolveTeamNamesFromApiRaw } from '../../lib/fifaHighlights'
 import { collectMatchPlayerRoster } from '../../lib/playerMatchStats'
 import {
   buildMatchEventsTabItems,
@@ -112,6 +114,7 @@ export default function MatchDetailSheet({
   const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState('directo')
   const [selectedPlayerId, setSelectedPlayerId] = useState(null)
+  const [highlights, setHighlights] = useState(null)
   const bodyRef = useRef(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
@@ -239,6 +242,36 @@ export default function MatchDetailSheet({
   const awayCrest = away.crest || currentSummary?.awayCrest
   const score = useMemo(() => (match ? getMatchDetailScore(match) : null), [match])
   const liveCommentary = match?.liveCommentary || []
+  const highlightTeams = useMemo(
+    () => (match ? resolveTeamNamesFromApiRaw(match) : { home: '', away: '' }),
+    [match],
+  )
+
+  useEffect(() => {
+    let cancelled = false
+    if (match?.status !== 'FINISHED' || !highlightTeams.home || !highlightTeams.away) {
+      setHighlights(null)
+      return undefined
+    }
+
+    const params = new URLSearchParams({
+      home: highlightTeams.home,
+      away: highlightTeams.away,
+    })
+    fetch(`/api/fifa/highlights?${params}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!cancelled && data?.available && data.youtubeId) setHighlights(data)
+        else if (!cancelled) setHighlights(null)
+      })
+      .catch(() => {
+        if (!cancelled) setHighlights(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [match?.status, highlightTeams.home, highlightTeams.away])
   const homeStats = pickTeamStatistics(home.statistics)
   const awayStats = pickTeamStatistics(away.statistics)
   const statsComparison = useMemo(
@@ -490,6 +523,17 @@ export default function MatchDetailSheet({
                       {liveCommentary.map(item => (
                         <LiveFeedItem key={item.id} item={item} onPlayerClick={openPlayer} />
                       ))}
+                      {highlights?.youtubeId && (
+                        <li className="feed-card feed-card--highlights">
+                          <div className="feed-highlights-player-wrap">
+                            <YoutubeHighlightsPlayer
+                              videoId={highlights.youtubeId}
+                              title={`Resumen: ${homeName} vs ${awayName}`}
+                              className="feed-highlights-player"
+                            />
+                          </div>
+                        </li>
+                      )}
                     </ul>
                   ) : (
                     <p className="match-detail-hint">

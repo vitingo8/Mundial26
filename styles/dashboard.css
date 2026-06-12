@@ -3608,6 +3608,31 @@ button.schedule-match-row:focus-visible {
   gap: 12px;
 }
 
+.feed-card--highlights {
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  overflow: visible;
+}
+
+.feed-highlights-player-wrap {
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #020f2a;
+  border: 1px solid #e8ece9;
+  box-shadow: 0 1px 2px rgba(16, 24, 20, 0.04);
+}
+
+.feed-highlights-player,
+.feed-highlights-player iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
 .feed-card {
   background: #fff;
   border: 1px solid #e8ece9;
