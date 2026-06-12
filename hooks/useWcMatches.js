@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { fetchWcResource } from '../lib/footballData'
 
 const CACHE_KEY = 'porra_wc_matches'
-const CACHE_TTL_LIVE = 30 * 1000
+const CACHE_TTL_LIVE = 10 * 1000
 const CACHE_TTL_IDLE = 10 * 60 * 1000
 
 function hasLiveMatches(list) {
@@ -91,7 +91,7 @@ export function useWcMatches() {
 
   useEffect(() => {
     if (!hasLiveMatches(wcMatches)) return
-    const t = setInterval(() => load(true), 30_000)
+    const t = setInterval(() => load(true), 10_000)
     return () => clearInterval(t)
   }, [wcMatches, load])
 

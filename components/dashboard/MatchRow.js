@@ -286,7 +286,8 @@ export default function MatchRow({
         away={away}
         score={apiScore}
         status={apiRaw.status}
-        liveMinute={apiRaw.liveTime?.short || (apiRaw.minute != null ? `${apiRaw.minute}'` : null)}
+        liveTime={apiRaw.liveTime}
+        minute={apiRaw.minute}
         onOpenDetail={onOpenLiveDetail}
         apiRaw={isApiFinished ? apiRaw : null}
         homeLabel={home}

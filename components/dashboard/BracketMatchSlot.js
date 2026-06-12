@@ -185,7 +185,8 @@ export default function BracketMatchSlot({
           away={match.away}
           score={apiScore}
           status={apiRaw.status}
-          liveMinute={apiRaw.liveTime?.short || (apiRaw.minute != null ? `${apiRaw.minute}'` : null)}
+          liveTime={apiRaw.liveTime}
+          minute={apiRaw.minute}
           onOpenDetail={onOpenMatch ? () => onOpenMatch(match) : undefined}
           apiRaw={isApiFinished ? apiRaw : null}
           homeLabel={match.home}

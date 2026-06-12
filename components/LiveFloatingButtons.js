@@ -5,6 +5,7 @@ import { useWcMatches } from '../hooks/useWcMatches'
 import { getApiMatchDisplayScore } from '../lib/apiMatchScores'
 import { displayTeamName } from '../lib/teamNamesEs'
 import { Icon } from './icons'
+import { useSimulatedLiveClock } from '../hooks/useSimulatedLiveClock'
 
 const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
 
@@ -17,20 +18,17 @@ function shortLabel(name) {
   return label.slice(0, 4)
 }
 
-function liveMinuteLabel(match) {
-  if (match.status === 'PAUSED') return 'HT'
-  const raw = match.liveTime?.short || (match.minute != null ? `${match.minute}'` : null)
-  if (!raw) return null
-  const digits = String(raw).match(/\d+/)?.[0]
-  return digits ? `${digits}'` : String(raw).trim()
-}
-
 function LiveFloatingButton({ match, onClick }) {
   const home = match.homeTeam?.shortName || match.homeTeam?.name
   const away = match.awayTeam?.shortName || match.awayTeam?.name
   const score = getApiMatchDisplayScore(match)
-  const minute = liveMinuteLabel(match)
   const isPaused = match.status === 'PAUSED'
+  const liveClock = useSimulatedLiveClock({
+    liveTime: match.liveTime,
+    minute: match.minute,
+    status: match.status,
+  })
+  const minute = isPaused ? 'HT' : liveClock?.compact
 
   if (!score) return null
 

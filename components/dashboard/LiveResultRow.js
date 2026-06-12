@@ -4,15 +4,10 @@ import TeamCrest from '../TeamCrest'
 import { Icon, MatchStatus } from '../icons'
 import FifaHighlightsButton from './FifaHighlightsButton'
 import { formatMatchKickoff, formatMatchShortDate } from '../../lib/matchSchedule'
+import { useSimulatedLiveClock } from '../../hooks/useSimulatedLiveClock'
 
 const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
 const UPCOMING_STATUSES = new Set(['SCHEDULED', 'TIMED'])
-
-function normalizeLiveMinute(raw) {
-  if (!raw) return null
-  const digits = String(raw).match(/\d+/)?.[0]
-  return digits ? `${digits}'` : String(raw).trim()
-}
 
 /** Cabecera minimalista en Porra: Local 1:0 Visitante · min · Vivo / FT (etiqueta a la derecha) */
 export function PorraLiveHeader({
@@ -20,7 +15,8 @@ export function PorraLiveHeader({
   away,
   score,
   status,
-  liveMinute,
+  liveTime,
+  minute: matchMinute,
   onOpenDetail,
   apiRaw = null,
   homeLabel,
@@ -32,7 +28,13 @@ export function PorraLiveHeader({
   if (!isLive && !isPaused && !isFinished) return null
   if (score?.home == null || score?.away == null) return null
 
-  const minute = isLive && !isPaused ? normalizeLiveMinute(liveMinute) : null
+  const liveClock = useSimulatedLiveClock({
+    liveTime,
+    minute: matchMinute,
+    status,
+    enabled: isLive || isPaused,
+  })
+  const minute = isLive && !isPaused ? liveClock?.compact : null
   const label = isFinished ? 'FT' : isPaused ? 'Descanso' : 'Vivo'
   const stripClass = [
     'porra-live-strip',
@@ -100,12 +102,13 @@ export function PorraLiveHeader({
   )
 }
 
-export function LiveScoreBlock({ score, status, liveMinute, size = 'row' }) {
+export function LiveScoreBlock({ score, status, liveTime, minute: matchMinute, size = 'row' }) {
   const isLive = LIVE_STATUSES.has(status)
   const isPaused = status === 'PAUSED'
   if (!isLive || score?.home == null || score?.away == null) return null
 
-  const minute = normalizeLiveMinute(liveMinute)
+  const liveClock = useSimulatedLiveClock({ liveTime, minute: matchMinute, status })
+  const minute = !isPaused ? liveClock?.compact : null
   const blockClass = [
     'live-score-block',
     size === 'detail' ? 'live-score-block--detail' : '',
@@ -145,7 +148,8 @@ export default function LiveResultRow({
   utcDate,
   score,
   status,
-  liveMinute,
+  liveTime,
+  minute: matchMinute,
   userPred,
   compact = false,
   denseTable = false,
@@ -271,7 +275,7 @@ export default function LiveResultRow({
       </div>
       <div className={`schedule-match-center${isLive && hasScore ? ' schedule-match-center--live' : ''}`}>
         {isLive && hasScore ? (
-          <LiveScoreBlock score={score} status={status} liveMinute={liveMinute} />
+          <LiveScoreBlock score={score} status={status} liveTime={liveTime} minute={matchMinute} />
         ) : hasScore ? (
           <>
             <div className="schedule-match-result">

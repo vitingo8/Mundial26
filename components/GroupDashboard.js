@@ -195,7 +195,7 @@ export default function GroupDashboard({
 
   useEffect(() => {
     if (tab !== 'live' || !hasLiveMatches) return
-    const t = setInterval(() => { void fetchLive() }, 30_000)
+    const t = setInterval(() => { void fetchLive() }, 10_000)
     return () => clearInterval(t)
   }, [tab, hasLiveMatches])
 

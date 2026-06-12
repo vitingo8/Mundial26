@@ -78,7 +78,8 @@ export default function LiveGroupStandingsView({
                   utcDate={m.utcDate}
                   score={getApiMatchDisplayScore(raw)}
                   status={raw?.status}
-                  liveMinute={raw?.liveTime?.short || (raw?.minute != null ? `${raw.minute}'` : null)}
+                  liveTime={raw?.liveTime}
+                  minute={raw?.minute}
                   userPred={userPreds[m.id]}
                   compact
                   showMatchDate

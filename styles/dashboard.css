@@ -8179,6 +8179,7 @@ button.schedule-match-team:disabled {
 .live-floating-btn__min {
   font-weight: 800;
   font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
   opacity: 0.9;
   flex-shrink: 0;
 }

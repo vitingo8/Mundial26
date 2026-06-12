@@ -16,7 +16,6 @@ import { collectMatchPlayerRoster } from '../../lib/playerMatchStats'
 import {
   buildMatchEventsTabItems,
   formatEventMinute,
-  formatLiveClock,
   formatMatchHeaderDate,
   formatMatchRoundLabel,
   getHeaderGoalScorers,
@@ -28,8 +27,9 @@ import {
   pickStatsComparison,
   pickTeamStatistics,
 } from '../../lib/matchDetail'
+import { useSimulatedLiveClock } from '../../hooks/useSimulatedLiveClock'
 
-const LIVE_POLL_MS = 12_000
+const LIVE_POLL_MS = 8_000
 
 const DETAIL_TABS = [
   { id: 'directo', label: 'Directo' },
@@ -304,10 +304,12 @@ export default function MatchDetailSheet({
     [away.bench, substitutions, awayName, match],
   )
   const benchSubbedOn = homeBench.some(p => p.subOn) || awayBench.some(p => p.subOn)
-  const liveClock = useMemo(
-    () => formatLiveClock(match?.liveTime, match?.minute, match?.status),
-    [match?.liveTime, match?.minute, match?.status],
-  )
+  const liveClock = useSimulatedLiveClock({
+    liveTime: match?.liveTime,
+    minute: match?.minute,
+    status: match?.status,
+    enabled: isLiveMatchStatus(match?.status),
+  })
   const goalScorers = useMemo(
     () => getHeaderGoalScorers(match, homeName, awayName),
     [match, homeName, awayName],
