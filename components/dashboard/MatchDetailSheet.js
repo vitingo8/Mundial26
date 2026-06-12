@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import SwipeTabPanels from '../SwipeTabPanels'
 import { createPortal } from 'react-dom'
 import TeamCrest from '../TeamCrest'
 import { Icon, MatchStatus, goalIconName } from '../icons'
@@ -117,6 +118,7 @@ export default function MatchDetailSheet({
   const [selectedPlayerId, setSelectedPlayerId] = useState(null)
   const [highlights, setHighlights] = useState(null)
   const bodyRef = useRef(null)
+  const sheetRef = useRef(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
@@ -150,6 +152,7 @@ export default function MatchDetailSheet({
     () => DETAIL_TABS.filter(tab => !tab.groupOnly || showGroupStandings),
     [showGroupStandings],
   )
+  const detailTabIds = useMemo(() => detailTabs.map(t => t.id), [detailTabs])
 
   useEffect(() => {
     setMatch(liveSnapshotFromSummary(currentSummary) || currentLiveSnapshot || null)
@@ -164,7 +167,7 @@ export default function MatchDetailSheet({
   }, [detailTabs, activeTab])
 
   useEffect(() => {
-    const el = bodyRef.current
+    const el = bodyRef.current?.querySelector('.swipe-tabs-panel[aria-hidden="false"]')
     if (el) el.scrollTop = 0
   }, [activeTab, currentMatchId])
 
@@ -344,7 +347,7 @@ export default function MatchDetailSheet({
       aria-labelledby={titleId}
       onClick={e => { if (e.target === e.currentTarget) handleClose() }}
     >
-      <div className="match-detail-sheet">
+      <div className="match-detail-sheet" ref={sheetRef}>
         <header className="match-detail-header" style={headerStyle}>
           <div className="match-detail-header-bg" aria-hidden="true" />
 
@@ -490,132 +493,136 @@ export default function MatchDetailSheet({
           )}
 
           {!loading && match && (
-            <>
-              {activeTab === 'stats' && (match.xg?.home != null || match.xg?.away != null) && (
-                <section className="match-detail-section match-detail-section--xg">
-                  <h3 className="match-detail-section-title">Goles esperados (xG)</h3>
-                  <div className="match-detail-xg-row">
-                    <span className="match-detail-xg-team">{homeName}</span>
-                    <span className="match-detail-xg-values">
-                      {Number(match.xg.home ?? 0).toFixed(2)} – {Number(match.xg.away ?? 0).toFixed(2)}
-                    </span>
-                    <span className="match-detail-xg-team match-detail-xg-team--away">{awayName}</span>
-                  </div>
-                </section>
-              )}
-
-              {activeTab === 'stats' && statsComparison.length > 0 && (
-                <section className="match-detail-section">
-                  <h3 className="match-detail-section-title">Estadísticas en vivo</h3>
-                  <ul className="match-detail-compare-stats">
-                    {statsComparison.map(row => (
-                      <CompareStatRow
-                        key={row.key}
-                        label={row.label}
-                        home={row.home}
-                        away={row.away}
-                        type={row.type}
-                      />
-                    ))}
-                  </ul>
-                </section>
-              )}
-
-              {activeTab === 'eventos' && (
-                <MatchEventsTimeline items={eventsTimeline} onPlayerClick={openPlayer} />
-              )}
-
-              {activeTab === 'directo' && (
-                <section className="match-detail-section match-detail-section--directo">
-                  {liveCommentary.length > 0 || highlights?.youtubeId ? (
-                    <ul className="match-detail-feed">
-                      {highlights?.youtubeId && (
-                        <li className="feed-card feed-card--highlights">
-                          <div className="feed-highlights-player-wrap">
-                            <YoutubeHighlightsPlayer
-                              videoId={highlights.youtubeId}
-                              title={`Resumen: ${homeName} vs ${awayName}`}
-                              className="feed-highlights-player"
+            <SwipeTabPanels
+              tabs={detailTabIds}
+              activeTab={activeTab}
+              onChange={selectTab}
+              enabled={!selectedPlayerId}
+              panelScroll
+              viewportClassName="match-detail-swipe-viewport"
+              panels={{
+                stats: (
+                  <>
+                    {(match.xg?.home != null || match.xg?.away != null) && (
+                      <section className="match-detail-section match-detail-section--xg">
+                        <h3 className="match-detail-section-title">Goles esperados (xG)</h3>
+                        <div className="match-detail-xg-row">
+                          <span className="match-detail-xg-team">{homeName}</span>
+                          <span className="match-detail-xg-values">
+                            {Number(match.xg.home ?? 0).toFixed(2)} – {Number(match.xg.away ?? 0).toFixed(2)}
+                          </span>
+                          <span className="match-detail-xg-team match-detail-xg-team--away">{awayName}</span>
+                        </div>
+                      </section>
+                    )}
+                    {statsComparison.length > 0 && (
+                      <section className="match-detail-section">
+                        <h3 className="match-detail-section-title">Estadísticas en vivo</h3>
+                        <ul className="match-detail-compare-stats">
+                          {statsComparison.map(row => (
+                            <CompareStatRow
+                              key={row.key}
+                              label={row.label}
+                              home={row.home}
+                              away={row.away}
+                              type={row.type}
                             />
-                          </div>
-                        </li>
-                      )}
-                      {liveCommentary.map(item => (
-                        <LiveFeedItem key={item.id} item={item} onPlayerClick={openPlayer} />
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="match-detail-hint">
-                      Sin mensajes todavía. Los eventos aparecen cuando el partido está en juego.
-                    </p>
-                  )}
-                </section>
-              )}
-
-              {activeTab === 'alineacion' && (hasLineups ? (
-                <section className="match-detail-section match-detail-section--lineup">
-                  <LineupPitchView
-                    homeName={homeName}
-                    awayName={awayName}
-                    homeCrest={homeCrest}
-                    awayCrest={awayCrest}
-                    homeFormation={home.formation}
-                    awayFormation={away.formation}
-                    homeRating={home.rating}
-                    awayRating={away.rating}
-                    homeLineup={homeLineup}
-                    awayLineup={awayLineup}
-                    availableFilters={match?.lineupFilters}
-                    onPlayerClick={openPlayer}
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+                    {(homeStats.length > 0 || awayStats.length > 0) && !statsComparison.length && (
+                      <section className="match-detail-section">
+                        <h3 className="match-detail-section-title">Estadísticas</h3>
+                        <div className="match-detail-stats">
+                          <StatsColumn teamName={homeName} stats={homeStats} />
+                          <StatsColumn teamName={awayName} stats={awayStats} />
+                        </div>
+                      </section>
+                    )}
+                  </>
+                ),
+                eventos: (
+                  <MatchEventsTimeline items={eventsTimeline} onPlayerClick={openPlayer} />
+                ),
+                directo: (
+                  <section className="match-detail-section match-detail-section--directo">
+                    {liveCommentary.length > 0 || highlights?.youtubeId ? (
+                      <ul className="match-detail-feed">
+                        {highlights?.youtubeId && (
+                          <li className="feed-card feed-card--highlights">
+                            <div className="feed-highlights-player-wrap">
+                              <YoutubeHighlightsPlayer
+                                videoId={highlights.youtubeId}
+                                title={`Resumen: ${homeName} vs ${awayName}`}
+                                className="feed-highlights-player"
+                              />
+                            </div>
+                          </li>
+                        )}
+                        {liveCommentary.map(item => (
+                          <LiveFeedItem key={item.id} item={item} onPlayerClick={openPlayer} />
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="match-detail-hint">
+                        Sin mensajes todavía. Los eventos aparecen cuando el partido está en juego.
+                      </p>
+                    )}
+                  </section>
+                ),
+                alineacion: hasLineups ? (
+                  <section className="match-detail-section match-detail-section--lineup">
+                    <LineupPitchView
+                      homeName={homeName}
+                      awayName={awayName}
+                      homeCrest={homeCrest}
+                      awayCrest={awayCrest}
+                      homeFormation={home.formation}
+                      awayFormation={away.formation}
+                      homeRating={home.rating}
+                      awayRating={away.rating}
+                      homeLineup={homeLineup}
+                      awayLineup={awayLineup}
+                      availableFilters={match?.lineupFilters}
+                      onPlayerClick={openPlayer}
+                    />
+                    {(homeBench.length > 0 || awayBench.length > 0) && (
+                      <>
+                        <h3 className="match-detail-section-title match-detail-section-title--bench">
+                          {benchSubbedOn ? 'Suplentes y cambios' : 'Suplentes'}
+                        </h3>
+                        <div className="match-detail-bench-grid">
+                          <BenchGrid
+                            homeName={homeName}
+                            awayName={awayName}
+                            homeCrest={homeCrest}
+                            awayCrest={awayCrest}
+                            homeBench={homeBench}
+                            awayBench={awayBench}
+                            onPlayerClick={openPlayer}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </section>
+                ) : (
+                  <p className="match-detail-hint">
+                    Las alineaciones aparecen cuando estén disponibles (normalmente cerca del pitido).
+                  </p>
+                ),
+                clasificacion: showGroupStandings ? (
+                  <MatchGroupStandingsPanel
+                    groupKey={match?.group || currentSummary?.group}
+                    groupMatches={groupMatches}
+                    apiMatches={apiMatches}
+                    userPreds={userPreds}
+                    highlightMatchId={currentMatchId}
+                    onOpenMatch={openGroupMatch}
                   />
-                  {(homeBench.length > 0 || awayBench.length > 0) && (
-                    <>
-                      <h3 className="match-detail-section-title match-detail-section-title--bench">
-                        {benchSubbedOn ? 'Suplentes y cambios' : 'Suplentes'}
-                      </h3>
-                      <div className="match-detail-bench-grid">
-                        <BenchGrid
-                          homeName={homeName}
-                          awayName={awayName}
-                          homeCrest={homeCrest}
-                          awayCrest={awayCrest}
-                          homeBench={homeBench}
-                          awayBench={awayBench}
-                          onPlayerClick={openPlayer}
-                        />
-                      </div>
-                    </>
-                  )}
-                </section>
-              ) : (
-                <p className="match-detail-hint">
-                  Las alineaciones aparecen cuando estén disponibles (normalmente cerca del pitido).
-                </p>
-              ))}
-
-              {activeTab === 'clasificacion' && showGroupStandings && (
-                <MatchGroupStandingsPanel
-                  groupKey={match?.group || currentSummary?.group}
-                  groupMatches={groupMatches}
-                  apiMatches={apiMatches}
-                  userPreds={userPreds}
-                  highlightMatchId={currentMatchId}
-                  onOpenMatch={openGroupMatch}
-                />
-              )}
-
-              {activeTab === 'stats' && (homeStats.length > 0 || awayStats.length > 0) && !statsComparison.length && (
-                <section className="match-detail-section">
-                  <h3 className="match-detail-section-title">Estadísticas</h3>
-                  <div className="match-detail-stats">
-                    <StatsColumn teamName={homeName} stats={homeStats} />
-                    <StatsColumn teamName={awayName} stats={awayStats} />
-                  </div>
-                </section>
-              )}
-
-
-            </>
+                ) : null,
+              }}
+            />
           )}
         </div>
       </div>

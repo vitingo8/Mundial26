@@ -7,9 +7,6 @@ const SWIPE_RATIO = 1.4
 const MOBILE_MQ = '(max-width: 639px)'
 
 const NO_SWIPE_SELECTOR = [
-  '.match-detail-backdrop',
-  '.player-detail-backdrop',
-  '.participant-preds-backdrop',
   '.schedule-day-picker',
   '.stats-table-scroll',
   '.lineup-pitch-filters',
@@ -17,6 +14,7 @@ const NO_SWIPE_SELECTOR = [
   '.dash-phase-picker',
   '.match-events-list',
   '.knockout-bracket-tree-wrap',
+  '.player-detail-shot-pills',
 ].join(', ')
 
 function hasBlockingOverlay() {
@@ -28,13 +26,22 @@ function touchInNoSwipeZone(target) {
   return target?.closest?.(NO_SWIPE_SELECTOR) != null
 }
 
-export function useSwipeTabs(tabs, activeTab, onChange, { enabled = true } = {}) {
+/**
+ * @param {string[]} tabs
+ * @param {string} activeTab
+ * @param {(tabId: string) => void} onChange
+ * @param {{ enabled?: boolean, rootRef?: import('react').RefObject<HTMLElement|null> }} [options]
+ *   rootRef — limit swipes to touches inside this element (dialogs)
+ */
+export function useSwipeTabs(tabs, activeTab, onChange, { enabled = true, rootRef = null } = {}) {
   const tabsRef = useRef(tabs)
   const activeRef = useRef(activeTab)
   const onChangeRef = useRef(onChange)
+  const rootRefStable = useRef(rootRef)
   tabsRef.current = tabs
   activeRef.current = activeTab
   onChangeRef.current = onChange
+  rootRefStable.current = rootRef
 
   useEffect(() => {
     if (!enabled) return undefined
@@ -49,8 +56,21 @@ export function useSwipeTabs(tabs, activeTab, onChange, { enabled = true } = {})
     let startY = 0
     let tracking = false
 
+    function touchInScope(target) {
+      const root = rootRefStable.current?.current
+      if (root) return root.contains(target)
+      return true
+    }
+
     function onTouchStart(e) {
-      if (!mobile || hasBlockingOverlay() || touchInNoSwipeZone(e.target)) return
+      if (!mobile) return
+      const scoped = !!rootRefStable.current?.current
+      if (scoped) {
+        if (!touchInScope(e.target)) return
+      } else if (hasBlockingOverlay() || touchInNoSwipeZone(e.target)) {
+        return
+      }
+      if (touchInNoSwipeZone(e.target)) return
       startX = e.touches[0].clientX
       startY = e.touches[0].clientY
       tracking = true
@@ -59,7 +79,7 @@ export function useSwipeTabs(tabs, activeTab, onChange, { enabled = true } = {})
     function onTouchEnd(e) {
       if (!tracking) return
       tracking = false
-      if (!mobile || hasBlockingOverlay()) return
+      if (!mobile) return
 
       const dx = e.changedTouches[0].clientX - startX
       const dy = e.changedTouches[0].clientY - startY

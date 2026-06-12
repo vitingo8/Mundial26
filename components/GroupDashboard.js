@@ -7,7 +7,7 @@ import { migratePredictionMap, countOrphanPredKeys, migrateGroupResults } from '
 import { isPhaseLocked, msUntilDeadline, formatCountdown } from '../lib/phaseLock'
 import { usePredictions } from '../hooks/usePredictions'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
-import { useSwipeTabs } from '../hooks/useSwipeTabs'
+import SwipeTabPanels from './SwipeTabPanels'
 import { useWcMatches } from '../hooks/useWcMatches'
 import { useAutoSyncResults } from '../hooks/useAutoSyncResults'
 
@@ -248,8 +248,6 @@ export default function GroupDashboard({
     return ids
   }, [isAdmin])
 
-  useSwipeTabs(swipeTabIds, tab, changeTab, { enabled: !profileMenuOpen })
-
   function tabNavLabel(t, compact = false) {
     return compact && t.navLabel ? t.navLabel : t.label
   }
@@ -347,44 +345,7 @@ export default function GroupDashboard({
         onSwitchGroup={onSwitchGroup}
       />
       <main className="dashboard-content dash-content app-container app-container--wide">
-        {tab === 'group' && (
-          <GroupTab
-            leaderboard={leaderboard}
-            group={currentGroup}
-            groupMatches={groupMatches}
-            knockoutMatches={knockoutMatches}
-            onLeave={onLeave}
-            currentUserId={user.id}
-          />
-        )}
-        {tab === 'predictions' && (
-          <PredictionsTab predPhase={predPhase} setPredPhase={setPredPhase} groupPreds={groupPreds} setGroupPreds={setGroupPreds}
-            koPreds={koPreds} setKoPreds={setKoPreds}
-            inicioKoPreds={inicioKoPreds} setInicioKoPreds={setInicioKoPreds}
-            bonusPreds={bonusPreds} setBonusPreds={setBonusPreds}
-            saving={saving} saveStatus={saveStatus} onSave={savePredictions}
-            groupDeadlinePassed={groupDeadlinePassed}
-            bonusDeadlinePassed={bonusDeadlinePassed}
-            koDeadlinePassed={koDeadlinePassed}
-            groupMatches={groupMatches} knockoutMatches={knockoutMatches} teamOptions={teamOptions.length ? teamOptions : ALL_TEAMS}
-            wcLoading={wcLoading} wcApiError={wcApiError} onReloadWc={reloadWc}
-            apiMatches={wcMatches}
-            groupPhase={currentGroup.phase}
-            orphanGroupKeys={orphanGroupKeys} matchRefs={matchRefs}
-            deadlines={{
-              group: effectiveGroupDeadline,
-              bonus: effectiveBonusDeadline,
-              knockout: effectiveKnockoutDeadline,
-            }}
-            group={currentGroup}
-            user={user}
-            groupId={currentGroup.id}
-            onApplyMirror={importPredictions}
-            onSwitchGroup={onSwitchGroup}
-            notify={notify}
-          />
-        )}
-        {tab === 'profile' && (
+        {tab === 'profile' ? (
           <ProfileTab
             user={user}
             groupId={currentGroup.id}
@@ -399,29 +360,76 @@ export default function GroupDashboard({
             onSaved={handleProfileSaved}
             notify={notify}
           />
-        )}
-        {tab === 'live' && (
-          <LiveTab
-            liveData={liveData}
-            apiStatus={apiStatus}
-            apiError={liveApiError}
-            onFetch={fetchLive}
-            wcLoading={wcLoading}
-            group={currentGroup}
-            groupMatches={groupMatches}
-            knockoutMatches={knockoutMatches}
-            userPreds={user.predictions}
-            onGoToPrediction={goToPrediction}
-          />
-        )}
-        {tab === 'admin' && isAdmin && (
-          <AdminTab
-            group={currentGroup}
-            setGroup={setCurrentGroup}
-            refreshGroup={refreshGroup}
-            notify={notify}
-            wcMatches={wcMatches}
-            userId={user.id}
+        ) : (
+          <SwipeTabPanels
+            className="dash-swipe-tabs"
+            tabs={swipeTabIds}
+            activeTab={tab}
+            onChange={changeTab}
+            enabled={!profileMenuOpen}
+            panels={{
+              group: (
+                <GroupTab
+                  leaderboard={leaderboard}
+                  group={currentGroup}
+                  groupMatches={groupMatches}
+                  knockoutMatches={knockoutMatches}
+                  onLeave={onLeave}
+                  currentUserId={user.id}
+                />
+              ),
+              predictions: (
+                <PredictionsTab predPhase={predPhase} setPredPhase={setPredPhase} groupPreds={groupPreds} setGroupPreds={setGroupPreds}
+                  koPreds={koPreds} setKoPreds={setKoPreds}
+                  inicioKoPreds={inicioKoPreds} setInicioKoPreds={setInicioKoPreds}
+                  bonusPreds={bonusPreds} setBonusPreds={setBonusPreds}
+                  saving={saving} saveStatus={saveStatus} onSave={savePredictions}
+                  groupDeadlinePassed={groupDeadlinePassed}
+                  bonusDeadlinePassed={bonusDeadlinePassed}
+                  koDeadlinePassed={koDeadlinePassed}
+                  groupMatches={groupMatches} knockoutMatches={knockoutMatches} teamOptions={teamOptions.length ? teamOptions : ALL_TEAMS}
+                  wcLoading={wcLoading} wcApiError={wcApiError} onReloadWc={reloadWc}
+                  apiMatches={wcMatches}
+                  groupPhase={currentGroup.phase}
+                  orphanGroupKeys={orphanGroupKeys} matchRefs={matchRefs}
+                  deadlines={{
+                    group: effectiveGroupDeadline,
+                    bonus: effectiveBonusDeadline,
+                    knockout: effectiveKnockoutDeadline,
+                  }}
+                  group={currentGroup}
+                  user={user}
+                  groupId={currentGroup.id}
+                  onApplyMirror={importPredictions}
+                  onSwitchGroup={onSwitchGroup}
+                  notify={notify}
+                />
+              ),
+              live: (
+                <LiveTab
+                  liveData={liveData}
+                  apiStatus={apiStatus}
+                  apiError={liveApiError}
+                  onFetch={fetchLive}
+                  wcLoading={wcLoading}
+                  group={currentGroup}
+                  groupMatches={groupMatches}
+                  knockoutMatches={knockoutMatches}
+                  userPreds={user.predictions}
+                  onGoToPrediction={goToPrediction}
+                />
+              ),
+              admin: isAdmin ? (
+                <AdminTab
+                  group={currentGroup}
+                  setGroup={setCurrentGroup}
+                  refreshGroup={refreshGroup}
+                  notify={notify}
+                  wcMatches={wcMatches}
+                  userId={user.id}
+                />
+              ) : null,
+            }}
           />
         )}
       </main>

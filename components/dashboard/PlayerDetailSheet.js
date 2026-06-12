@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import SwipeTabPanels from '../SwipeTabPanels'
 import { createPortal } from 'react-dom'
 import { Icon } from '../icons'
 import TeamCrest from '../TeamCrest'
@@ -33,6 +34,7 @@ const PLAYER_TABS = [
   { id: 'destacados', label: 'Destacados' },
   { id: 'estadisticas', label: 'Estadísticas' },
 ]
+const PLAYER_TAB_IDS = PLAYER_TABS.map(t => t.id)
 
 function ratingTone(rating) {
   if (rating == null) return 'neutral'
@@ -360,6 +362,7 @@ export default function PlayerDetailSheet({
   const [heatmapTemplate, setHeatmapTemplate] = useState(null)
   const [heatmapLoading, setHeatmapLoading] = useState(false)
   const bodyRef = useRef(null)
+  const sheetRef = useRef(null)
 
   const lineupPlayer = useMemo(
     () => roster.find(p => String(p.id) === String(playerId)) || null,
@@ -400,7 +403,7 @@ export default function PlayerDetailSheet({
   }
 
   useEffect(() => {
-    const el = bodyRef.current
+    const el = bodyRef.current?.querySelector('.swipe-tabs-panel[aria-hidden="false"]')
     if (el) el.scrollTop = 0
   }, [activeTab, playerId])
 
@@ -465,7 +468,7 @@ export default function PlayerDetailSheet({
       aria-labelledby="player-detail-title"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="player-detail-sheet">
+      <div className="player-detail-sheet" ref={sheetRef}>
         <header className="player-detail-header">
           <div className="player-detail-nav">
             <button
@@ -541,33 +544,49 @@ export default function PlayerDetailSheet({
         </header>
 
         <div className="player-detail-body" ref={bodyRef}>
-          <div className="player-detail-tab-panel">
-            {!loadedTabs.has(activeTab) && (
-              <p className="player-detail-hint">
-                Pulsa la pestaña para cargar el contenido.
-              </p>
-            )}
-
-            {loadedTabs.has('destacados') && activeTab === 'destacados' && (
-              <>
-                {heatmapLoading ? (
-                  <p className="player-detail-hint">Cargando mapa de calor…</p>
-                ) : (
-                  <PlayerHeatmap
-                    circles={heatmapCircles}
-                    template={heatmapTemplate}
-                    touches={player.touches}
-                  />
-                )}
-                <PlayerShotmap shots={player.shots} />
-                <PlayerHighlights items={player.highlights} />
-              </>
-            )}
-
-            {loadedTabs.has('estadisticas') && activeTab === 'estadisticas' && (
-              <PlayerStatSections sections={player.statSections} />
-            )}
-          </div>
+          <SwipeTabPanels
+            tabs={PLAYER_TAB_IDS}
+            activeTab={activeTab}
+            onChange={activateTab}
+            panelScroll
+            viewportClassName="player-detail-swipe-viewport"
+            panels={{
+              destacados: (
+                <div className="player-detail-tab-panel">
+                  {!loadedTabs.has('destacados') ? (
+                    <p className="player-detail-hint">
+                      Pulsa la pestaña para cargar el contenido.
+                    </p>
+                  ) : (
+                    <>
+                      {heatmapLoading ? (
+                        <p className="player-detail-hint">Cargando mapa de calor…</p>
+                      ) : (
+                        <PlayerHeatmap
+                          circles={heatmapCircles}
+                          template={heatmapTemplate}
+                          touches={player.touches}
+                        />
+                      )}
+                      <PlayerShotmap shots={player.shots} />
+                      <PlayerHighlights items={player.highlights} />
+                    </>
+                  )}
+                </div>
+              ),
+              estadisticas: (
+                <div className="player-detail-tab-panel">
+                  {!loadedTabs.has('estadisticas') ? (
+                    <p className="player-detail-hint">
+                      Pulsa la pestaña para cargar el contenido.
+                    </p>
+                  ) : (
+                    <PlayerStatSections sections={player.statSections} />
+                  )}
+                </div>
+              ),
+            }}
+          />
         </div>
 
         <footer className="player-detail-footer">

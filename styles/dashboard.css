@@ -2785,9 +2785,17 @@ button.schedule-match-row:focus-visible {
 .match-detail-body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 12px 16px max(20px, var(--safe-bottom));
-  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+}
+
+.match-detail-body > .swipe-tabs-root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .match-detail-section {
@@ -3305,8 +3313,17 @@ button.schedule-match-row:focus-visible {
 .player-detail-body {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 0 16px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.player-detail-body > .swipe-tabs-root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .player-detail-tab-panel {
@@ -8078,4 +8095,85 @@ button.schedule-match-team:disabled {
 
 .live-floating-btn--paused .live-floating-btn__min {
   color: #f0c674;
+}
+
+/* Swipe tabs — carrusel horizontal estilo FotMob (móvil) */
+.swipe-tabs-root {
+  width: 100%;
+}
+
+.swipe-tabs-viewport {
+  overflow: hidden;
+  width: 100%;
+  touch-action: pan-y;
+}
+
+.swipe-tabs-viewport--scroll-panels {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.swipe-tabs-viewport--scroll-panels .swipe-tabs-track {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  align-items: stretch;
+}
+
+.swipe-tabs-track {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  will-change: transform;
+}
+
+.swipe-tabs-track--animate {
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.swipe-tabs-panel {
+  flex-shrink: 0;
+  width: 100%;
+  min-height: 0;
+}
+
+.swipe-tabs-panel--scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  height: 100%;
+  max-height: 100%;
+  overscroll-behavior-y: contain;
+}
+
+.dash-swipe-tabs .swipe-tabs-viewport {
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .swipe-tabs-viewport {
+    overflow: visible;
+  }
+
+  .swipe-tabs-track {
+    display: block;
+    transform: none !important;
+    width: 100% !important;
+    transition: none;
+  }
+
+  .swipe-tabs-panel {
+    display: none;
+    width: 100% !important;
+  }
+
+  .swipe-tabs-panel[aria-hidden="false"] {
+    display: block;
+  }
+
+  .swipe-tabs-panel--scroll {
+    overflow: visible;
+    max-height: none;
+  }
 }

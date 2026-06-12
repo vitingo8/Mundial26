@@ -2,9 +2,11 @@
 
 import { useMemo } from 'react'
 import { computeGroupStandings } from '../../lib/groupStandings'
-import { finishedGroupScoresFromApi, getApiMatchDisplayScore, indexApiMatches } from '../../lib/apiMatchScores'
+import { computeBestThirdPlacesRanking } from '../../lib/bestThirdPlaces'
+import { groupScoresFromApi, getApiMatchDisplayScore, indexApiMatches } from '../../lib/apiMatchScores'
 import TeamCrest from '../TeamCrest'
 import LiveResultRow from './LiveResultRow'
+import BestThirdPlacesTable from './BestThirdPlacesTable'
 
 export default function LiveGroupStandingsView({
   matches,
@@ -15,11 +17,15 @@ export default function LiveGroupStandingsView({
 }) {
   const rawById = useMemo(() => indexApiMatches(apiMatches), [apiMatches])
   const officialScores = useMemo(
-    () => finishedGroupScoresFromApi(apiMatches),
+    () => groupScoresFromApi(apiMatches),
     [apiMatches],
   )
   const groups = useMemo(
     () => computeGroupStandings(matches, officialScores),
+    [matches, officialScores],
+  )
+  const bestThirds = useMemo(
+    () => computeBestThirdPlacesRanking(matches, officialScores),
     [matches, officialScores],
   )
 
@@ -85,6 +91,11 @@ export default function LiveGroupStandingsView({
           </div>
         </section>
       ))}
+
+      <BestThirdPlacesTable
+        rows={bestThirds.rows}
+        combinationKey={bestThirds.combinationKey}
+      />
     </div>
   )
 }
