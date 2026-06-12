@@ -243,6 +243,8 @@ export default function MatchDetailSheet({
   const away = match?.awayTeam || {}
   const homeName = home.shortName || home.name || currentSummary?.home || 'Local'
   const awayName = away.shortName || away.name || currentSummary?.away || 'Visitante'
+  const homeDisplayName = formatStatsTeamName(homeName)
+  const awayDisplayName = formatStatsTeamName(awayName)
   const homeCrest = home.crest || currentSummary?.homeCrest
   const awayCrest = away.crest || currentSummary?.awayCrest
   const score = useMemo(() => (match ? getMatchDetailScore(match) : null), [match])
@@ -401,7 +403,7 @@ export default function MatchDetailSheet({
           <h2 id={titleId} className="match-detail-hero">
             <div className="match-detail-hero-side">
               <div className="match-detail-hero-team-row">
-                <span className="match-detail-hero-name">{homeName}</span>
+                <span className="match-detail-hero-name">{homeDisplayName}</span>
                 <TeamCrest src={homeCrest} alt={homeName} size={40} />
               </div>
               {home.fifaRank != null && (
@@ -447,7 +449,7 @@ export default function MatchDetailSheet({
             <div className="match-detail-hero-side match-detail-hero-side--away">
               <div className="match-detail-hero-team-row">
                 <TeamCrest src={awayCrest} alt={awayName} size={40} />
-                <span className="match-detail-hero-name">{awayName}</span>
+                <span className="match-detail-hero-name">{awayDisplayName}</span>
               </div>
               {away.fifaRank != null && (
                 <span className="match-detail-hero-rank">FIFA #{away.fifaRank}</span>
@@ -510,17 +512,21 @@ export default function MatchDetailSheet({
                       <section className="match-detail-section match-detail-section--xg">
                         <h3 className="match-detail-section-title">Goles esperados (xG)</h3>
                         <div className="match-detail-xg-row">
-                          <span className="match-detail-xg-team">{homeName}</span>
+                          <span className="match-detail-xg-team">{homeDisplayName}</span>
                           <span className="match-detail-xg-values">
                             {Number(match.xg.home ?? 0).toFixed(2)} – {Number(match.xg.away ?? 0).toFixed(2)}
                           </span>
-                          <span className="match-detail-xg-team match-detail-xg-team--away">{awayName}</span>
+                          <span className="match-detail-xg-team match-detail-xg-team--away">{awayDisplayName}</span>
                         </div>
                       </section>
                     )}
                     {statsComparison.length > 0 && (
                       <section className="match-detail-section">
                         <h3 className="match-detail-section-title">Estadísticas en vivo</h3>
+                        <div className="match-detail-compare-teams" aria-hidden="true">
+                          <span>{homeDisplayName}</span>
+                          <span>{awayDisplayName}</span>
+                        </div>
                         <ul className="match-detail-compare-stats">
                           {statsComparison.map(row => (
                             <CompareStatRow
@@ -538,8 +544,8 @@ export default function MatchDetailSheet({
                       <section className="match-detail-section">
                         <h3 className="match-detail-section-title">Estadísticas</h3>
                         <div className="match-detail-stats">
-                          <StatsColumn teamName={formatStatsTeamName(homeName)} stats={homeStats} />
-                          <StatsColumn teamName={formatStatsTeamName(awayName)} stats={awayStats} />
+                          <StatsColumn teamName={homeDisplayName} stats={homeStats} />
+                          <StatsColumn teamName={awayDisplayName} stats={awayStats} />
                         </div>
                       </section>
                     )}

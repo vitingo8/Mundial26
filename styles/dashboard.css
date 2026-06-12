@@ -5119,6 +5119,19 @@ button.schedule-match-row:focus-visible {
   letter-spacing: 0.02em;
 }
 
+.match-detail-compare-teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.match-detail-compare-teams span:last-child {
+  text-align: right;
+}
+
 .match-detail-compare-stats {
   list-style: none;
   margin: 0;
@@ -8172,9 +8185,6 @@ button.schedule-match-team:disabled {
 }
 
 .live-floating-btn__team {
-  max-width: 7.5rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   opacity: 0.85;
 }

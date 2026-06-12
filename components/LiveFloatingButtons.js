@@ -3,16 +3,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useWcMatches } from '../hooks/useWcMatches'
 import { getApiMatchDisplayScore } from '../lib/apiMatchScores'
-import { displayTeamName } from '../lib/teamNamesEs'
+import { displayTeamName, floatingTeamLabel } from '../lib/teamNamesEs'
 import { Icon } from './icons'
 import { useSimulatedLiveClock } from '../hooks/useSimulatedLiveClock'
 
 const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
-
-function teamLabel(name) {
-  const label = displayTeamName(name)
-  return label || '?'
-}
 
 function LiveFloatingButton({ match, onClick }) {
   const home = match.homeTeam?.shortName || match.homeTeam?.name
@@ -37,9 +32,9 @@ function LiveFloatingButton({ match, onClick }) {
     >
       {!isPaused && <span className="live-floating-btn__pulse" aria-hidden />}
       <span className="live-floating-btn__score">
-        <span className="live-floating-btn__team">{teamLabel(home)}</span>
+        <span className="live-floating-btn__team">{floatingTeamLabel(home)}</span>
         <span className="live-floating-btn__nums">{score.home}-{score.away}</span>
-        <span className="live-floating-btn__team">{teamLabel(away)}</span>
+        <span className="live-floating-btn__team">{floatingTeamLabel(away)}</span>
       </span>
       {minute && <span className="live-floating-btn__min">{minute}</span>}
       {!isPaused && <Icon name="signal" size={12} className="live-floating-btn__icon" />}

@@ -391,6 +391,7 @@ export default function GroupDashboard({
                   leaderboard={leaderboard}
                   rankingProvisional={rankingProvisional}
                   group={currentGroup}
+                  groupResults={provisionalResults}
                   groupMatches={groupMatches}
                   knockoutMatches={knockoutMatches}
                   onLeave={onLeave}
@@ -473,22 +474,24 @@ export default function GroupDashboard({
 }
 
 // ─── GROUP TAB ────────────────────────────────────────────────────────────────
-function GroupTab({ leaderboard, rankingProvisional, group, groupMatches, knockoutMatches, onLeave, currentUserId }) {
+function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupMatches, knockoutMatches, onLeave, currentUserId }) {
   const [view, setView] = useState('ranking')
   const [viewingParticipant, setViewingParticipant] = useState(null)
   const scoringOpts = useMemo(
     () => ({ groupMatches, knockoutMatches }),
     [groupMatches, knockoutMatches],
   )
+  const scoringGroup = useMemo(
+    () => ({ ...group, results: groupResults }),
+    [group, groupResults],
+  )
   const tableRows = useMemo(
-    () => enrichLeaderboardWithStats(leaderboard, group, scoringOpts),
-    [leaderboard, group, scoringOpts],
+    () => enrichLeaderboardWithStats(leaderboard, scoringGroup, scoringOpts),
+    [leaderboard, scoringGroup, scoringOpts],
   )
   function openParticipantPreds(p) {
     setViewingParticipant(p)
   }
-
-  const leader = tableRows[0]
 
   return (
     <div className="dash-tab-panel dash-tab-panel--ranking">
@@ -533,19 +536,6 @@ function GroupTab({ leaderboard, rankingProvisional, group, groupMatches, knocko
         </>
       ) : (
         <>
-          {leader && (
-            <div className="ranking-podium" aria-hidden="true">
-              <div className="ranking-podium-glow" />
-              <div className="ranking-podium-inner">
-                <Icon name="trophy" size={18} style={{ color: '#c9a227' }} />
-                <span className="ranking-podium-label">Líder</span>
-                <span className="ranking-podium-name">{leader.team_name?.trim() || leader.name}</span>
-                <span className="ranking-podium-pts">
-                  {formatPtsOfMax(leader.total, SCORING_COLUMN_LIMITS.total)} pts
-                </span>
-              </div>
-            </div>
-          )}
           <p className="ranking-hint">
             Toca un jugador para ver su porra completa.
             {rankingProvisional && (
