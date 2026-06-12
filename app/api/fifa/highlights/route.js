@@ -14,7 +14,7 @@ const CACHE_TTL_MS = 6 * 60 * 60 * 1000
 /** Si aún no hay vídeo embebible, reintentar antes (suele tardar en subirse). */
 const CACHE_TTL_NO_VIDEO_MS = 30 * 60 * 1000
 /** Incrementar al cambiar la lógica de selección de YouTube (invalida caché en caliente). */
-const CACHE_KEY_VERSION = 'v2'
+const CACHE_KEY_VERSION = 'v3'
 
 function cacheGet(key) {
   const hit = CACHE.get(key)
