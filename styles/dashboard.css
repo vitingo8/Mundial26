@@ -5312,6 +5312,16 @@ button.schedule-match-row:focus-visible {
   gap: 10px;
 }
 
+.ranking-provisional-badge {
+  margin-left: 6px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
 .ranking-hint {
   margin: 0;
   font-size: 0.72rem;
@@ -8162,7 +8172,7 @@ button.schedule-match-team:disabled {
 }
 
 .live-floating-btn__team {
-  max-width: 3.5rem;
+  max-width: 7.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

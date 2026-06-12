@@ -9,13 +9,9 @@ import { useSimulatedLiveClock } from '../hooks/useSimulatedLiveClock'
 
 const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
 
-function shortLabel(name) {
+function teamLabel(name) {
   const label = displayTeamName(name)
-  if (!label) return '?'
-  const parts = label.split(/\s+/)
-  if (parts.length > 1 && parts[0].length <= 6) return parts[0]
-  if (label.length <= 5) return label
-  return label.slice(0, 4)
+  return label || '?'
 }
 
 function LiveFloatingButton({ match, onClick }) {
@@ -41,9 +37,9 @@ function LiveFloatingButton({ match, onClick }) {
     >
       {!isPaused && <span className="live-floating-btn__pulse" aria-hidden />}
       <span className="live-floating-btn__score">
-        <span className="live-floating-btn__team">{shortLabel(home)}</span>
+        <span className="live-floating-btn__team">{teamLabel(home)}</span>
         <span className="live-floating-btn__nums">{score.home}-{score.away}</span>
-        <span className="live-floating-btn__team">{shortLabel(away)}</span>
+        <span className="live-floating-btn__team">{teamLabel(away)}</span>
       </span>
       {minute && <span className="live-floating-btn__min">{minute}</span>}
       {!isPaused && <Icon name="signal" size={12} className="live-floating-btn__icon" />}

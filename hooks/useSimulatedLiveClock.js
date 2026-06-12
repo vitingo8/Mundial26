@@ -11,33 +11,47 @@ const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
 
 /**
  * Reloj en vivo que avanza segundo a segundo entre actualizaciones de la API.
- * Se resincroniza cuando llegan nuevos liveTime/minute de FotMob.
+ * Solo se resincroniza si FotMob avanza el tiempo (nunca hacia atrás).
  */
 export function useSimulatedLiveClock({ liveTime, minute, status, enabled = true }) {
   const [now, setNow] = useState(() => Date.now())
   const [syncedAt, setSyncedAt] = useState(() => Date.now())
+  const [activeAnchor, setActiveAnchor] = useState(null)
 
-  const anchor = useMemo(() => {
+  const incomingAnchor = useMemo(() => {
     if (!enabled || !LIVE_STATUSES.has(status)) return null
     if (status === 'PAUSED') return null
     return buildLiveClockAnchor(liveTime, minute)
   }, [enabled, status, liveTime, minute, liveTime?.long, liveTime?.short, liveTime?.addedTime])
 
   useEffect(() => {
-    if (anchor) setSyncedAt(Date.now())
-  }, [anchor?.key])
+    if (!incomingAnchor) {
+      setActiveAnchor(null)
+      return
+    }
+    setActiveAnchor(prev => {
+      if (!prev || incomingAnchor.totalSeconds > prev.totalSeconds) {
+        setSyncedAt(Date.now())
+        return incomingAnchor
+      }
+      if (incomingAnchor.addedTime !== prev.addedTime) {
+        return { ...prev, addedTime: incomingAnchor.addedTime }
+      }
+      return prev
+    })
+  }, [incomingAnchor])
 
   useEffect(() => {
-    if (!anchor || status === 'PAUSED') return undefined
+    if (!activeAnchor || status === 'PAUSED') return undefined
     const t = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(t)
-  }, [anchor?.key, status])
+  }, [activeAnchor?.key, status])
 
   return useMemo(() => {
     if (!enabled || !LIVE_STATUSES.has(status)) return null
     if (status === 'PAUSED') return formatPausedLiveClock()
-    if (!anchor) return null
+    if (!activeAnchor) return null
     const elapsed = Math.floor((now - syncedAt) / 1000)
-    return formatSimulatedClock(anchor, elapsed)
-  }, [enabled, status, anchor, now, syncedAt])
+    return formatSimulatedClock(activeAnchor, elapsed)
+  }, [enabled, status, activeAnchor, now, syncedAt])
 }

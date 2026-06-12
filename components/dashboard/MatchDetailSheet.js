@@ -11,6 +11,7 @@ import MatchEventsTimeline from './MatchEventsTimeline'
 import PlayerDetailSheet from './PlayerDetailSheet'
 import YoutubeHighlightsPlayer from './YoutubeHighlightsPlayer'
 import { fetchWcMatchClient, formatStageLabel } from '../../lib/footballData'
+import { formatStatsTeamName } from '../../lib/teamNamesEs'
 import { resolveTeamNamesFromApiRaw } from '../../lib/fifaHighlights'
 import { collectMatchPlayerRoster } from '../../lib/playerMatchStats'
 import {
@@ -537,8 +538,8 @@ export default function MatchDetailSheet({
                       <section className="match-detail-section">
                         <h3 className="match-detail-section-title">Estadísticas</h3>
                         <div className="match-detail-stats">
-                          <StatsColumn teamName={homeName} stats={homeStats} />
-                          <StatsColumn teamName={awayName} stats={awayStats} />
+                          <StatsColumn teamName={formatStatsTeamName(homeName)} stats={homeStats} />
+                          <StatsColumn teamName={formatStatsTeamName(awayName)} stats={awayStats} />
                         </div>
                       </section>
                     )}

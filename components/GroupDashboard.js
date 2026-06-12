@@ -70,6 +70,7 @@ import { buildEliminatoriasKnockoutSchedule } from '../lib/knockoutBridge'
 import { patchKnockoutScore, patchKnockoutAdvance } from '../lib/knockoutAdvances'
 import { buildKnockoutScoringContext } from '../lib/knockoutMatchScoring'
 import { buildPublishedResultsMap } from '../lib/matchPointsDisplay'
+import { buildProvisionalResults, hasProvisionalLiveResults } from '../lib/syncResultsFromApi'
 import { SCORING as SCORING_RULES } from '../lib/gameData'
 
 function isInicioKoMatchId(id) {
@@ -126,9 +127,20 @@ export default function GroupDashboard({
     () => ({ groupMatches, knockoutMatches }),
     [groupMatches, knockoutMatches],
   )
+  const provisionalResults = useMemo(
+    () => buildProvisionalResults(currentGroup?.results, wcMatches),
+    [currentGroup?.results, wcMatches],
+  )
+  const rankingProvisional = useMemo(
+    () => hasProvisionalLiveResults(wcMatches),
+    [wcMatches],
+  )
   const leaderboard = useMemo(
-    () => calcLeaderboard(currentGroup, scoringOpts),
-    [currentGroup, scoringOpts],
+    () => calcLeaderboard(
+      { ...currentGroup, results: provisionalResults },
+      scoringOpts,
+    ),
+    [currentGroup, provisionalResults, scoringOpts],
   )
   const groupDeadlinePassed = isGroupDeadlinePassed(currentGroup)
   const bonusDeadlinePassed = isBonusDeadlinePassed(currentGroup)
@@ -377,6 +389,7 @@ export default function GroupDashboard({
               group: (
                 <GroupTab
                   leaderboard={leaderboard}
+                  rankingProvisional={rankingProvisional}
                   group={currentGroup}
                   groupMatches={groupMatches}
                   knockoutMatches={knockoutMatches}
@@ -460,7 +473,7 @@ export default function GroupDashboard({
 }
 
 // ─── GROUP TAB ────────────────────────────────────────────────────────────────
-function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, currentUserId }) {
+function GroupTab({ leaderboard, rankingProvisional, group, groupMatches, knockoutMatches, onLeave, currentUserId }) {
   const [view, setView] = useState('ranking')
   const [viewingParticipant, setViewingParticipant] = useState(null)
   const scoringOpts = useMemo(
@@ -504,7 +517,14 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
 
       {view === 'table' ? (
         <>
-          <p className="ranking-hint">Toca un jugador para ver su clasificación y cuadro.</p>
+          <p className="ranking-hint">
+            Toca un jugador para ver su clasificación y cuadro.
+            {rankingProvisional && (
+              <span className="ranking-provisional-badge" title="Puntos con marcadores en vivo, sujetos a cambio">
+                Prov.
+              </span>
+            )}
+          </p>
           <GroupStatsTable
             rows={tableRows}
             currentUserId={currentUserId}
@@ -526,7 +546,14 @@ function GroupTab({ leaderboard, group, groupMatches, knockoutMatches, onLeave, 
               </div>
             </div>
           )}
-          <p className="ranking-hint">Toca un jugador para ver su porra completa.</p>
+          <p className="ranking-hint">
+            Toca un jugador para ver su porra completa.
+            {rankingProvisional && (
+              <span className="ranking-provisional-badge" title="Puntos con marcadores en vivo, sujetos a cambio">
+                Prov.
+              </span>
+            )}
+          </p>
           <div className="ranking-board">
             <div className="ranking-list">
               {tableRows.map((p, i) => (
@@ -903,12 +930,14 @@ function GroupPhasePreds({
 
   return (
     <div>
-      <div className="dash-progress-wrap">
-        <div className="dash-progress-bar">
-          <div className="dash-progress-fill" style={{ width: `${Math.round(filled / total * 100)}%` }} />
+      {filled < total && (
+        <div className="dash-progress-wrap">
+          <div className="dash-progress-bar">
+            <div className="dash-progress-fill" style={{ width: `${Math.round(filled / total * 100)}%` }} />
+          </div>
+          <span className="dash-progress-text">{filled}/{total} partidos</span>
         </div>
-        <span className="dash-progress-text">{filled}/{total} partidos</span>
-      </div>
+      )}
 
       {viewMode === 'groups' ? (
         <GroupStandingsView
