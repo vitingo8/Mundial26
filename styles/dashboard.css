@@ -1887,24 +1887,17 @@
 }
 
 .schedule-match-scoreline--exact {
-  color: #1a7a3a;
-  background: rgba(73, 169, 66, 0.16);
-  border-radius: 6px;
-  padding: 2px 6px;
+  color: #2d9a4a;
 }
 
 .schedule-match-scores--exact .schedule-score-input:disabled {
   opacity: 1;
-  border-color: #49a942 !important;
-  background: rgba(73, 169, 66, 0.14) !important;
-  color: #1a6b32 !important;
+  color: #2d9a4a !important;
 }
 
 .bracket-slot-score-wrap--exact .schedule-score-input:disabled {
   opacity: 1;
-  border-color: #49a942 !important;
-  background: rgba(73, 169, 66, 0.14) !important;
-  color: #1a6b32 !important;
+  color: #2d9a4a !important;
 }
 
 .schedule-match-kickoff,
