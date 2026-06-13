@@ -14,7 +14,7 @@ const CACHE_TTL_MS = 6 * 60 * 60 * 1000
 /** Si aún no hay vídeo embebible, reintentar antes (suele tardar en subirse). */
 const CACHE_TTL_NO_VIDEO_MS = 30 * 60 * 1000
 /** Incrementar al cambiar la lógica de selección de YouTube (invalida caché en caliente). */
-const CACHE_KEY_VERSION = 'v3'
+const CACHE_KEY_VERSION = 'v6'
 
 function cacheGet(key) {
   const hit = CACHE.get(key)
@@ -30,43 +30,78 @@ function cacheSet(key, value, ttl = CACHE_TTL_MS) {
   CACHE.set(key, { at: Date.now(), value, ttl })
 }
 
+function youtubeThumbnail(videoId) {
+  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+}
+
+function buildYoutubeOnlyPayload(youtube) {
+  return {
+    available: true,
+    title: youtube.title || null,
+    thumbnail: youtubeThumbnail(youtube.videoId),
+    urlEs: null,
+    urlEn: null,
+    watchUrl: null,
+    youtubeId: youtube.videoId,
+    youtubeTitle: youtube.title || null,
+    youtubeChannel: youtube.channel || null,
+  }
+}
+
 async function fetchFifaHighlightsPage(home, away) {
   const pagePath = buildFifaHighlightsPagePath(home, away)
-  if (!pagePath) {
-    return { available: false, reason: 'invalid_teams' }
-  }
+  const cacheKey = pagePath ? `${CACHE_KEY_VERSION}:${pagePath}` : `${CACHE_KEY_VERSION}:${home}|${away}`
 
-  const cacheKey = `${CACHE_KEY_VERSION}:${pagePath}`
   const cached = cacheGet(cacheKey)
   if (cached) return cached
 
+  const youtubePromise = findEmbeddableHighlights(home, away).catch(() => null)
+
+  if (!pagePath) {
+    const youtube = await youtubePromise
+    if (!youtube) {
+      const miss = { available: false, reason: 'invalid_teams' }
+      cacheSet(cacheKey, miss, CACHE_TTL_NO_VIDEO_MS)
+      return miss
+    }
+    const payload = buildYoutubeOnlyPayload(youtube)
+    cacheSet(cacheKey, payload)
+    return payload
+  }
+
   const apiUrl = `${FIFA_CXM_PAGES_API}${pagePath}`
-  const res = await fetch(apiUrl, {
+  const fifaPromise = fetch(apiUrl, {
     headers: { 'User-Agent': 'Mundial26/1.0' },
     next: { revalidate: 3600 },
   })
 
-  if (res.status === 404) {
+  const [fifaRes, youtube] = await Promise.all([fifaPromise, youtubePromise])
+
+  if (fifaRes.status === 404) {
+    if (youtube) {
+      const payload = buildYoutubeOnlyPayload(youtube)
+      cacheSet(cacheKey, payload)
+      return payload
+    }
     const miss = { available: false, reason: 'not_published' }
-    cacheSet(cacheKey, miss)
+    cacheSet(cacheKey, miss, CACHE_TTL_NO_VIDEO_MS)
     return miss
   }
 
-  if (!res.ok) {
+  if (!fifaRes.ok) {
+    if (youtube) {
+      const payload = buildYoutubeOnlyPayload(youtube)
+      cacheSet(cacheKey, payload, CACHE_TTL_MS)
+      return payload
+    }
     return { available: false, reason: 'upstream_error' }
   }
 
-  const data = await res.json()
+  const data = await fifaRes.json()
   const esPath = data?.relativeUrlsSEO?.es || null
   const enPath = data?.relativeUrl || pagePath
 
-  let youtube = null
   let watchUrl = null
-  try {
-    youtube = await findEmbeddableHighlights(home, away)
-  } catch {
-    // sin YouTube se mantiene el fallback a FIFA.com
-  }
   try {
     watchUrl = await findFifaWatchUrl(`${FIFA_WC26_BASE}${enPath}`)
   } catch {
@@ -75,8 +110,8 @@ async function fetchFifaHighlightsPage(home, away) {
 
   const payload = {
     available: true,
-    title: data?.meta?.title || null,
-    thumbnail: data?.meta?.image || null,
+    title: data?.meta?.title || youtube?.title || null,
+    thumbnail: data?.meta?.image || (youtube ? youtubeThumbnail(youtube.videoId) : null),
     urlEs: esPath ? `${FIFA_WC26_BASE}${esPath}` : null,
     urlEn: `${FIFA_WC26_BASE}${enPath}`,
     watchUrl,
