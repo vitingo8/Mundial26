@@ -72,6 +72,7 @@ import { buildKnockoutScoringContext } from '../lib/knockoutMatchScoring'
 import { buildPublishedResultsMap } from '../lib/matchPointsDisplay'
 import { buildProvisionalResults, hasProvisionalLiveResults } from '../lib/syncResultsFromApi'
 import { SCORING as SCORING_RULES } from '../lib/gameData'
+import { resetDashboardScroll } from '../lib/dashboardScroll'
 
 function isInicioKoMatchId(id) {
   const s = String(id)
@@ -99,6 +100,8 @@ export default function GroupDashboard({
   const [scrollToMatchId, setScrollToMatchId] = useState(null)
   const [currentGroup, setCurrentGroup] = useState(group)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const contentRef = useRef(null)
+  const changeTabRef = useRef(() => {})
   const matchRefs = useRef({})
   const { groups: userPorraGroups, hasMultiple: hasMultipleGroups } = useUserPorraGroups(user?.email)
 
@@ -187,14 +190,22 @@ export default function GroupDashboard({
   useEffect(() => { const t = setInterval(handleRefresh, 60000); return () => clearInterval(t) }, [currentGroup.id])
   useEffect(() => { setPredPhase(getDefaultPredPhase(currentGroup.phase)) }, [currentGroup.phase])
 
+  function changeTab(next) {
+    if (next === tab) return
+    if (tab === 'predictions' && next !== 'predictions') void flushSave()
+    resetDashboardScroll(contentRef.current)
+    setTab(next)
+  }
+  changeTabRef.current = changeTab
+
   useEffect(() => {
     function openLiveTab() {
-      setTab('live')
+      changeTabRef.current('live')
     }
     window.addEventListener('porra:open-live', openLiveTab)
     if (sessionStorage.getItem('porra_open_live')) {
       sessionStorage.removeItem('porra_open_live')
-      setTab('live')
+      changeTabRef.current('live')
     }
     return () => window.removeEventListener('porra:open-live', openLiveTab)
   }, [])
@@ -205,11 +216,6 @@ export default function GroupDashboard({
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setScrollToMatchId(null) }
   }, [scrollToMatchId, tab, predPhase])
 
-  function changeTab(next) {
-    if (tab === 'predictions' && next !== 'predictions') void flushSave()
-    setTab(next)
-  }
-
   async function handleGoHome() {
     if (tab === 'predictions') await flushSave()
     onGoHome?.()
@@ -219,7 +225,7 @@ export default function GroupDashboard({
     setScrollToMatchId(String(matchId))
     if (groupMatches.find(x => String(x.id) === String(matchId))) setPredPhase('group')
     else if (knockoutMatches.find(x => String(x.id) === String(matchId))) setPredPhase('knockout')
-    setTab('predictions')
+    changeTab('predictions')
   }
 
   async function savePredictions() { await persistPredictions(true) }
@@ -325,35 +331,39 @@ export default function GroupDashboard({
         onOpenAdmin={isAdmin ? () => changeTab('admin') : undefined}
         onSwitchGroup={onSwitchGroup}
       />
-      <main className="dashboard-content dash-content app-container app-container--wide">
+      <main ref={contentRef} className="dashboard-content dash-content app-container app-container--wide">
         {tab === 'profile' ? (
-          <ProfileTab
-            user={user}
-            groupId={currentGroup.id}
-            currentPredictions={{
-              group: groupPreds,
-              knockout: koPreds,
-              inicioKnockout: inicioKoPreds,
-              bonuses: bonusPreds,
-            }}
-            onApplyMirror={importPredictions}
-            onSwitchGroup={onSwitchGroup}
-            onSaved={handleProfileSaved}
-            notify={notify}
-            isAdmin={isAdmin}
-            onOpenAdmin={isAdmin ? () => changeTab('admin') : undefined}
-            adminHasAlerts={adminBadges.some(b => b.type === 'warn')}
-          />
+          <div className="dash-tab-scroll">
+            <ProfileTab
+              user={user}
+              groupId={currentGroup.id}
+              currentPredictions={{
+                group: groupPreds,
+                knockout: koPreds,
+                inicioKnockout: inicioKoPreds,
+                bonuses: bonusPreds,
+              }}
+              onApplyMirror={importPredictions}
+              onSwitchGroup={onSwitchGroup}
+              onSaved={handleProfileSaved}
+              notify={notify}
+              isAdmin={isAdmin}
+              onOpenAdmin={isAdmin ? () => changeTab('admin') : undefined}
+              adminHasAlerts={adminBadges.some(b => b.type === 'warn')}
+            />
+          </div>
         ) : tab === 'admin' && isAdmin ? (
-          <AdminTab
-            group={currentGroup}
-            setGroup={setCurrentGroup}
-            refreshGroup={refreshGroup}
-            notify={notify}
-            wcMatches={wcMatches}
-            userId={user.id}
-            onBack={() => changeTab('profile')}
-          />
+          <div className="dash-tab-scroll">
+            <AdminTab
+              group={currentGroup}
+              setGroup={setCurrentGroup}
+              refreshGroup={refreshGroup}
+              notify={notify}
+              wcMatches={wcMatches}
+              userId={user.id}
+              onBack={() => changeTab('profile')}
+            />
+          </div>
         ) : (
           <SwipeTabPanels
             className="dash-swipe-tabs"
@@ -361,6 +371,7 @@ export default function GroupDashboard({
             activeTab={tab}
             onChange={changeTab}
             enabled={!profileMenuOpen}
+            panelScroll
             panels={{
               group: (
                 <GroupTab
@@ -404,6 +415,7 @@ export default function GroupDashboard({
               ),
               live: (
                 <LiveTab
+                  isActive={tab === 'live'}
                   apiMatches={wcMatches}
                   onFetch={reloadWc}
                   group={currentGroup}
@@ -1257,6 +1269,7 @@ function AdminResultsFallback({ group, groupMatches, userPreds }) {
 }
 
 function LiveTab({
+  isActive = false,
   apiMatches = [],
   onFetch,
   group, groupMatches, knockoutMatches, userPreds, onGoToPrediction,
@@ -1292,7 +1305,8 @@ function LiveTab({
   const phasePreds = livePhase === 'group' ? (userPreds?.group || {}) : (userPreds?.knockout || {})
   const hasSchedule = apiMatches.length > 0 || phaseMatches.length > 0
   const { pull, refreshing: pullRefreshing, hint: pullHint } = usePullToRefresh(onFetch, {
-    enabled: !detailMatch,
+    enabled: isActive && !detailMatch,
+    getScrollElement: () => document.querySelector('.dash-swipe-tabs .swipe-tabs-panel[aria-hidden="false"]'),
   })
 
   const livePhases = [

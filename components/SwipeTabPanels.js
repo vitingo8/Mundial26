@@ -88,6 +88,18 @@ export default function SwipeTabPanels({
     }
   }, [activeTab, dragging])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    requestAnimationFrame(() => {
+      if (panelScroll) {
+        const el = viewportRef.current?.querySelector('.swipe-tabs-panel[aria-hidden="false"]')
+        el?.scrollTo(0, 0)
+      } else {
+        window.scrollTo(0, 0)
+      }
+    })
+  }, [activeTab, panelScroll])
+
   const clampDrag = useCallback((dx, index) => {
     if (index <= 0 && dx > 0) return dx * EDGE_RUBBER
     if (index >= tabs.length - 1 && dx < 0) return dx * EDGE_RUBBER

@@ -315,6 +315,80 @@
   padding: 20px 18px 100px;
 }
 
+@media (max-width: 639px) {
+  .dashboard-app {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .dash-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    padding-top: 16px;
+    padding-left: max(16px, var(--safe-left));
+    padding-right: max(16px, var(--safe-right));
+    padding-bottom: calc(72px + var(--safe-bottom));
+  }
+
+  .dash-tab-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+  }
+
+  .dash-swipe-tabs.swipe-tabs-root {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dash-swipe-tabs .swipe-tabs-viewport {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dash-swipe-tabs .swipe-tabs-viewport--scroll-panels {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .dash-swipe-tabs .swipe-tabs-track {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    align-items: stretch;
+  }
+
+  .dash-swipe-tabs .swipe-tabs-panel--scroll {
+    touch-action: pan-y;
+    contain: layout style paint;
+  }
+
+  .dash-swipe-tabs .swipe-tabs-panel[aria-hidden="true"] {
+    content-visibility: hidden;
+    pointer-events: none;
+  }
+
+  .dash-tab-panel {
+    animation: dashFadeInMobile 0.2s ease both;
+  }
+
+  @keyframes dashFadeInMobile {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
 .dash-tab-panel {
   display: flex;
   flex-direction: column;
@@ -8670,6 +8744,11 @@ button.schedule-match-team:disabled {
 
 .dash-swipe-tabs .swipe-tabs-viewport {
   overflow: hidden;
+}
+
+.dash-swipe-tabs .swipe-tabs-viewport--scroll-panels {
+  flex: 1;
+  min-height: 0;
 }
 
 @media (min-width: 640px) {

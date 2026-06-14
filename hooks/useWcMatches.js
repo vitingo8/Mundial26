@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -102,7 +103,9 @@ export function WcMatchesProvider({ children }) {
         if (!raw.length) {
           throw new Error('El calendario llegó vacío')
         }
-        setWcMatches(raw)
+        startTransition(() => {
+          setWcMatches(raw)
+        })
         writeCache(raw)
         if (data._source === 'catalog' || data._source === 'stale') {
           setApiError(

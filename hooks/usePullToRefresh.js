@@ -5,14 +5,16 @@ import { useEffect, useRef, useState } from 'react'
 const PULL_THRESHOLD = 72
 const MAX_PULL = 96
 
-export function usePullToRefresh(onRefresh, { enabled = true } = {}) {
+export function usePullToRefresh(onRefresh, { enabled = true, getScrollElement = null } = {}) {
   const [pull, setPull] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
   const pullRef = useRef(0)
   const startY = useRef(0)
   const pulling = useRef(false)
   const onRefreshRef = useRef(onRefresh)
+  const getScrollElementRef = useRef(getScrollElement)
   onRefreshRef.current = onRefresh
+  getScrollElementRef.current = getScrollElement
 
   useEffect(() => {
     if (!enabled) {
@@ -21,7 +23,13 @@ export function usePullToRefresh(onRefresh, { enabled = true } = {}) {
       return undefined
     }
 
+    function scrollEl() {
+      return getScrollElementRef.current?.() ?? null
+    }
+
     function atTop() {
+      const el = scrollEl()
+      if (el) return el.scrollTop <= 0
       return window.scrollY <= 0
     }
 
@@ -66,16 +74,19 @@ export function usePullToRefresh(onRefresh, { enabled = true } = {}) {
       }
     }
 
-    document.addEventListener('touchstart', onTouchStart, { passive: true })
-    document.addEventListener('touchmove', onTouchMove, { passive: false })
-    document.addEventListener('touchend', onTouchEnd)
-    document.addEventListener('touchcancel', onTouchEnd)
+    const root = scrollEl()
+    const target = root ?? document
+
+    target.addEventListener('touchstart', onTouchStart, { passive: true })
+    target.addEventListener('touchmove', onTouchMove, { passive: false })
+    target.addEventListener('touchend', onTouchEnd)
+    target.addEventListener('touchcancel', onTouchEnd)
 
     return () => {
-      document.removeEventListener('touchstart', onTouchStart)
-      document.removeEventListener('touchmove', onTouchMove)
-      document.removeEventListener('touchend', onTouchEnd)
-      document.removeEventListener('touchcancel', onTouchEnd)
+      target.removeEventListener('touchstart', onTouchStart)
+      target.removeEventListener('touchmove', onTouchMove)
+      target.removeEventListener('touchend', onTouchEnd)
+      target.removeEventListener('touchcancel', onTouchEnd)
     }
   }, [enabled, refreshing])
 

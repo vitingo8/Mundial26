@@ -168,6 +168,13 @@ export default function LiveResultRow({
   const isLive = LIVE_STATUSES.has(status)
   const isFinished = status === 'FINISHED'
   const isUpcoming = UPCOMING_STATUSES.has(status)
+  const liveClock = useSimulatedLiveClock({
+    liveTime,
+    minute: matchMinute,
+    status,
+    enabled: isLive || status === 'PAUSED',
+  })
+  const displayMinute = liveClock?.compact || null
   const hasScore = score?.home != null && score?.away != null
   const kickoff = formatMatchKickoff(utcDate)
   const matchDate = formatMatchShortDate(utcDate)
@@ -228,7 +235,7 @@ export default function LiveResultRow({
               />
             )}
             {isLive && hasScore && (
-              <span className="schedule-match-live-dot" aria-hidden={!!minute} aria-label={minute ? undefined : 'En juego'} />
+              <span className="schedule-match-live-dot" aria-hidden={!!displayMinute} aria-label={displayMinute ? undefined : 'En juego'} />
             )}
             {isFinished && (
               <FifaHighlightsButton
