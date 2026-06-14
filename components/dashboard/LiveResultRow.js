@@ -105,10 +105,14 @@ export function PorraLiveHeader({
 
 export function LiveScoreBlock({ score, status, liveTime, minute: matchMinute, size = 'row' }) {
   const isLive = LIVE_STATUSES.has(status)
-  const isPaused = status === 'PAUSED'
+  const liveClock = useSimulatedLiveClock({
+    liveTime,
+    minute: matchMinute,
+    status,
+    enabled: isLive,
+  })
   if (!isLive || score?.home == null || score?.away == null) return null
 
-  const liveClock = useSimulatedLiveClock({ liveTime, minute: matchMinute, status })
   const minute = liveClock?.compact || null
   const isPaused = status === 'PAUSED' || minute === 'HT'
   const blockClass = [
