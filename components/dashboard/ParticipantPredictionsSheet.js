@@ -135,6 +135,7 @@ export default function ParticipantPredictionsSheet({
                 knockoutMatches={knockoutMatches}
                 publishedResults={publishedResults}
                 apiMatches={apiMatches}
+                viewingParticipantPreds
               />
             )
           ) : view === 'bonuses' ? (
@@ -155,6 +156,7 @@ export default function ParticipantPredictionsSheet({
               error={inicioKo.error}
               publishedResults={publishedResults}
               apiMatches={apiMatches}
+              viewingParticipantPreds
             />
           )}
         </div>

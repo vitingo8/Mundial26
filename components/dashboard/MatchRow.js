@@ -138,6 +138,9 @@ export default function MatchRow({
 
   readOnly = false,
 
+  /** Porra ajena (ranking): el tooltip de puntos muestra su predicción */
+  viewingParticipantPreds = false,
+
   compact = false,
 
   denseTable = false,
@@ -249,18 +252,22 @@ export default function MatchRow({
   }
 
   const pointsBubble = (() => {
-    const userPrediction = readOnly ? predRow : null
+    const bubbleUserPred = (readOnly || viewingParticipantPreds) ? predRow : null
+    const bubbleProps = {
+      userPrediction: bubbleUserPred,
+      highlightPrediction: viewingParticipantPreds,
+      homeCrest,
+      awayCrest,
+      homeName: home,
+      awayName: away,
+    }
     if (publishedResult && pointsSummary?.pts > 0) {
       return (
         <MatchPointsBubble
           points={pointsSummary.pts}
           detail={pointsSummary.detail}
           publishedResult={publishedResult}
-          userPrediction={userPrediction}
-          homeCrest={homeCrest}
-          awayCrest={awayCrest}
-          homeName={home}
-          awayName={away}
+          {...bubbleProps}
         />
       )
     }
@@ -270,11 +277,7 @@ export default function MatchRow({
           points={livePointsSummary.pts}
           detail={livePointsSummary.detail}
           publishedResult={apiScore}
-          userPrediction={userPrediction}
-          homeCrest={homeCrest}
-          awayCrest={awayCrest}
-          homeName={home}
-          awayName={away}
+          {...bubbleProps}
           provisional
         />
       )
@@ -285,11 +288,7 @@ export default function MatchRow({
           points={apiFinishedPointsSummary.pts}
           detail={apiFinishedPointsSummary.detail}
           publishedResult={apiScore}
-          userPrediction={userPrediction}
-          homeCrest={homeCrest}
-          awayCrest={awayCrest}
-          homeName={home}
-          awayName={away}
+          {...bubbleProps}
         />
       )
     }

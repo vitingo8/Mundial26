@@ -78,6 +78,7 @@ export default function BracketMatchSlot({
   participants = null,
   groupMatches = [],
   knockoutMatches = [],
+  viewingParticipantPreds = false,
 }) {
   if (!match) return <div className="bracket-slot bracket-slot--empty" />
 
@@ -109,17 +110,17 @@ export default function BracketMatchSlot({
   }
 
   const pointsSummary =
-    !readOnly && publishedResult
+    (!readOnly || viewingParticipantPreds) && publishedResult
       ? summarizeMatchPoints(predRow, publishedResult, knockoutScoringOpts)
       : null
 
   const livePointsSummary =
-    isApiLive && apiScore && !publishedResult
+    (!readOnly || viewingParticipantPreds) && isApiLive && apiScore && !publishedResult
       ? summarizeMatchPoints(predRow, apiScore, knockoutScoringOpts)
       : null
 
   const apiFinishedPointsSummary =
-    isApiFinished && apiScore && !publishedResult
+    (!readOnly || viewingParticipantPreds) && isApiFinished && apiScore && !publishedResult
       ? summarizeMatchPoints(predRow, apiScore, knockoutScoringOpts)
       : null
 
@@ -131,6 +132,17 @@ export default function BracketMatchSlot({
     return getParticipantPredsForMatch(participants, match.id, { groupMatches, knockoutMatches })
   }, [readOnly, participants, match?.id, groupMatches, knockoutMatches])
 
+  const bubbleUserPred = viewingParticipantPreds ? predRow : null
+  const bubbleProps = {
+    userPrediction: bubbleUserPred,
+    highlightPrediction: viewingParticipantPreds,
+    homeCrest: match.homeCrest,
+    awayCrest: match.awayCrest,
+    homeName: match.home,
+    awayName: match.away,
+    className: 'match-points-bubble-wrap--bracket',
+  }
+
   const pointsBubble = (() => {
     if (pointsSummary?.pts > 0) {
       return (
@@ -138,11 +150,7 @@ export default function BracketMatchSlot({
           points={pointsSummary.pts}
           detail={pointsSummary.detail}
           publishedResult={publishedResult}
-          homeCrest={match.homeCrest}
-          awayCrest={match.awayCrest}
-          homeName={match.home}
-          awayName={match.away}
-          className="match-points-bubble-wrap--bracket"
+          {...bubbleProps}
         />
       )
     }
@@ -152,11 +160,7 @@ export default function BracketMatchSlot({
           points={livePointsSummary.pts}
           detail={livePointsSummary.detail}
           publishedResult={apiScore}
-          homeCrest={match.homeCrest}
-          awayCrest={match.awayCrest}
-          homeName={match.home}
-          awayName={match.away}
-          className="match-points-bubble-wrap--bracket"
+          {...bubbleProps}
           provisional
         />
       )
@@ -167,11 +171,7 @@ export default function BracketMatchSlot({
           points={apiFinishedPointsSummary.pts}
           detail={apiFinishedPointsSummary.detail}
           publishedResult={apiScore}
-          homeCrest={match.homeCrest}
-          awayCrest={match.awayCrest}
-          homeName={match.home}
-          awayName={match.away}
-          className="match-points-bubble-wrap--bracket"
+          {...bubbleProps}
         />
       )
     }

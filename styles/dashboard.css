@@ -1771,6 +1771,19 @@
   font-variant-numeric: tabular-nums;
 }
 
+.match-points-tooltip-real {
+  margin: 0 0 4px;
+  font-size: 0.58rem;
+  font-weight: 600;
+  line-height: 1.25;
+  opacity: 0.8;
+}
+
+.match-points-tooltip-real strong {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Reloj en vivo unificado */
 .live-clock-label {
   font-size: 0.62rem;

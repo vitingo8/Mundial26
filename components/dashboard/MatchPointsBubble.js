@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import TeamCrest from '../TeamCrest'
 
 /**
- * Burbuja verde (+N) sobre el marcador; al pulsar, tooltip con resultado real y desglose.
+ * Burbuja verde (+N) sobre el marcador; al pulsar, tooltip con desglose de puntos.
  */
 export default function MatchPointsBubble({
   points,
@@ -19,6 +19,8 @@ export default function MatchPointsBubble({
   className = '',
   /** Marcador en vivo: estimación provisional, no definitiva */
   provisional = false,
+  /** En ranking/porra ajena: destacar la predicción del usuario, no el resultado real */
+  highlightPrediction = false,
 }) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef(null)
@@ -36,11 +38,12 @@ export default function MatchPointsBubble({
   if (!points || points <= 0 || !publishedResult) return null
 
   const { home, away } = publishedResult
-  const scoreLabel = `${homeName || 'Local'} ${home}–${away} ${awayName || 'Visitante'}`
+  const realScoreLabel = `${homeName || 'Local'} ${home}–${away} ${awayName || 'Visitante'}`
   const hasUserPred = userPrediction?.home != null || userPrediction?.away != null
   const userPredLabel = hasUserPred
     ? `${userPrediction.home ?? '?'}–${userPrediction.away ?? '?'}`
     : null
+  const showPredFirst = highlightPrediction && userPredLabel
 
   return (
     <div
@@ -69,21 +72,39 @@ export default function MatchPointsBubble({
           {provisional && (
             <p className="match-points-tooltip-note">En vivo · estimado, puede cambiar</p>
           )}
-          {userPredLabel && (
-            <p className="match-points-tooltip-pred">
-              Su porra: <strong>{userPredLabel}</strong>
-            </p>
+          {showPredFirst ? (
+            <>
+              <div
+                className="match-points-tooltip-score"
+                aria-label={`Su porra: ${homeName || 'Local'} ${userPredLabel} ${awayName || 'Visitante'}`}
+              >
+                <TeamCrest src={homeCrest} alt={homeName} size={14} />
+                <span className="match-points-tooltip-goals">{userPredLabel}</span>
+                <TeamCrest src={awayCrest} alt={awayName} size={14} />
+              </div>
+              <p className="match-points-tooltip-real">
+                Real: <strong>{home}–{away}</strong>
+              </p>
+            </>
+          ) : (
+            <>
+              {userPredLabel && (
+                <p className="match-points-tooltip-pred">
+                  Su porra: <strong>{userPredLabel}</strong>
+                </p>
+              )}
+              <div
+                className="match-points-tooltip-score"
+                aria-label={
+                  provisional ? `Marcador en vivo: ${realScoreLabel}` : `Resultado real: ${realScoreLabel}`
+                }
+              >
+                <TeamCrest src={homeCrest} alt={homeName} size={14} />
+                <span className="match-points-tooltip-goals">{home}–{away}</span>
+                <TeamCrest src={awayCrest} alt={awayName} size={14} />
+              </div>
+            </>
           )}
-          <div
-            className="match-points-tooltip-score"
-            aria-label={
-              provisional ? `Marcador en vivo: ${scoreLabel}` : `Resultado real: ${scoreLabel}`
-            }
-          >
-            <TeamCrest src={homeCrest} alt={homeName} size={14} />
-            <span className="match-points-tooltip-goals">{home}–{away}</span>
-            <TeamCrest src={awayCrest} alt={awayName} size={14} />
-          </div>
           {detail ? <p className="match-points-tooltip-detail">{detail}</p> : null}
         </div>
       )}
