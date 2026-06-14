@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const MOBILE_MQ = '(max-width: 639px)'
 /** Píxeles de gesto para colapsar del todo el header */
@@ -21,6 +21,7 @@ function contentScrollAllowed(collapse, target) {
 /**
  * Colapsa el header del detalle de partido en móvil.
  * Hasta que el header no está oculto, el panel no hace scroll (gesto = colapsar).
+ * @returns {boolean} headerScrollLocked — true mientras el panel no puede desplazarse
  */
 export function useMatchDetailHeaderCollapse({
   headerRef,
@@ -33,10 +34,14 @@ export function useMatchDetailHeaderCollapse({
 }) {
   const collapseRef = useRef(0)
   const targetRef = useRef(0)
+  const lockedRef = useRef(true)
+  const [headerScrollLocked, setHeaderScrollLocked] = useState(false)
 
   useEffect(() => {
     collapseRef.current = 0
     targetRef.current = 0
+    lockedRef.current = true
+    setHeaderScrollLocked(false)
     const header = headerRef.current
     if (header) {
       header.style.setProperty('--md-header-collapse', '0')
@@ -51,6 +56,8 @@ export function useMatchDetailHeaderCollapse({
     if (!header || !expand) return undefined
 
     if (!enabled) {
+      lockedRef.current = false
+      setHeaderScrollLocked(false)
       header.style.setProperty('--md-header-collapse', '0')
       header.classList.remove('match-detail-header--collapsed')
       header.classList.remove('match-detail-header--scroll-locked')
@@ -74,21 +81,26 @@ export function useMatchDetailHeaderCollapse({
     let lastTouchY = 0
     let touchTracking = false
 
+    function updateLockedState(locked) {
+      header.classList.toggle('match-detail-header--scroll-locked', locked)
+      scrollEl?.classList.toggle('match-detail-panel--header-locked', locked)
+      if (locked !== lockedRef.current) {
+        lockedRef.current = locked
+        setHeaderScrollLocked(locked)
+      }
+    }
+
     function applyCollapse(value) {
       const p = Math.min(1, Math.max(0, value))
       collapseRef.current = p
       header.style.setProperty('--md-header-collapse', String(p))
       header.classList.toggle('match-detail-header--collapsed', p > 0.96)
-      const locked = !contentScrollAllowed(p, targetRef.current)
-      header.classList.toggle('match-detail-header--scroll-locked', locked)
-      scrollEl?.classList.toggle('match-detail-panel--header-locked', locked)
+      updateLockedState(!contentScrollAllowed(p, targetRef.current))
     }
 
     function syncTargetFromPx() {
       targetRef.current = smoothstep(collapsePx / COLLAPSE_SCROLL_PX)
-      const locked = !contentScrollAllowed(collapseRef.current, targetRef.current)
-      header.classList.toggle('match-detail-header--scroll-locked', locked)
-      scrollEl?.classList.toggle('match-detail-panel--header-locked', locked)
+      updateLockedState(!contentScrollAllowed(collapseRef.current, targetRef.current))
     }
 
     function stopAnimation() {
@@ -124,12 +136,26 @@ export function useMatchDetailHeaderCollapse({
       ensureAnimation()
     }
 
+    function isScrollLocked() {
+      return !contentScrollAllowed(collapseRef.current, targetRef.current)
+    }
+
+    function absorbPanelScroll() {
+      if (!scrollEl || scrollEl.scrollTop <= 0) return
+      addCollapseDelta(scrollEl.scrollTop)
+      scrollEl.scrollTop = 0
+    }
+
     function lockScrollPosition() {
-      if (!scrollEl) return
-      if (!contentScrollAllowed(collapseRef.current, targetRef.current) && scrollEl.scrollTop > 0) {
-        addCollapseDelta(scrollEl.scrollTop)
-        scrollEl.scrollTop = 0
-      }
+      if (!scrollEl || !isScrollLocked()) return
+      absorbPanelScroll()
+    }
+
+    function handleLockedGesture(deltaY) {
+      if (!scrollEl || !deltaY) return
+      absorbPanelScroll()
+      addCollapseDelta(deltaY)
+      scrollEl.scrollTop = 0
     }
 
     function onScroll() {
@@ -151,22 +177,15 @@ export function useMatchDetailHeaderCollapse({
 
       if (!dy) return
 
-      const st = scrollEl.scrollTop
-      if (st > 0) return
-
-      const collapsed = contentScrollAllowed(collapseRef.current, targetRef.current)
-
-      if (dy > 0 && !collapsed) {
+      if (isScrollLocked()) {
         e.preventDefault()
-        addCollapseDelta(dy)
-        scrollEl.scrollTop = 0
+        handleLockedGesture(dy)
         return
       }
 
-      if (dy < 0 && collapsePx > 0) {
+      if (dy < 0 && collapsePx > 0 && scrollEl.scrollTop <= 0) {
         e.preventDefault()
-        addCollapseDelta(dy)
-        scrollEl.scrollTop = 0
+        handleLockedGesture(dy)
       }
     }
 
@@ -177,22 +196,17 @@ export function useMatchDetailHeaderCollapse({
     function onWheel(e) {
       if (!scrollEl) return
 
-      const st = scrollEl.scrollTop
-      if (st > 0) return
-
-      const collapsed = contentScrollAllowed(collapseRef.current, targetRef.current)
-
-      if (e.deltaY > 0 && !collapsed) {
-        e.preventDefault()
-        addCollapseDelta(e.deltaY)
-        scrollEl.scrollTop = 0
+      if (isScrollLocked()) {
+        if (e.deltaY !== 0) {
+          e.preventDefault()
+          handleLockedGesture(e.deltaY)
+        }
         return
       }
 
-      if (e.deltaY < 0 && collapsePx > 0) {
+      if (e.deltaY < 0 && collapsePx > 0 && scrollEl.scrollTop <= 0) {
         e.preventDefault()
-        addCollapseDelta(e.deltaY)
-        scrollEl.scrollTop = 0
+        handleLockedGesture(e.deltaY)
       }
     }
 
@@ -216,6 +230,7 @@ export function useMatchDetailHeaderCollapse({
       targetRef.current = 0
       applyCollapse(0)
       scrollEl.scrollTop = 0
+      updateLockedState(true)
 
       scrollEl.addEventListener('scroll', onScroll, { passive: true })
       scrollEl.addEventListener('touchstart', onTouchStart, { passive: true })
@@ -223,8 +238,6 @@ export function useMatchDetailHeaderCollapse({
       scrollEl.addEventListener('touchend', onTouchEnd, { passive: true })
       scrollEl.addEventListener('touchcancel', onTouchEnd, { passive: true })
       scrollEl.addEventListener('wheel', onWheel, { passive: false })
-      scrollEl.classList.add('match-detail-panel--header-locked')
-      header.classList.add('match-detail-header--scroll-locked')
     }
 
     bindScroll()
@@ -237,6 +250,8 @@ export function useMatchDetailHeaderCollapse({
         collapsePx = 0
         targetRef.current = 0
         collapseRef.current = 0
+        lockedRef.current = false
+        setHeaderScrollLocked(false)
         header.style.setProperty('--md-header-collapse', '0')
         header.classList.remove('match-detail-header--collapsed')
         header.classList.remove('match-detail-header--scroll-locked')
@@ -256,9 +271,13 @@ export function useMatchDetailHeaderCollapse({
       collapsePx = 0
       targetRef.current = 0
       collapseRef.current = 0
+      lockedRef.current = false
+      setHeaderScrollLocked(false)
       header.style.setProperty('--md-header-collapse', '0')
       header.classList.remove('match-detail-header--collapsed')
       header.classList.remove('match-detail-header--scroll-locked')
     }
   }, [enabled, activeTab, matchId, contentKey, bodyRef, headerRef, expandRef])
+
+  return headerScrollLocked
 }

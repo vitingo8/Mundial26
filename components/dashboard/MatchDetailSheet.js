@@ -327,14 +327,14 @@ export default function MatchDetailSheet({
   const playerRoster = useMemo(() => collectMatchPlayerRoster(match), [match])
   const isLive = isLiveMatchStatus(match?.status)
 
-  useMatchDetailHeaderCollapse({
+  const headerScrollLocked = useMatchDetailHeaderCollapse({
     headerRef,
     expandRef: headerExpandRef,
     bodyRef,
     activeTab,
     matchId: currentMatchId,
     enabled: !selectedPlayerId && Boolean(match),
-    contentKey: `${loading}-${score?.home ?? ''}-${goalScorers.home.length}-${goalScorers.away.length}-${isLive}-${liveClock?.clock ?? ''}`,
+    contentKey: `${loading}-${score?.home ?? ''}-${goalScorers.home.length}-${goalScorers.away.length}-${isLive}`,
   })
 
   function openPlayer(player) {
@@ -557,6 +557,7 @@ export default function MatchDetailSheet({
               onChange={selectTab}
               enabled={!selectedPlayerId}
               panelScroll
+              panelSwipeLocked={headerScrollLocked}
               viewportClassName="match-detail-swipe-viewport"
               panels={{
                 stats: (

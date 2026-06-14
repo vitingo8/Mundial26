@@ -42,6 +42,7 @@ export default function SwipeTabPanels({
   panels,
   enabled = true,
   panelScroll = false,
+  panelSwipeLocked = false,
   className = '',
   viewportClassName = '',
 }) {
@@ -51,6 +52,7 @@ export default function SwipeTabPanels({
   const onChangeRef = useRef(onChange)
   const tabsRef = useRef(tabs)
   const activeTabRef = useRef(activeTab)
+  const panelSwipeLockedRef = useRef(panelSwipeLocked)
 
   const [width, setWidth] = useState(0)
   const [panelGap, setPanelGap] = useState(DEFAULT_PANEL_GAP)
@@ -61,6 +63,7 @@ export default function SwipeTabPanels({
   onChangeRef.current = onChange
   tabsRef.current = tabs
   activeTabRef.current = activeTab
+  panelSwipeLockedRef.current = panelSwipeLocked
   dragXRef.current = dragX
 
   const activeIndex = Math.max(0, tabs.indexOf(activeTab))
@@ -123,7 +126,7 @@ export default function SwipeTabPanels({
     }
 
     function onStart(e) {
-      if (!mobile || touchInNoSwipeZone(e.target)) return
+      if (!mobile || panelSwipeLockedRef.current || touchInNoSwipeZone(e.target)) return
       dragStateRef.current = {
         active: true,
         startX: e.touches[0].clientX,
@@ -134,7 +137,7 @@ export default function SwipeTabPanels({
 
     function onMove(e) {
       const d = dragStateRef.current
-      if (!d.active || !mobile) return
+      if (!d.active || !mobile || panelSwipeLockedRef.current) return
       const dx = e.touches[0].clientX - d.startX
       const dy = e.touches[0].clientY - d.startY
       if (!d.locked) {

@@ -5725,7 +5725,9 @@ button.schedule-match-row:focus-visible {
   }
 
   .match-detail-panel--header-locked {
+    overflow: hidden;
     overscroll-behavior-y: none;
+    touch-action: none;
   }
 
   .match-detail-tabs {
@@ -8776,6 +8778,12 @@ button.schedule-match-team:disabled {
   height: 100%;
   max-height: 100%;
   overscroll-behavior-y: contain;
+}
+
+.swipe-tabs-panel--scroll.match-detail-panel--header-locked {
+  overflow: hidden;
+  overscroll-behavior-y: none;
+  touch-action: none;
 }
 
 .dash-swipe-tabs .swipe-tabs-viewport {
