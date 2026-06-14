@@ -1877,10 +1877,7 @@
 }
 
 .match-preds-info-wrap--bracket {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  z-index: 2;
+  flex-shrink: 0;
 }
 
 .match-points-tooltip::after {
@@ -1959,6 +1956,12 @@
 
 .schedule-match-center--knockout {
   padding-bottom: 28px;
+}
+
+.schedule-match-tag-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .schedule-match-number {
@@ -7890,13 +7893,20 @@ button.schedule-match-team:disabled {
   box-shadow: 0 0 0 1px rgba(29, 49, 38, 0.08);
 }
 
+.bracket-slot-tag-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 1px;
+}
+
 .bracket-slot-tag {
   font-size: var(--bracket-tag-fs);
   font-weight: 800;
   letter-spacing: 0.06em;
   color: var(--dash-muted);
   text-align: center;
-  margin-bottom: 1px;
 }
 
 .bracket-slot-team {

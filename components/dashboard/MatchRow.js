@@ -351,9 +351,17 @@ export default function MatchRow({
 
         {matchTag && !denseTable ? (
 
-          <span className="schedule-match-number" title={slotLine ? `${matchTag} · ${slotLine}` : matchTag}>
+          <span className="schedule-match-tag-row">
 
-            {matchTag}
+            <span className="schedule-match-number" title={slotLine ? `${matchTag} · ${slotLine}` : matchTag}>
+
+              {matchTag}
+
+            </span>
+
+            {!readOnly && participantPredRows.length > 0 && (
+              <MatchPredsInfo rows={participantPredRows} />
+            )}
 
           </span>
 
@@ -373,9 +381,6 @@ export default function MatchRow({
 
           <span className="schedule-match-scores-wrap">
             {pointsBubble}
-            {!readOnly && participantPredRows.length > 0 && (
-              <MatchPredsInfo rows={participantPredRows} />
-            )}
             <span
               className={`schedule-match-scoreline${isExactHit ? ' schedule-match-scoreline--exact' : ''}`}
               aria-label={`${home} ${homeVal === '' ? 'sin marcar' : homeVal}, ${away} ${awayVal === '' ? 'sin marcar' : awayVal}${isExactHit ? ' · marcador exacto' : ''}`}
@@ -392,9 +397,6 @@ export default function MatchRow({
 
             <div className="schedule-match-scores-wrap">
             {pointsBubble}
-            {!readOnly && participantPredRows.length > 0 && (
-              <MatchPredsInfo rows={participantPredRows} />
-            )}
             <div className={`schedule-match-scores${isExactHit ? ' schedule-match-scores--exact' : ''}`}>
 
               <ScoreInput

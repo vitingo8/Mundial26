@@ -191,9 +191,6 @@ export default function BracketMatchSlot({
       onKeyDown={readOnly && onGoToPrediction ? e => { if (e.key === 'Enter') onGoToPrediction(match.id) } : undefined}
     >
       {pointsBubble}
-      {!readOnly && participantPredRows.length > 0 && (
-        <MatchPredsInfo rows={participantPredRows} className="match-preds-info-wrap--bracket" />
-      )}
       {showPorraHeader && (
         <PorraLiveHeader
           home={match.home}
@@ -208,7 +205,12 @@ export default function BracketMatchSlot({
           awayLabel={match.away}
         />
       )}
-      <div className="bracket-slot-tag">P{match.matchNumber}</div>
+      <div className="bracket-slot-tag-row">
+        <div className="bracket-slot-tag">P{match.matchNumber}</div>
+        {!readOnly && participantPredRows.length > 0 && (
+          <MatchPredsInfo rows={participantPredRows} className="match-preds-info-wrap--bracket" />
+        )}
+      </div>
 
       <BracketTeam
         name={match.home}
