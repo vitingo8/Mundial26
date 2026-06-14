@@ -3,16 +3,11 @@
 import { useEffect, useRef, useState } from 'react'
 
 const MOBILE_MQ = '(max-width: 639px)'
-/** Píxeles de gesto para colapsar del todo el header */
 const COLLAPSE_SCROLL_PX = 240
-/** 0–1: menor = más suave al seguir el gesto */
-const COLLAPSE_LERP = 0.09
+/** Umbral mínimo de gesto hacia arriba/abajo para plegar/desplegar */
+const GESTURE_COMMIT_PX = 14
 const COLLAPSED_THRESHOLD = 0.985
-
-function smoothstep(t) {
-  const x = Math.min(1, Math.max(0, t))
-  return x * x * (3 - 2 * x)
-}
+const COLLAPSE_LERP = 0.24
 
 function contentScrollAllowed(collapse, target) {
   return collapse >= COLLAPSED_THRESHOLD && target >= COLLAPSED_THRESHOLD
@@ -20,7 +15,7 @@ function contentScrollAllowed(collapse, target) {
 
 /**
  * Colapsa el header del detalle de partido en móvil.
- * Hasta que el header no está oculto, el panel no hace scroll (gesto = colapsar).
+ * Un gesto hacia arriba pliega el header por completo; hacia abajo lo despliega.
  * @returns {boolean} headerScrollLocked — true mientras el panel no puede desplazarse
  */
 export function useMatchDetailHeaderCollapse({
@@ -80,6 +75,7 @@ export function useMatchDetailHeaderCollapse({
     let animRef = 0
     let lastTouchY = 0
     let touchTracking = false
+    let gestureDy = 0
 
     function updateLockedState(locked) {
       header.classList.toggle('match-detail-header--scroll-locked', locked)
@@ -98,8 +94,7 @@ export function useMatchDetailHeaderCollapse({
       updateLockedState(!contentScrollAllowed(p, targetRef.current))
     }
 
-    function syncTargetFromPx() {
-      targetRef.current = smoothstep(collapsePx / COLLAPSE_SCROLL_PX)
+    function syncLockedFromTarget() {
       updateLockedState(!contentScrollAllowed(collapseRef.current, targetRef.current))
     }
 
@@ -129,10 +124,17 @@ export function useMatchDetailHeaderCollapse({
       if (!animRef) animRef = requestAnimationFrame(tick)
     }
 
-    function addCollapseDelta(deltaY) {
-      if (!deltaY) return
-      collapsePx = Math.min(COLLAPSE_SCROLL_PX, Math.max(0, collapsePx + deltaY))
-      syncTargetFromPx()
+    function commitCollapse() {
+      collapsePx = COLLAPSE_SCROLL_PX
+      targetRef.current = 1
+      syncLockedFromTarget()
+      ensureAnimation()
+    }
+
+    function commitExpand() {
+      collapsePx = 0
+      targetRef.current = 0
+      syncLockedFromTarget()
       ensureAnimation()
     }
 
@@ -142,7 +144,6 @@ export function useMatchDetailHeaderCollapse({
 
     function absorbPanelScroll() {
       if (!scrollEl || scrollEl.scrollTop <= 0) return
-      addCollapseDelta(scrollEl.scrollTop)
       scrollEl.scrollTop = 0
     }
 
@@ -154,8 +155,22 @@ export function useMatchDetailHeaderCollapse({
     function handleLockedGesture(deltaY) {
       if (!scrollEl || !deltaY) return
       absorbPanelScroll()
-      addCollapseDelta(deltaY)
+      gestureDy += deltaY
       scrollEl.scrollTop = 0
+
+      if (gestureDy >= GESTURE_COMMIT_PX) {
+        commitCollapse()
+      }
+    }
+
+    function handleExpandGesture(deltaY) {
+      if (!scrollEl || !deltaY) return
+      gestureDy += deltaY
+      scrollEl.scrollTop = 0
+
+      if (gestureDy <= -GESTURE_COMMIT_PX) {
+        commitExpand()
+      }
     }
 
     function onScroll() {
@@ -165,6 +180,7 @@ export function useMatchDetailHeaderCollapse({
     function onTouchStart(e) {
       if (!scrollEl || e.touches.length !== 1) return
       touchTracking = true
+      gestureDy = 0
       lastTouchY = e.touches[0].clientY
     }
 
@@ -185,28 +201,36 @@ export function useMatchDetailHeaderCollapse({
 
       if (dy < 0 && collapsePx > 0 && scrollEl.scrollTop <= 0) {
         e.preventDefault()
-        handleLockedGesture(dy)
+        handleExpandGesture(dy)
       }
     }
 
     function onTouchEnd() {
+      if (touchTracking && scrollEl) {
+        if (isScrollLocked() && gestureDy > 0) {
+          commitCollapse()
+        } else if (!isScrollLocked() && collapsePx > 0 && scrollEl.scrollTop <= 0 && gestureDy < 0) {
+          commitExpand()
+        }
+      }
       touchTracking = false
+      gestureDy = 0
     }
 
     function onWheel(e) {
       if (!scrollEl) return
 
       if (isScrollLocked()) {
-        if (e.deltaY !== 0) {
+        if (e.deltaY > 0) {
           e.preventDefault()
-          handleLockedGesture(e.deltaY)
+          commitCollapse()
         }
         return
       }
 
       if (e.deltaY < 0 && collapsePx > 0 && scrollEl.scrollTop <= 0) {
         e.preventDefault()
-        handleLockedGesture(e.deltaY)
+        commitExpand()
       }
     }
 
