@@ -5724,6 +5724,10 @@ button.schedule-match-row:focus-visible {
     pointer-events: none;
   }
 
+  .match-detail-panel--header-locked {
+    overscroll-behavior-y: none;
+  }
+
   .match-detail-tabs {
     position: relative;
     z-index: 2;
