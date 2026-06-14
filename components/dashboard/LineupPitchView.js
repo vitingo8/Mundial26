@@ -190,8 +190,10 @@ function TeamPitchHeader({ teamName, crest, formation, indicator, align }) {
         <span className={ratingClass}>{indicator.text}</span>
       )}
       {align === 'home' && <TeamCrest src={crest} alt={teamName} size={20} />}
-      <span className="lineup-pitch-team-name">{teamName}</span>
-      {formation && <span className="lineup-pitch-formation">{formation}</span>}
+      <div className="lineup-pitch-team-info">
+        <span className="lineup-pitch-team-name">{teamName}</span>
+        {formation && <span className="lineup-pitch-formation">{formation}</span>}
+      </div>
       {align === 'away' && <TeamCrest src={crest} alt={teamName} size={20} />}
       {align === 'away' && indicator && (
         <span className={ratingClass}>{indicator.text}</span>

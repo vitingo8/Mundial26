@@ -29,6 +29,7 @@ import {
   pickTeamStatistics,
 } from '../../lib/matchDetail'
 import { useSimulatedLiveClock } from '../../hooks/useSimulatedLiveClock'
+import { useMatchDetailHeaderCollapse } from '../../hooks/useMatchDetailHeaderCollapse'
 
 const LIVE_POLL_MS = 8_000
 
@@ -120,6 +121,8 @@ export default function MatchDetailSheet({
   const [highlights, setHighlights] = useState(null)
   const bodyRef = useRef(null)
   const sheetRef = useRef(null)
+  const headerRef = useRef(null)
+  const headerExpandRef = useRef(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
@@ -323,6 +326,16 @@ export default function MatchDetailSheet({
   )
   const playerRoster = useMemo(() => collectMatchPlayerRoster(match), [match])
 
+  useMatchDetailHeaderCollapse({
+    headerRef,
+    expandRef: headerExpandRef,
+    bodyRef,
+    activeTab,
+    matchId: currentMatchId,
+    enabled: !selectedPlayerId && Boolean(match),
+    contentKey: `${loading}-${score?.home ?? ''}-${goalScorers.home.length}-${goalScorers.away.length}-${isLive}-${liveClock?.clock ?? ''}`,
+  })
+
   function openPlayer(player) {
     if (player?.id == null) return
     setSelectedPlayerId(player.id)
@@ -353,24 +366,39 @@ export default function MatchDetailSheet({
       onClick={e => { if (e.target === e.currentTarget) handleClose() }}
     >
       <div className="match-detail-sheet" ref={sheetRef}>
-        <header className="match-detail-header" style={headerStyle}>
+        <header
+          ref={headerRef}
+          className="match-detail-header"
+          style={{ ...headerStyle, '--md-header-collapse': 0 }}
+        >
           <div className="match-detail-header-bg" aria-hidden="true" />
 
-          <div className="match-detail-nav">
-            <button type="button" className="match-detail-nav-back" onClick={handleClose}>
+          <div className="match-detail-header-compact">
+            <button type="button" className="match-detail-compact-back" onClick={handleClose}>
               <Icon name="chevronLeft" size="sm" />
-              <span>{canGoBack ? 'Volver' : 'Partidos'}</span>
+              <span className="sr-only">{canGoBack ? 'Volver' : 'Partidos'}</span>
             </button>
-            <div className="match-detail-nav-comp">
-              <Icon name="trophy" size="sm" />
-              <span>
-                Copa del Mundo
-                {roundLabel && <> · {roundLabel}</>}
-              </span>
+            <div className="match-detail-compact-scoreline">
+              <TeamCrest src={homeCrest} alt={homeName} size={22} />
+              <span className="match-detail-compact-score">{score?.home ?? '–'}</span>
+              {isLive && liveClock ? (
+                <div className="match-detail-compact-clock-wrap">
+                  <span className="match-detail-compact-clock">{liveClock.clock}</span>
+                  {liveClock.addedTime && (
+                    <span className="match-detail-compact-added">{liveClock.addedTime}</span>
+                  )}
+                </div>
+              ) : match?.status === 'FINISHED' ? (
+                <span className="match-detail-compact-status">Final</span>
+              ) : (
+                <span className="match-detail-compact-status match-detail-compact-status--vs">vs</span>
+              )}
+              <span className="match-detail-compact-score">{score?.away ?? '–'}</span>
+              <TeamCrest src={awayCrest} alt={awayName} size={22} />
             </div>
             <button
               type="button"
-              className="match-detail-nav-refresh"
+              className="match-detail-compact-refresh"
               aria-label={loading ? 'Actualizando' : 'Actualizar'}
               onClick={() => { setLoading(true); load(true) }}
               disabled={loading}
@@ -379,99 +407,124 @@ export default function MatchDetailSheet({
             </button>
           </div>
 
-          <div className="match-detail-facts">
-            {headerDate && (
-              <span className="match-detail-fact">
-                <Icon name="calendarDays" size="sm" />
-                {headerDate}
-              </span>
-            )}
-            {match?.venue && (
-              <span className="match-detail-fact">
-                <Icon name="buildingLibrary" size="sm" />
-                {match.venue}
-              </span>
-            )}
-            {referee && (
-              <span className="match-detail-fact">
-                <Icon name="user" size="sm" />
-                {referee}
-              </span>
+          <div ref={headerExpandRef} className="match-detail-header-expand">
+            <div className="match-detail-nav">
+              <button type="button" className="match-detail-nav-back" onClick={handleClose}>
+                <Icon name="chevronLeft" size="sm" />
+                <span>{canGoBack ? 'Volver' : 'Partidos'}</span>
+              </button>
+              <div className="match-detail-nav-comp">
+                <Icon name="trophy" size="sm" />
+                <span>
+                  Copa del Mundo
+                  {roundLabel && <> · {roundLabel}</>}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="match-detail-nav-refresh"
+                aria-label={loading ? 'Actualizando' : 'Actualizar'}
+                onClick={() => { setLoading(true); load(true) }}
+                disabled={loading}
+              >
+                <Icon name="arrowPath" size="sm" />
+              </button>
+            </div>
+
+            <div className="match-detail-facts">
+              {headerDate && (
+                <span className="match-detail-fact">
+                  <Icon name="calendarDays" size="sm" />
+                  {headerDate}
+                </span>
+              )}
+              {match?.venue && (
+                <span className="match-detail-fact">
+                  <Icon name="buildingLibrary" size="sm" />
+                  {match.venue}
+                </span>
+              )}
+              {referee && (
+                <span className="match-detail-fact">
+                  <Icon name="user" size="sm" />
+                  {referee}
+                </span>
+              )}
+            </div>
+
+            <h2 id={titleId} className="match-detail-hero">
+              <div className="match-detail-hero-side">
+                <div className="match-detail-hero-team-row">
+                  <span className="match-detail-hero-name">{homeDisplayName}</span>
+                  <TeamCrest src={homeCrest} alt={homeName} size={40} />
+                </div>
+                {home.fifaRank != null && (
+                  <span className="match-detail-hero-rank">FIFA #{home.fifaRank}</span>
+                )}
+                {goalScorers.home.length > 0 && (
+                  <ul className="match-detail-hero-goals">
+                    {goalScorers.home.map((g, i) => (
+                      <li key={`hg-${i}`} className="match-detail-hero-goal">
+                        {formatHeroGoalLabel(g)}
+                        <Icon name={goalIconName(g.type)} size={14} className="match-detail-hero-goal-icon" />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="match-detail-hero-center">
+                {score ? (
+                  <span className="match-detail-hero-score">
+                    {score.home} - {score.away}
+                  </span>
+                ) : (
+                  <span className="match-detail-hero-score match-detail-hero-score--vs">vs</span>
+                )}
+                {isLive && liveClock ? (
+                  <div className="match-detail-hero-clock-row">
+                    <span className="match-detail-hero-clock">{liveClock.clock}</span>
+                    {liveClock.addedTime && (
+                      <span className="match-detail-hero-added">{liveClock.addedTime}</span>
+                    )}
+                  </div>
+                ) : match?.status === 'FINISHED' ? (
+                  <span className="match-detail-hero-status">Final</span>
+                ) : match?.status ? (
+                  <MatchStatus status={match.status} highlight={isLive} />
+                ) : null}
+                {score?.label && (
+                  <span className="match-detail-hero-status">{score.label}</span>
+                )}
+              </div>
+
+              <div className="match-detail-hero-side match-detail-hero-side--away">
+                <div className="match-detail-hero-team-row">
+                  <TeamCrest src={awayCrest} alt={awayName} size={40} />
+                  <span className="match-detail-hero-name">{awayDisplayName}</span>
+                </div>
+                {away.fifaRank != null && (
+                  <span className="match-detail-hero-rank">FIFA #{away.fifaRank}</span>
+                )}
+                {goalScorers.away.length > 0 && (
+                  <ul className="match-detail-hero-goals">
+                    {goalScorers.away.map((g, i) => (
+                      <li key={`ag-${i}`} className="match-detail-hero-goal">
+                        <Icon name={goalIconName(g.type)} size={14} className="match-detail-hero-goal-icon" />
+                        {formatHeroGoalLabel(g)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </h2>
+
+            {currentUserPred && (
+              <p className="match-detail-pred">
+                Tu porra: {currentUserPred.home ?? '?'}-{currentUserPred.away ?? '?'}
+              </p>
             )}
           </div>
-
-          <h2 id={titleId} className="match-detail-hero">
-            <div className="match-detail-hero-side">
-              <div className="match-detail-hero-team-row">
-                <span className="match-detail-hero-name">{homeDisplayName}</span>
-                <TeamCrest src={homeCrest} alt={homeName} size={40} />
-              </div>
-              {home.fifaRank != null && (
-                <span className="match-detail-hero-rank">FIFA #{home.fifaRank}</span>
-              )}
-              {goalScorers.home.length > 0 && (
-                <ul className="match-detail-hero-goals">
-                  {goalScorers.home.map((g, i) => (
-                    <li key={`hg-${i}`} className="match-detail-hero-goal">
-                      {formatHeroGoalLabel(g)}
-                      <Icon name={goalIconName(g.type)} size={14} className="match-detail-hero-goal-icon" />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <div className="match-detail-hero-center">
-              {score ? (
-                <span className="match-detail-hero-score">
-                  {score.home} - {score.away}
-                </span>
-              ) : (
-                <span className="match-detail-hero-score match-detail-hero-score--vs">vs</span>
-              )}
-              {isLive && liveClock ? (
-                <div className="match-detail-hero-clock-row">
-                  <span className="match-detail-hero-clock">{liveClock.clock}</span>
-                  {liveClock.addedTime && (
-                    <span className="match-detail-hero-added">{liveClock.addedTime}</span>
-                  )}
-                </div>
-              ) : match?.status === 'FINISHED' ? (
-                <span className="match-detail-hero-status">Final</span>
-              ) : match?.status ? (
-                <MatchStatus status={match.status} highlight={isLive} />
-              ) : null}
-              {score?.label && (
-                <span className="match-detail-hero-status">{score.label}</span>
-              )}
-            </div>
-
-            <div className="match-detail-hero-side match-detail-hero-side--away">
-              <div className="match-detail-hero-team-row">
-                <TeamCrest src={awayCrest} alt={awayName} size={40} />
-                <span className="match-detail-hero-name">{awayDisplayName}</span>
-              </div>
-              {away.fifaRank != null && (
-                <span className="match-detail-hero-rank">FIFA #{away.fifaRank}</span>
-              )}
-              {goalScorers.away.length > 0 && (
-                <ul className="match-detail-hero-goals">
-                  {goalScorers.away.map((g, i) => (
-                    <li key={`ag-${i}`} className="match-detail-hero-goal">
-                      <Icon name={goalIconName(g.type)} size={14} className="match-detail-hero-goal-icon" />
-                      {formatHeroGoalLabel(g)}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </h2>
-
-          {currentUserPred && (
-            <p className="match-detail-pred">
-              Tu porra: {currentUserPred.home ?? '?'}-{currentUserPred.away ?? '?'}
-            </p>
-          )}
 
           <div className="match-detail-tabs" role="tablist" aria-label="Secciones del partido">
             {detailTabs.map(tab => (

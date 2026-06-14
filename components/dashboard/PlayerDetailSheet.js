@@ -357,10 +357,8 @@ export default function PlayerDetailSheet({
 }) {
   const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState('destacados')
-  const [loadedTabs, setLoadedTabs] = useState(() => new Set())
   const [heatmapCircles, setHeatmapCircles] = useState(null)
   const [heatmapTemplate, setHeatmapTemplate] = useState(null)
-  const [heatmapLoading, setHeatmapLoading] = useState(false)
   const bodyRef = useRef(null)
   const sheetRef = useRef(null)
 
@@ -386,20 +384,12 @@ export default function PlayerDetailSheet({
 
   useEffect(() => {
     setActiveTab('destacados')
-    setLoadedTabs(new Set())
     setHeatmapCircles(null)
     setHeatmapTemplate(null)
-    setHeatmapLoading(false)
   }, [playerId])
 
   function activateTab(tabId) {
     setActiveTab(tabId)
-    setLoadedTabs(prev => {
-      if (prev.has(tabId)) return prev
-      const next = new Set(prev)
-      next.add(tabId)
-      return next
-    })
   }
 
   useEffect(() => {
@@ -407,12 +397,11 @@ export default function PlayerDetailSheet({
     if (el) el.scrollTop = 0
   }, [activeTab, playerId])
 
-  const loadDestacados = loadedTabs.has('destacados')
+  const loadDestacados = activeTab === 'destacados'
 
   useEffect(() => {
     if (!playerId || !matchId || !loadDestacados) return
     let cancelled = false
-    setHeatmapLoading(true)
     setHeatmapCircles(null)
     setHeatmapTemplate(null)
     const params = {
@@ -433,9 +422,6 @@ export default function PlayerDetailSheet({
           setHeatmapCircles(null)
           setHeatmapTemplate(null)
         }
-      })
-      .finally(() => {
-        if (!cancelled) setHeatmapLoading(false)
       })
     return () => { cancelled = true }
   }, [matchId, playerId, match?.heatmapPubUrl, player?.optaId, loadDestacados])
@@ -553,36 +539,18 @@ export default function PlayerDetailSheet({
             panels={{
               destacados: (
                 <div className="player-detail-tab-panel">
-                  {!loadedTabs.has('destacados') ? (
-                    <p className="player-detail-hint">
-                      Pulsa la pestaña para cargar el contenido.
-                    </p>
-                  ) : (
-                    <>
-                      {heatmapLoading ? (
-                        <p className="player-detail-hint">Cargando mapa de calor…</p>
-                      ) : (
-                        <PlayerHeatmap
-                          circles={heatmapCircles}
-                          template={heatmapTemplate}
-                          touches={player.touches}
-                        />
-                      )}
-                      <PlayerShotmap shots={player.shots} />
-                      <PlayerHighlights items={player.highlights} />
-                    </>
-                  )}
+                  <PlayerHeatmap
+                    circles={heatmapCircles}
+                    template={heatmapTemplate}
+                    touches={player.touches}
+                  />
+                  <PlayerShotmap shots={player.shots} />
+                  <PlayerHighlights items={player.highlights} />
                 </div>
               ),
               estadisticas: (
                 <div className="player-detail-tab-panel">
-                  {!loadedTabs.has('estadisticas') ? (
-                    <p className="player-detail-hint">
-                      Pulsa la pestaña para cargar el contenido.
-                    </p>
-                  ) : (
-                    <PlayerStatSections sections={player.statSections} />
-                  )}
+                  <PlayerStatSections sections={player.statSections} />
                 </div>
               ),
             }}
