@@ -132,6 +132,8 @@ export default function GroupStandingsView({
                     : undefined
                 }
                 participants={participants}
+                groupMatches={matches}
+                knockoutMatches={knockoutMatches}
               />
             ))}
           </div>

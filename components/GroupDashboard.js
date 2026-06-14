@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { getStoredWriteToken } from '../lib/sessionToken'
 import { migratePredictionMap, countOrphanPredKeys, migrateGroupResults } from '../lib/matchIdMap'
@@ -110,12 +110,23 @@ export default function GroupDashboard({
   const knockoutMatches = useMemo(() => transformKnockoutMatches(wcMatches), [wcMatches])
   const isAdmin = user.is_admin
 
+  const syncCurrentUser = useCallback((updatedUser) => {
+    setCurrentUser(updatedUser)
+    setCurrentGroup(g => ({
+      ...g,
+      participants: {
+        ...g.participants,
+        [updatedUser.id]: { ...g.participants?.[updatedUser.id], ...updatedUser },
+      },
+    }))
+  }, [setCurrentUser])
+
   const {
     groupPreds, setGroupPreds, koPreds, setKoPreds,
     inicioKoPreds, setInicioKoPreds, bonusPreds, setBonusPreds,
     saving, saveStatus, persistPredictions, flushSave, importPredictions,
   } = usePredictions({
-    user, group: currentGroup, predPhase, tab, notify, setCurrentUser, isAdmin,
+    user, group: currentGroup, predPhase, tab, notify, setCurrentUser: syncCurrentUser, isAdmin,
     groupMatches, knockoutMatches,
   })
 
@@ -955,6 +966,8 @@ function GroupPhasePreds({
             apiMatches={apiMatches}
             onOpenMatch={onOpenMatch}
             participants={group?.participants}
+            groupMatches={matches}
+            knockoutMatches={knockoutMatches}
           />
         </>
       ) : viewMode === 'daily' ? (
@@ -988,6 +1001,8 @@ function GroupPhasePreds({
             apiMatches={apiMatches}
             onOpenMatch={onOpenMatch}
             participants={group?.participants}
+            groupMatches={matches}
+            knockoutMatches={knockoutMatches}
           />
         </>
       ) : (
@@ -1006,6 +1021,8 @@ function GroupPhasePreds({
             apiMatches={apiMatches}
             onOpenMatch={onOpenMatch}
             participants={group?.participants}
+            groupMatches={matches}
+            knockoutMatches={knockoutMatches}
           />
           <PredictedKnockoutSection
             groupMatches={matches}
@@ -1100,6 +1117,8 @@ function KnockoutPreds({
           apiMatches={apiMatches}
           onOpenMatch={onOpenMatch}
           participants={group?.participants}
+          groupMatches={groupMatches}
+          knockoutMatches={matches}
         />
       </>
     )
@@ -1127,6 +1146,8 @@ function KnockoutPreds({
           apiMatches={apiMatches}
           onOpenMatch={onOpenMatch}
           participants={group?.participants}
+          groupMatches={groupMatches}
+          knockoutMatches={matches}
         />
       </>
     )

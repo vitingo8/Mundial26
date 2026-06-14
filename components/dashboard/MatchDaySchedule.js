@@ -44,6 +44,8 @@ export default function MatchDaySchedule({
   apiMatches = [],
   onOpenMatch,
   participants = null,
+  groupMatches = [],
+  knockoutMatches = [],
 }) {
   const rawById = useMemo(() => indexApiMatches(apiMatches), [apiMatches])
   const knockoutAdvanceDefault = schedulePhase === 'knockout'
@@ -162,6 +164,8 @@ export default function MatchDaySchedule({
             : undefined
         }
         participants={participants}
+        groupMatches={groupMatches}
+        knockoutMatches={knockoutMatches}
       />
     )
   }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { isMatchKickoffPassed } from '../../lib/deadlines'
 import TeamCrest from '../TeamCrest'
 import ScoreInput from './ScoreInput'
@@ -75,6 +76,8 @@ export default function BracketMatchSlot({
   knockoutScoringCtx = null,
   onOpenMatch,
   participants = null,
+  groupMatches = [],
+  knockoutMatches = [],
 }) {
   if (!match) return <div className="bracket-slot bracket-slot--empty" />
 
@@ -123,9 +126,10 @@ export default function BracketMatchSlot({
   const resultForCompare = publishedResult || apiScore || null
   const isExactHit = isExactScoreHit(predRow, resultForCompare, knockoutScoringOpts)
 
-  const participantPredRows = !readOnly && participants && match?.id
-    ? getParticipantPredsForMatch(participants, match.id)
-    : []
+  const participantPredRows = useMemo(() => {
+    if (readOnly || !participants || !match?.id) return []
+    return getParticipantPredsForMatch(participants, match.id, { groupMatches, knockoutMatches })
+  }, [readOnly, participants, match?.id, groupMatches, knockoutMatches])
 
   const pointsBubble = (() => {
     if (pointsSummary?.pts > 0) {

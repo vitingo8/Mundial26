@@ -33,6 +33,8 @@ export default function KnockoutBracketView({
   knockoutScoringCtx = null,
   onOpenMatch,
   participants = null,
+  groupMatches = [],
+  knockoutMatches = [],
 }) {
   const isMobile = useIsMobileBracket()
 
@@ -65,6 +67,8 @@ export default function KnockoutBracketView({
     knockoutScoringCtx,
     onOpenMatch,
     participants,
+    groupMatches,
+    knockoutMatches,
   }
 
   if (isMobile) {

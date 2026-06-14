@@ -167,6 +167,10 @@ export default function MatchRow({
 
   matchId = null,
 
+  groupMatches = [],
+
+  knockoutMatches = [],
+
 }) {
 
   const rowRef = useRef(null)
@@ -233,8 +237,8 @@ export default function MatchRow({
 
   const participantPredRows = useMemo(() => {
     if (readOnly || !participants || !matchId) return []
-    return getParticipantPredsForMatch(participants, matchId)
-  }, [readOnly, participants, matchId])
+    return getParticipantPredsForMatch(participants, matchId, { groupMatches, knockoutMatches })
+  }, [readOnly, participants, matchId, groupMatches, knockoutMatches])
 
   function setRowRef(el) {
 
