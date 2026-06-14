@@ -947,6 +947,7 @@ function GroupPhasePreds({
           knockoutMatches={knockoutMatches}
           apiMatches={apiMatches}
           onOpenMatch={onOpenMatch}
+          participants={group?.participants}
         />
       ) : viewMode === 'bracket' ? (
         <>
@@ -966,6 +967,7 @@ function GroupPhasePreds({
             publishedResults={publishedResults}
             apiMatches={apiMatches}
             onOpenMatch={onOpenMatch}
+            participants={group?.participants}
           />
         </>
       ) : viewMode === 'daily' ? (
@@ -998,6 +1000,7 @@ function GroupPhasePreds({
             publishedResults={publishedResults}
             apiMatches={apiMatches}
             onOpenMatch={onOpenMatch}
+            participants={group?.participants}
           />
         </>
       ) : (
@@ -1015,6 +1018,7 @@ function GroupPhasePreds({
             publishedResults={publishedResults}
             apiMatches={apiMatches}
             onOpenMatch={onOpenMatch}
+            participants={group?.participants}
           />
           <PredictedKnockoutSection
             groupMatches={matches}
@@ -1108,6 +1112,7 @@ function KnockoutPreds({
           knockoutScoringCtx={knockoutScoringCtx}
           apiMatches={apiMatches}
           onOpenMatch={onOpenMatch}
+          participants={group?.participants}
         />
       </>
     )
@@ -1134,6 +1139,7 @@ function KnockoutPreds({
           knockoutScoringCtx={knockoutScoringCtx}
           apiMatches={apiMatches}
           onOpenMatch={onOpenMatch}
+          participants={group?.participants}
         />
       </>
     )

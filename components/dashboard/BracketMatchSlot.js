@@ -11,6 +11,8 @@ import { summarizeMatchPoints } from '../../lib/matchPointsDisplay'
 import { isExactScoreHit } from '../../lib/gameData'
 import { resolveKnockoutTeamsForScoring } from '../../lib/knockoutMatchScoring'
 import MatchPointsBubble from './MatchPointsBubble'
+import MatchPredsInfo from './MatchPredsInfo'
+import { getParticipantPredsForMatch } from '../../lib/participantMatchPreds'
 import { MatchStatus } from '../icons'
 
 function BracketTeam({
@@ -72,6 +74,7 @@ export default function BracketMatchSlot({
   publishedResults = {},
   knockoutScoringCtx = null,
   onOpenMatch,
+  participants = null,
 }) {
   if (!match) return <div className="bracket-slot bracket-slot--empty" />
 
@@ -119,6 +122,10 @@ export default function BracketMatchSlot({
 
   const resultForCompare = publishedResult || apiScore || null
   const isExactHit = isExactScoreHit(predRow, resultForCompare, knockoutScoringOpts)
+
+  const participantPredRows = !readOnly && participants && match?.id
+    ? getParticipantPredsForMatch(participants, match.id)
+    : []
 
   const pointsBubble = (() => {
     if (pointsSummary?.pts > 0) {
@@ -184,6 +191,9 @@ export default function BracketMatchSlot({
       onKeyDown={readOnly && onGoToPrediction ? e => { if (e.key === 'Enter') onGoToPrediction(match.id) } : undefined}
     >
       {pointsBubble}
+      {!readOnly && participantPredRows.length > 0 && (
+        <MatchPredsInfo rows={participantPredRows} className="match-preds-info-wrap--bracket" />
+      )}
       {showPorraHeader && (
         <PorraLiveHeader
           home={match.home}

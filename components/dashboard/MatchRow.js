@@ -17,6 +17,8 @@ import { needsKnockoutAdvancePick } from '../../lib/knockoutAdvances'
 import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
 import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
 import { PorraLiveHeader } from './LiveResultRow'
+import MatchPredsInfo from './MatchPredsInfo'
+import { getParticipantPredsForMatch } from '../../lib/participantMatchPreds'
 
 
 
@@ -160,6 +162,11 @@ export default function MatchRow({
   /** Abre el detalle en vivo del partido. */
   onOpenLiveDetail,
 
+  /** Mapa de participantes del grupo (para tooltip de porras). */
+  participants = null,
+
+  matchId = null,
+
 }) {
 
   const rowRef = useRef(null)
@@ -224,6 +231,11 @@ export default function MatchRow({
     [predRow, resultForCompare, scoringOpts],
   )
 
+  const participantPredRows = useMemo(() => {
+    if (readOnly || !participants || !matchId) return []
+    return getParticipantPredsForMatch(participants, matchId)
+  }, [readOnly, participants, matchId])
+
   function setRowRef(el) {
 
     rowRef.current = el
@@ -233,12 +245,14 @@ export default function MatchRow({
   }
 
   const pointsBubble = (() => {
+    const userPrediction = readOnly ? predRow : null
     if (publishedResult && pointsSummary?.pts > 0) {
       return (
         <MatchPointsBubble
           points={pointsSummary.pts}
           detail={pointsSummary.detail}
           publishedResult={publishedResult}
+          userPrediction={userPrediction}
           homeCrest={homeCrest}
           awayCrest={awayCrest}
           homeName={home}
@@ -252,6 +266,7 @@ export default function MatchRow({
           points={livePointsSummary.pts}
           detail={livePointsSummary.detail}
           publishedResult={apiScore}
+          userPrediction={userPrediction}
           homeCrest={homeCrest}
           awayCrest={awayCrest}
           homeName={home}
@@ -266,6 +281,7 @@ export default function MatchRow({
           points={apiFinishedPointsSummary.pts}
           detail={apiFinishedPointsSummary.detail}
           publishedResult={apiScore}
+          userPrediction={userPrediction}
           homeCrest={homeCrest}
           awayCrest={awayCrest}
           homeName={home}
@@ -357,6 +373,9 @@ export default function MatchRow({
 
           <span className="schedule-match-scores-wrap">
             {pointsBubble}
+            {!readOnly && participantPredRows.length > 0 && (
+              <MatchPredsInfo rows={participantPredRows} />
+            )}
             <span
               className={`schedule-match-scoreline${isExactHit ? ' schedule-match-scoreline--exact' : ''}`}
               aria-label={`${home} ${homeVal === '' ? 'sin marcar' : homeVal}, ${away} ${awayVal === '' ? 'sin marcar' : awayVal}${isExactHit ? ' · marcador exacto' : ''}`}
@@ -373,6 +392,9 @@ export default function MatchRow({
 
             <div className="schedule-match-scores-wrap">
             {pointsBubble}
+            {!readOnly && participantPredRows.length > 0 && (
+              <MatchPredsInfo rows={participantPredRows} />
+            )}
             <div className={`schedule-match-scores${isExactHit ? ' schedule-match-scores--exact' : ''}`}>
 
               <ScoreInput

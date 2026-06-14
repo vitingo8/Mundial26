@@ -14,6 +14,8 @@ const NO_SWIPE_SELECTOR = [
   '.dash-phase-picker',
   '.match-events-list',
   '.knockout-bracket-tree-wrap',
+  '.knockout-bracket-scene--mobile',
+  '.bracket-mobile-viewport',
   '.player-detail-shot-pills',
 ].join(', ')
 

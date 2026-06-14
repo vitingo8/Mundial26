@@ -13,13 +13,13 @@ function LiveFloatingButton({ match, onClick }) {
   const home = match.homeTeam?.shortName || match.homeTeam?.name
   const away = match.awayTeam?.shortName || match.awayTeam?.name
   const score = getApiMatchDisplayScore(match)
-  const isPaused = match.status === 'PAUSED'
   const liveClock = useSimulatedLiveClock({
     liveTime: match.liveTime,
     minute: match.minute,
     status: match.status,
   })
-  const minute = isPaused ? 'HT' : liveClock?.compact
+  const minute = liveClock?.compact
+  const isPaused = match.status === 'PAUSED' || minute === 'HT'
 
   if (!score) return null
 

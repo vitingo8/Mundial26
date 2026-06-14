@@ -11,6 +11,7 @@ export default function MatchPointsBubble({
   points,
   detail,
   publishedResult,
+  userPrediction = null,
   homeCrest,
   awayCrest,
   homeName = '',
@@ -36,6 +37,10 @@ export default function MatchPointsBubble({
 
   const { home, away } = publishedResult
   const scoreLabel = `${homeName || 'Local'} ${home}–${away} ${awayName || 'Visitante'}`
+  const hasUserPred = userPrediction?.home != null || userPrediction?.away != null
+  const userPredLabel = hasUserPred
+    ? `${userPrediction.home ?? '?'}–${userPrediction.away ?? '?'}`
+    : null
 
   return (
     <div
@@ -63,6 +68,11 @@ export default function MatchPointsBubble({
         <div id={tipId} className="match-points-tooltip" role="tooltip">
           {provisional && (
             <p className="match-points-tooltip-note">En vivo · estimado, puede cambiar</p>
+          )}
+          {userPredLabel && (
+            <p className="match-points-tooltip-pred">
+              Su porra: <strong>{userPredLabel}</strong>
+            </p>
           )}
           <div
             className="match-points-tooltip-score"

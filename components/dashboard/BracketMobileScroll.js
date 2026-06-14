@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import BracketMatchSlot from './BracketMatchSlot'
+import { Icon } from '../icons'
 import { BRACKET_MOBILE_COLUMNS } from '../../lib/bracketMobileColumns'
 import { BRACKET_CENTER } from '../../lib/knockoutBracketTreeLayout'
 import { formatKnockoutErrorForUi, getKnockoutErrorHint } from '../../lib/knockoutBridge'
@@ -121,6 +122,16 @@ export default function BracketMobileScroll({
       </div>
 
       <div className="bracket-mobile-stage">
+        {activeIndex > 0 && (
+          <button
+            type="button"
+            className="bracket-mobile-nav bracket-mobile-nav--prev"
+            aria-label="Fase anterior"
+            onClick={() => goToPhase(activeIndex - 1)}
+          >
+            <Icon name="chevronLeft" size={18} />
+          </button>
+        )}
         <div
           ref={viewportRef}
           className="bracket-mobile-viewport"
@@ -133,6 +144,16 @@ export default function BracketMobileScroll({
             </div>
           ))}
         </div>
+        {activeIndex < BRACKET_MOBILE_COLUMNS.length - 1 && (
+          <button
+            type="button"
+            className="bracket-mobile-nav bracket-mobile-nav--next"
+            aria-label="Fase siguiente"
+            onClick={() => goToPhase(activeIndex + 1)}
+          >
+            <Icon name="chevronRight" size={18} />
+          </button>
+        )}
       </div>
     </div>
   )

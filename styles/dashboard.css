@@ -1758,6 +1758,131 @@
   opacity: 0.92;
 }
 
+.match-points-tooltip-pred {
+  margin: 0 0 4px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.25;
+  opacity: 0.95;
+}
+
+.match-points-tooltip-pred strong {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reloj en vivo unificado */
+.live-clock-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--dash-accent-deep, #1a7a42);
+  white-space: nowrap;
+}
+
+.live-clock-label--paused {
+  color: #c9922e;
+}
+
+.live-clock-label__added {
+  margin-left: 2px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.schedule-match-live-clock {
+  flex-shrink: 0;
+}
+
+/* Porra: info de predicciones del grupo */
+.match-preds-info-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.match-preds-info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(29, 49, 38, 0.08);
+  color: var(--dash-muted, #5a7263);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.match-preds-info-btn:hover {
+  background: rgba(29, 49, 38, 0.14);
+  color: var(--dash-text, #1d3126);
+}
+
+.match-preds-info-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  min-width: 140px;
+  max-width: min(220px, 70vw);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--dash-text, #1d3126);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.match-preds-info-tooltip-title {
+  margin: 0 0 6px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.match-preds-info-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.match-preds-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.62rem;
+  line-height: 1.2;
+}
+
+.match-preds-info-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.match-preds-info-score {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.match-preds-info-wrap--bracket {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+}
+
 .match-points-tooltip::after {
   content: '';
   position: absolute;
@@ -7920,7 +8045,40 @@ button.schedule-match-team:disabled {
   }
 
   .bracket-mobile-stage {
+    position: relative;
     padding: 0 0 16px;
+  }
+
+  .bracket-mobile-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--dash-accent-deep);
+    box-shadow: 0 1px 6px rgba(29, 49, 38, 0.12);
+    cursor: pointer;
+    transform: translateY(-50%);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bracket-mobile-nav--prev {
+    left: 4px;
+  }
+
+  .bracket-mobile-nav--next {
+    right: 4px;
+  }
+
+  .bracket-mobile-nav:active {
+    transform: translateY(-50%) scale(0.94);
   }
 
   .bracket-mobile-viewport {

@@ -5,6 +5,7 @@ import {
   buildLiveClockAnchor,
   formatPausedLiveClock,
   formatSimulatedClock,
+  isLiveClockPaused,
 } from '../lib/liveClock'
 
 const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
@@ -18,11 +19,13 @@ export function useSimulatedLiveClock({ liveTime, minute, status, enabled = true
   const [syncedAt, setSyncedAt] = useState(() => Date.now())
   const [activeAnchor, setActiveAnchor] = useState(null)
 
+  const paused = isLiveClockPaused(status, liveTime)
+
   const incomingAnchor = useMemo(() => {
     if (!enabled || !LIVE_STATUSES.has(status)) return null
-    if (status === 'PAUSED') return null
+    if (paused) return null
     return buildLiveClockAnchor(liveTime, minute)
-  }, [enabled, status, liveTime, minute, liveTime?.long, liveTime?.short, liveTime?.addedTime])
+  }, [enabled, status, paused, liveTime, minute, liveTime?.long, liveTime?.short, liveTime?.addedTime])
 
   useEffect(() => {
     if (!incomingAnchor) {
@@ -42,16 +45,16 @@ export function useSimulatedLiveClock({ liveTime, minute, status, enabled = true
   }, [incomingAnchor])
 
   useEffect(() => {
-    if (!activeAnchor || status === 'PAUSED') return undefined
+    if (!activeAnchor || paused) return undefined
     const t = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(t)
-  }, [activeAnchor?.key, status])
+  }, [activeAnchor?.key, paused])
 
   return useMemo(() => {
     if (!enabled || !LIVE_STATUSES.has(status)) return null
-    if (status === 'PAUSED') return formatPausedLiveClock()
+    if (paused) return formatPausedLiveClock()
     if (!activeAnchor) return null
     const elapsed = Math.floor((now - syncedAt) / 1000)
     return formatSimulatedClock(activeAnchor, elapsed)
-  }, [enabled, status, activeAnchor, now, syncedAt])
+  }, [enabled, status, paused, activeAnchor, now, syncedAt])
 }

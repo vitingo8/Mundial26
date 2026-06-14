@@ -25,6 +25,7 @@ export default function GroupStandingsView({
   knockoutMatches = [],
   apiMatches = [],
   onOpenMatch,
+  participants = null,
 }) {
   const rawById = useMemo(() => indexApiMatches(apiMatches), [apiMatches])
   const groups = useMemo(
@@ -105,6 +106,7 @@ export default function GroupStandingsView({
             {group.matches.map(m => (
               <MatchRow
                 key={m.id}
+                matchId={m.id}
                 matchRef={el => { if (matchRefs) matchRefs.current[m.id] = el }}
                 home={m.home}
                 away={m.away}
@@ -129,6 +131,7 @@ export default function GroupStandingsView({
                     ? () => onOpenMatch(m)
                     : undefined
                 }
+                participants={participants}
               />
             ))}
           </div>

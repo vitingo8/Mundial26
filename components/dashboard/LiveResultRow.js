@@ -5,6 +5,7 @@ import { Icon, MatchStatus } from '../icons'
 import FifaHighlightsButton from './FifaHighlightsButton'
 import { formatMatchKickoff, formatMatchShortDate } from '../../lib/matchSchedule'
 import { useSimulatedLiveClock } from '../../hooks/useSimulatedLiveClock'
+import LiveClockLabel from './LiveClockLabel'
 
 const LIVE_STATUSES = new Set(['IN_PLAY', 'PAUSED', 'LIVE'])
 const UPCOMING_STATUSES = new Set(['SCHEDULED', 'TIMED'])
@@ -24,17 +25,17 @@ export function PorraLiveHeader({
 }) {
   const isFinished = status === 'FINISHED'
   const isLive = LIVE_STATUSES.has(status)
-  const isPaused = status === 'PAUSED'
-  if (!isLive && !isPaused && !isFinished) return null
+  if (!isLive && !isFinished && status !== 'PAUSED') return null
   if (score?.home == null || score?.away == null) return null
 
   const liveClock = useSimulatedLiveClock({
     liveTime,
     minute: matchMinute,
     status,
-    enabled: isLive || isPaused,
+    enabled: isLive || status === 'PAUSED',
   })
-  const minute = isLive && !isPaused ? liveClock?.compact : null
+  const minute = liveClock?.compact || null
+  const isPaused = status === 'PAUSED' || minute === 'HT'
   const label = isFinished ? 'FT' : isPaused ? 'Descanso' : 'Vivo'
   const stripClass = [
     'porra-live-strip',
@@ -108,7 +109,8 @@ export function LiveScoreBlock({ score, status, liveTime, minute: matchMinute, s
   if (!isLive || score?.home == null || score?.away == null) return null
 
   const liveClock = useSimulatedLiveClock({ liveTime, minute: matchMinute, status })
-  const minute = !isPaused ? liveClock?.compact : null
+  const minute = liveClock?.compact || null
+  const isPaused = status === 'PAUSED' || minute === 'HT'
   const blockClass = [
     'live-score-block',
     size === 'detail' ? 'live-score-block--detail' : '',
@@ -133,7 +135,7 @@ export function LiveScoreBlock({ score, status, liveTime, minute: matchMinute, s
         <span className="live-score-block__sep" aria-hidden="true">-</span>
         <span className="live-score-block__num">{score.away}</span>
       </div>
-      {minute && !isPaused && (
+      {minute && (
         <span className="live-score-block__minute">{minute}</span>
       )}
     </div>
@@ -214,7 +216,15 @@ export default function LiveResultRow({
               )}
             </span>
             {isLive && hasScore && (
-              <span className="schedule-match-live-dot" aria-label="En juego" />
+              <LiveClockLabel
+                liveTime={liveTime}
+                minute={matchMinute}
+                status={status}
+                className="schedule-match-live-clock"
+              />
+            )}
+            {isLive && hasScore && (
+              <span className="schedule-match-live-dot" aria-hidden={!!minute} aria-label={minute ? undefined : 'En juego'} />
             )}
             {isFinished && (
               <FifaHighlightsButton
