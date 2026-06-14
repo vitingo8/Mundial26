@@ -97,15 +97,12 @@ export default function GroupDashboard({
   const [tab, setTab] = useState('live')
   const [predPhase, setPredPhase] = useState('group')
   const [scrollToMatchId, setScrollToMatchId] = useState(null)
-  const [liveData, setLiveData] = useState([])
-  const [apiStatus, setApiStatus] = useState('idle')
-  const [liveApiError, setLiveApiError] = useState(null)
   const [currentGroup, setCurrentGroup] = useState(group)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const matchRefs = useRef({})
   const { groups: userPorraGroups, hasMultiple: hasMultipleGroups } = useUserPorraGroups(user?.email)
 
-  const { wcMatches, setWcMatches, wcLoading, apiError: wcApiError, reload: reloadWc } = useWcMatches()
+  const { wcMatches, setWcMatches, apiError: wcApiError, reload: reloadWc } = useWcMatches()
   const groupMatches = useMemo(() => transformGroupMatches(wcMatches), [wcMatches])
   const knockoutMatches = useMemo(() => transformKnockoutMatches(wcMatches), [wcMatches])
   const isAdmin = user.is_admin
@@ -203,13 +200,6 @@ export default function GroupDashboard({
   }, [])
 
   useEffect(() => {
-    if (wcMatches.length > 0) {
-      setLiveData(wcMatches)
-      setApiStatus('ok')
-    }
-  }, [wcMatches])
-
-  useEffect(() => {
     if (!scrollToMatchId || tab !== 'predictions') return
     const el = matchRefs.current[scrollToMatchId]
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setScrollToMatchId(null) }
@@ -233,18 +223,6 @@ export default function GroupDashboard({
   }
 
   async function savePredictions() { await persistPredictions(true) }
-
-  async function fetchLive() {
-    setApiStatus('loading'); setLiveApiError(null)
-    const raw = await reloadWc()
-    if (raw?.length) {
-      setLiveData(raw)
-      setApiStatus('ok')
-    } else {
-      setApiStatus('unavailable')
-      setLiveApiError('No se pudo cargar el calendario. Inténtalo de nuevo en unos segundos.')
-    }
-  }
 
   const navTabs = [
     { id: 'group', label: 'Ranking' },
@@ -407,7 +385,7 @@ export default function GroupDashboard({
                   bonusDeadlinePassed={bonusDeadlinePassed}
                   koDeadlinePassed={koDeadlinePassed}
                   groupMatches={groupMatches} knockoutMatches={knockoutMatches} teamOptions={teamOptions.length ? teamOptions : ALL_TEAMS}
-                  wcLoading={wcLoading} wcApiError={wcApiError} onReloadWc={reloadWc}
+                  wcApiError={wcApiError} onReloadWc={reloadWc}
                   apiMatches={wcMatches}
                   groupPhase={currentGroup.phase}
                   orphanGroupKeys={orphanGroupKeys} matchRefs={matchRefs}
@@ -426,11 +404,8 @@ export default function GroupDashboard({
               ),
               live: (
                 <LiveTab
-                  liveData={liveData}
-                  apiStatus={apiStatus}
-                  apiError={liveApiError}
-                  onFetch={fetchLive}
-                  wcLoading={wcLoading}
+                  apiMatches={wcMatches}
+                  onFetch={reloadWc}
                   group={currentGroup}
                   groupMatches={groupMatches}
                   knockoutMatches={knockoutMatches}
@@ -638,7 +613,7 @@ function PredictionsTab({
   inicioKoPreds, setInicioKoPreds,
   bonusPreds, setBonusPreds, saving, saveStatus, onSave,
   groupDeadlinePassed, bonusDeadlinePassed, koDeadlinePassed,
-  groupMatches, knockoutMatches, teamOptions, wcLoading, wcApiError, onReloadWc,
+  groupMatches, knockoutMatches, teamOptions, wcApiError, onReloadWc,
   groupPhase, deadlines,
   orphanGroupKeys, matchRefs,
   user, groupId, group, onApplyMirror, onSwitchGroup, notify,
@@ -757,12 +732,7 @@ function PredictionsTab({
         />
       )}
 
-      {wcLoading && predPhase === 'group' && groupMatches.length === 0 && (
-        <div className="dash-card">
-          <div className="dash-empty">Cargando calendario FIFA 2026…</div>
-        </div>
-      )}
-      {predPhase === 'group' && (!wcLoading || groupMatches.length > 0) && (
+      {predPhase === 'group' && (
         <GroupPhasePreds
           preds={groupPreds}
           setPreds={setGroupPreds}
@@ -1287,7 +1257,8 @@ function AdminResultsFallback({ group, groupMatches, userPreds }) {
 }
 
 function LiveTab({
-  liveData, apiStatus, apiError, onFetch, wcLoading,
+  apiMatches = [],
+  onFetch,
   group, groupMatches, knockoutMatches, userPreds, onGoToPrediction,
 }) {
   const [livePhase, setLivePhase] = useState('group')
@@ -1319,8 +1290,8 @@ function LiveTab({
 
   const phaseMatches = livePhase === 'group' ? groupMatches : knockoutMatches
   const phasePreds = livePhase === 'group' ? (userPreds?.group || {}) : (userPreds?.knockout || {})
-  const showFallback = apiStatus === 'unavailable' || (apiStatus === 'idle' && !wcLoading && liveData.length === 0)
-  const hasSchedule = liveData.length > 0 && !showFallback
+  const hasSchedule = apiMatches.length > 0
+  const showFallback = !hasSchedule
   const { pull, refreshing: pullRefreshing, hint: pullHint } = usePullToRefresh(onFetch, {
     enabled: !detailMatch,
   })
@@ -1342,26 +1313,6 @@ function LiveTab({
         </div>
       )}
 
-      {apiStatus === 'idle' && !wcLoading && liveData.length === 0 && (
-        <div style={s.apiCard}>
-          <div style={s.apiMsg}>Cargando resultados en vivo…</div>
-        </div>
-      )}
-      {wcLoading && apiStatus !== 'loading' && (
-        <div style={s.apiCard}>
-          <div style={s.apiMsg}>Cargando 104 partidos del Mundial…</div>
-        </div>
-      )}
-      {apiStatus === 'unavailable' && (
-        <div style={{ ...s.apiCard, borderColor: 'var(--yellow-border)' }}>
-          <div style={{ color: 'var(--yellow)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="exclamationTriangle" size="sm" /> API en vivo no disponible
-          </div>
-          <div style={s.apiSub}>
-            {apiError || 'No se pudo conectar con la fuente de datos en vivo. Mostrando resultados del organizador si existen.'}
-          </div>
-        </div>
-      )}
       {showFallback && (
         <AdminResultsFallback group={group} groupMatches={groupMatches} userPreds={userPreds} />
       )}
@@ -1398,7 +1349,7 @@ function LiveTab({
           ) : effectiveViewMode === 'groups' ? (
             <LiveGroupStandingsView
               matches={phaseMatches}
-              apiMatches={liveData}
+              apiMatches={apiMatches}
               userPreds={phasePreds}
               onGoToPrediction={onGoToPrediction}
               onOpenMatch={openMatchDetail}
@@ -1407,14 +1358,14 @@ function LiveTab({
             <KnockoutBracketView
               matches={phaseMatches}
               readOnly
-              apiMatches={liveData}
+              apiMatches={apiMatches}
               userPreds={phasePreds}
               onGoToPrediction={onGoToPrediction}
             />
           ) : (
             <LiveMatchDaySchedule
               matches={phaseMatches}
-              apiMatches={liveData}
+              apiMatches={apiMatches}
               userPreds={phasePreds}
               onGoToPrediction={onGoToPrediction}
               onOpenMatch={openMatchDetail}
@@ -1431,10 +1382,10 @@ function LiveTab({
         <MatchDetailSheet
           matchId={detailMatch.id}
           summary={detailMatch}
-          liveSnapshot={liveData.find(x => String(x.id) === String(detailMatch.id))}
+          liveSnapshot={apiMatches.find(x => String(x.id) === String(detailMatch.id))}
           userPred={detailMatch.userPred}
           groupMatches={groupMatches}
-          apiMatches={liveData}
+          apiMatches={apiMatches}
           userPreds={userPreds?.group || {}}
           onClose={() => setDetailMatch(null)}
         />

@@ -20,18 +20,23 @@ const CACHE_TTL_IDLE = 10 * 60 * 1000
 
 const WcMatchesContext = createContext(null)
 
-function readCache() {
+function readCache({ allowStale = false } = {}) {
   if (typeof sessionStorage === 'undefined') return null
   try {
     const raw = sessionStorage.getItem(CACHE_KEY)
     if (!raw) return null
     const { ts, data, live } = JSON.parse(raw)
+    if (!Array.isArray(data) || !data.length) return null
     const ttl = live ? CACHE_TTL_LIVE : CACHE_TTL_IDLE
-    if (Date.now() - ts > ttl) return null
+    if (!allowStale && Date.now() - ts > ttl) return null
     return data
   } catch {
     return null
   }
+}
+
+function getInitialWcMatches() {
+  return readCache({ allowStale: true }) ?? []
 }
 
 function writeCache(data) {
@@ -48,8 +53,7 @@ function writeCache(data) {
  * (pausa con la pestaña oculta; reanuda al volver).
  */
 export function WcMatchesProvider({ children }) {
-  const [wcMatches, setWcMatches] = useState([])
-  const [wcLoading, setWcLoading] = useState(true)
+  const [wcMatches, setWcMatches] = useState(getInitialWcMatches)
   const [apiError, setApiError] = useState(null)
   const wcMatchesRef = useRef([])
   const loadInFlight = useRef(null)
@@ -65,12 +69,13 @@ export function WcMatchesProvider({ children }) {
         const cached = readCache()
         if (cached?.length) {
           setWcMatches(cached)
-          setWcLoading(false)
           return cached
         }
+        const stale = readCache({ allowStale: true })
+        if (stale?.length && !wcMatchesRef.current.length) {
+          setWcMatches(stale)
+        }
       }
-      const hadMatches = wcMatchesRef.current.length > 0
-      if (!hadMatches) setWcLoading(true)
       setApiError(null)
       try {
         const data = await fetchWcResource('matches', force ? { force: '1' } : {})
@@ -92,14 +97,12 @@ export function WcMatchesProvider({ children }) {
         return raw
       } catch (e) {
         setApiError(e.message)
-        const cached = readCache()
+        const cached = readCache({ allowStale: true })
         if (cached?.length) {
           setWcMatches(cached)
           setApiError('Usando calendario guardado en el dispositivo')
         }
         return cached || []
-      } finally {
-        setWcLoading(false)
       }
     })()
 
@@ -174,7 +177,6 @@ export function WcMatchesProvider({ children }) {
   const value = {
     wcMatches,
     setWcMatches,
-    wcLoading,
     apiError,
     reload,
     hasLive: hasLiveWcMatches(wcMatches),
