@@ -315,12 +315,39 @@
   padding: 20px 18px 100px;
 }
 
-@media (max-width: 639px) {
+@media (max-width: 767px) {
   .dashboard-app {
     height: 100dvh;
     max-height: 100dvh;
     overflow: hidden;
-    --dash-bottom-scroll-inset: calc(96px + var(--safe-bottom));
+    box-sizing: border-box;
+  }
+
+  /* El nav forma parte del layout (no flota encima del scroll) */
+  .dashboard-app > .dash-main-nav.bottom-nav {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    flex-shrink: 0;
+    width: 100%;
+    z-index: 60;
+  }
+
+  .dash-content {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .dash-swipe-tabs .swipe-tabs-panel--scroll > .dash-tab-panel,
+  .dash-tab-scroll > * {
+    padding-bottom: 20px;
+  }
+}
+
+@media (max-width: 639px) {
+  .dashboard-app {
+    --dash-bottom-scroll-inset: 20px;
   }
 
   .dash-content {
@@ -342,8 +369,6 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     touch-action: pan-y;
-    padding-bottom: var(--dash-bottom-scroll-inset);
-    scroll-padding-bottom: var(--dash-bottom-scroll-inset);
   }
 
   .dash-swipe-tabs.swipe-tabs-root {
@@ -374,9 +399,6 @@
 
   .dash-swipe-tabs .swipe-tabs-panel--scroll {
     touch-action: pan-y;
-    contain: layout style paint;
-    padding-bottom: var(--dash-bottom-scroll-inset);
-    scroll-padding-bottom: var(--dash-bottom-scroll-inset);
   }
 
   .dash-swipe-tabs .swipe-tabs-panel[aria-hidden="true"] {

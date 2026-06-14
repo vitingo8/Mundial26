@@ -56,18 +56,6 @@
   .dash-tabs.tab-bar-desktop {
     display: none !important;
   }
-
-  .dashboard-content,
-  .dash-content {
-    padding-bottom: calc(120px + var(--safe-bottom)) !important;
-  }
-
-  @media (max-width: 639px) {
-    .dashboard-content,
-    .dash-content {
-      padding-bottom: 0 !important;
-    }
-  }
 }
 
 .bottom-nav-btn {
