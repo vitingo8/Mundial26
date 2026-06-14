@@ -325,6 +325,7 @@ export default function MatchDetailSheet({
     [match, homeName, awayName],
   )
   const playerRoster = useMemo(() => collectMatchPlayerRoster(match), [match])
+  const isLive = isLiveMatchStatus(match?.status)
 
   useMatchDetailHeaderCollapse({
     headerRef,
@@ -344,7 +345,6 @@ export default function MatchDetailSheet({
     || (match?.stage && match.stage !== 'GROUP_STAGE' ? formatStageLabel(match.stage) : null)
   const referee = match?.referees?.find(r => r.type === 'REFEREE' || !r.type)?.name
   const headerDate = formatMatchHeaderDate(match?.utcDate || currentSummary?.utcDate)
-  const isLive = isLiveMatchStatus(match?.status)
   const headerStyle = match?.teamColors
     ? {
         '--md-home-glow': `${match.teamColors.home}40`,

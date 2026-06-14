@@ -320,6 +320,7 @@
     height: 100dvh;
     max-height: 100dvh;
     overflow: hidden;
+    --dash-bottom-scroll-inset: calc(96px + var(--safe-bottom));
   }
 
   .dash-content {
@@ -330,7 +331,7 @@
     padding-top: 16px;
     padding-left: max(16px, var(--safe-left));
     padding-right: max(16px, var(--safe-right));
-    padding-bottom: calc(72px + var(--safe-bottom));
+    padding-bottom: 0;
   }
 
   .dash-tab-scroll {
@@ -341,6 +342,8 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     touch-action: pan-y;
+    padding-bottom: var(--dash-bottom-scroll-inset);
+    scroll-padding-bottom: var(--dash-bottom-scroll-inset);
   }
 
   .dash-swipe-tabs.swipe-tabs-root {
@@ -372,6 +375,8 @@
   .dash-swipe-tabs .swipe-tabs-panel--scroll {
     touch-action: pan-y;
     contain: layout style paint;
+    padding-bottom: var(--dash-bottom-scroll-inset);
+    scroll-padding-bottom: var(--dash-bottom-scroll-inset);
   }
 
   .dash-swipe-tabs .swipe-tabs-panel[aria-hidden="true"] {

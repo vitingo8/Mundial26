@@ -59,7 +59,14 @@
 
   .dashboard-content,
   .dash-content {
-    padding-bottom: calc(72px + var(--safe-bottom)) !important;
+    padding-bottom: calc(96px + var(--safe-bottom)) !important;
+  }
+
+  @media (max-width: 639px) {
+    .dashboard-content,
+    .dash-content {
+      padding-bottom: 0 !important;
+    }
   }
 }
 
