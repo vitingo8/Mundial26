@@ -192,24 +192,11 @@ export default function GroupDashboard({
   }, [])
 
   useEffect(() => {
-    if (tab === 'live' && apiStatus === 'idle' && wcMatches.length > 0) { setLiveData(wcMatches); setApiStatus('ok') }
-  }, [tab, wcMatches, apiStatus])
-
-  const hasLiveMatches = useMemo(
-    () => liveData.some(m => ['IN_PLAY', 'PAUSED', 'LIVE'].includes(m.status)),
-    [liveData],
-  )
-
-  useEffect(() => {
-    if (tab !== 'live') return
-    void fetchLive()
-  }, [tab])
-
-  useEffect(() => {
-    if (tab !== 'live' || !hasLiveMatches) return
-    const t = setInterval(() => { void fetchLive() }, 10_000)
-    return () => clearInterval(t)
-  }, [tab, hasLiveMatches])
+    if (wcMatches.length > 0) {
+      setLiveData(wcMatches)
+      setApiStatus('ok')
+    }
+  }, [wcMatches])
 
   useEffect(() => {
     if (!scrollToMatchId || tab !== 'predictions') return

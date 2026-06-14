@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 import PwaRegister from '../components/PwaRegister'
 import SiteFooter from '../components/SiteFooter'
 import LiveFloatingButtons from '../components/LiveFloatingButtons'
+import { WcMatchesProvider } from '../hooks/useWcMatches'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,11 +43,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body>
-        <PwaRegister />
-        {children}
-        <LiveFloatingButtons />
-        <SiteFooter />
-        <Analytics />
+        <WcMatchesProvider>
+          <PwaRegister />
+          {children}
+          <LiveFloatingButtons />
+          <SiteFooter />
+          <Analytics />
+        </WcMatchesProvider>
       </body>
     </html>
   )
