@@ -5,10 +5,13 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react'
 import { fetchWcResource } from '../lib/footballData'
+import { enrichApiMatches } from '../lib/fifaMatchNumbers.js'
+import { buildCatalogApiMatches } from '../lib/catalogApiMatches.js'
 import {
   getWcMatchesPollIntervalMs,
   hasLiveWcMatches,
@@ -19,6 +22,15 @@ const CACHE_TTL_LIVE = 10 * 1000
 const CACHE_TTL_IDLE = 10 * 60 * 1000
 
 const WcMatchesContext = createContext(null)
+
+let catalogMatchesMemo = null
+
+function getCatalogMatches() {
+  if (!catalogMatchesMemo) {
+    catalogMatchesMemo = enrichApiMatches(buildCatalogApiMatches())
+  }
+  return catalogMatchesMemo
+}
 
 function readCache({ allowStale = false } = {}) {
   if (typeof sessionStorage === 'undefined') return null
@@ -35,8 +47,10 @@ function readCache({ allowStale = false } = {}) {
   }
 }
 
-function getInitialWcMatches() {
-  return readCache({ allowStale: true }) ?? []
+function readBootstrapMatches() {
+  const cached = readCache({ allowStale: true })
+  if (cached?.length) return cached
+  return getCatalogMatches()
 }
 
 function writeCache(data) {
@@ -53,11 +67,16 @@ function writeCache(data) {
  * (pausa con la pestaña oculta; reanuda al volver).
  */
 export function WcMatchesProvider({ children }) {
-  const [wcMatches, setWcMatches] = useState(getInitialWcMatches)
+  const [wcMatches, setWcMatches] = useState(readBootstrapMatches)
   const [apiError, setApiError] = useState(null)
   const wcMatchesRef = useRef([])
   const loadInFlight = useRef(null)
   wcMatchesRef.current = wcMatches
+
+  useLayoutEffect(() => {
+    const cached = readCache({ allowStale: true })
+    if (cached?.length) setWcMatches(cached)
+  }, [])
 
   const load = useCallback(async (force = false) => {
     if (loadInFlight.current) {
@@ -101,8 +120,10 @@ export function WcMatchesProvider({ children }) {
         if (cached?.length) {
           setWcMatches(cached)
           setApiError('Usando calendario guardado en el dispositivo')
+        } else if (!wcMatchesRef.current.length) {
+          setWcMatches(getCatalogMatches())
         }
-        return cached || []
+        return cached || wcMatchesRef.current
       }
     })()
 

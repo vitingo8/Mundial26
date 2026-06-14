@@ -1290,8 +1290,7 @@ function LiveTab({
 
   const phaseMatches = livePhase === 'group' ? groupMatches : knockoutMatches
   const phasePreds = livePhase === 'group' ? (userPreds?.group || {}) : (userPreds?.knockout || {})
-  const hasSchedule = apiMatches.length > 0
-  const showFallback = !hasSchedule
+  const hasSchedule = apiMatches.length > 0 || phaseMatches.length > 0
   const { pull, refreshing: pullRefreshing, hint: pullHint } = usePullToRefresh(onFetch, {
     enabled: !detailMatch,
   })
@@ -1311,10 +1310,6 @@ function LiveTab({
         >
           {pullHint && <span className="live-ptr-label">{pullHint}</span>}
         </div>
-      )}
-
-      {showFallback && (
-        <AdminResultsFallback group={group} groupMatches={groupMatches} userPreds={userPreds} />
       )}
 
       {hasSchedule && (

@@ -7,38 +7,45 @@ import { supabase } from '../lib/supabase'
 import { createWriteToken } from '../lib/sessionToken'
 import { getSavedEmail } from '../lib/savedEmail'
 import { Icon } from '../components/icons'
+import {
+  readDashboardCache,
+  readInitialDashboardState,
+  readStoredSession,
+  resolveInitialScreen,
+  saveDashboardCache,
+} from '../lib/dashboardSessionCache'
 
 export default function Page() {
-  const [screen, setScreen] = useState('loading')
+  const initialDash = readInitialDashboardState()
+  const [screen, setScreen] = useState(resolveInitialScreen)
   const [joinCode, setJoinCode] = useState('')
   const [joinEmail, setJoinEmail] = useState('')
   const [joinNewUser, setJoinNewUser] = useState(false)
-  const [currentGroup, setCurrentGroup] = useState(null)
-  const [currentUser, setCurrentUser] = useState(null)
+  const [currentGroup, setCurrentGroup] = useState(initialDash.group)
+  const [currentUser, setCurrentUser] = useState(initialDash.user)
   const [notification, setNotification] = useState(null)
 
   useEffect(() => {
     const hash = window.location.hash.replace('#', '')
     const params = new URLSearchParams(window.location.search)
     const code = params.get('join') || (hash.startsWith('join-') ? hash.replace('join-', '') : '')
-    const screenParam = params.get('screen')
 
     async function init() {
-      const atHome = typeof window !== 'undefined' && sessionStorage.getItem('porra_at_home')
-      const savedSession = localStorage.getItem('porra_session')
-      if (savedSession && !atHome) {
-        try {
-          const { groupId, userId } = JSON.parse(savedSession)
-          if (code && code !== groupId) {
-            setJoinCode(code)
-            setJoinEmail(getSavedEmail())
-            setJoinNewUser(false)
-            setScreen('join')
-            return
-          }
-          const ok = await restoreSession(groupId, userId)
-          if (ok) return
-        } catch { /* ignore */ }
+      const session = readStoredSession()
+
+      if (session) {
+        const { groupId, userId } = session
+        if (code && code !== groupId) {
+          setJoinCode(code)
+          setJoinEmail(getSavedEmail())
+          setJoinNewUser(false)
+          setScreen('join')
+          return
+        }
+        const ok = await restoreSession(groupId, userId)
+        if (ok) return
+        if (!readDashboardCache(groupId, userId)) setScreen('home')
+        return
       }
 
       if (code) {
@@ -49,12 +56,13 @@ export default function Page() {
         return
       }
 
+      const screenParam = params.get('screen')
       if (screenParam === 'create') setScreen('create')
       else if (screenParam === 'recover') setScreen('home')
-      else setScreen('home')
+      else if (screen !== 'join') setScreen('home')
     }
 
-    init()
+    void init()
   }, [])
 
   async function restoreSession(groupId, userId) {
@@ -69,11 +77,13 @@ export default function Page() {
         const user = participants.find(p => p.id === userId)
         if (user) {
           if (typeof window !== 'undefined') sessionStorage.removeItem('porra_at_home')
-          setCurrentGroup({
+          const fullGroup = {
             ...group,
             participants: Object.fromEntries(participants.map(p => [p.id, p])),
-          })
+          }
+          setCurrentGroup(fullGroup)
           setCurrentUser(user)
+          saveDashboardCache(fullGroup, user)
           setScreen('dashboard')
           return true
         }
@@ -115,6 +125,7 @@ export default function Page() {
     if (typeof window !== 'undefined') sessionStorage.removeItem('porra_at_home')
     setCurrentGroup(group)
     setCurrentUser(user)
+    saveDashboardCache(group, user)
     setScreen('dashboard')
   }
 
@@ -146,11 +157,10 @@ export default function Page() {
         participants: Object.fromEntries(participants.map(p => [p.id, p])),
       }
       setCurrentGroup(full)
+      if (currentUser) saveDashboardCache(full, currentUser)
       return full
     }
   }
-
-  if (screen === 'loading') return <LoadingScreen />
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
@@ -210,24 +220,6 @@ export default function Page() {
           onSwitchGroup={switchGroup}
         />
       )}
-    </div>
-  )
-}
-
-function LoadingScreen() {
-  return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', flexDirection: 'column', gap: 16,
-      position: 'relative', zIndex: 1,
-    }}>
-      <img src="/logo-wc26.png" alt="" width={120} height={120} style={{ opacity: 0.95 }} aria-hidden="true" />
-      <div style={{
-        width: 32, height: 32, border: '3px solid var(--border)',
-        borderTopColor: 'var(--accent)', borderRadius: '50%',
-        animation: 'spin 0.8s linear infinite',
-      }} />
-      <span className="sr-only">Cargando…</span>
     </div>
   )
 }
