@@ -32,14 +32,16 @@ function useVerticalLineupPitch() {
 
 function pitchPosition(layout, isHome, vertical) {
   if (!layout) return { left: '50%', top: '50%' }
+  // Fotmob horizontalLayout.y is from each team's own perspective; mirror for home on screen.
+  const lateralPct = isHome ? (1 - layout.y) * 100 : layout.y * 100
   if (vertical) {
     const topPct = isHome
       ? layout.x * 50
       : 50 + (1 - layout.x) * 50
-    return { left: `${layout.y * 100}%`, top: `${topPct}%` }
+    return { left: `${lateralPct}%`, top: `${topPct}%` }
   }
   const leftPct = isHome ? layout.x * 50 : (1 - layout.x * 0.5) * 100
-  return { left: `${leftPct}%`, top: `${layout.y * 100}%` }
+  return { left: `${leftPct}%`, top: `${lateralPct}%` }
 }
 
 function ratingTone(rating) {
