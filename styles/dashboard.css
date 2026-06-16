@@ -1825,6 +1825,7 @@
   left: 50%;
   bottom: calc(100% + 8px);
   transform: translateX(-50%);
+  z-index: 999;
   width: max-content;
   max-width: min(9.5rem, 62vw);
   padding: 6px 8px;
@@ -1997,6 +1998,43 @@
 
 .match-preds-info-wrap--bracket {
   flex-shrink: 0;
+}
+
+.match-points-bubble-wrap:has(.match-points-tooltip),
+.match-preds-info-wrap:has(.match-preds-info-tooltip) {
+  z-index: 999;
+}
+
+.schedule-match-wrap:has(.match-points-tooltip),
+.schedule-match-wrap:has(.match-preds-info-tooltip) {
+  position: relative;
+  z-index: 999;
+}
+
+.group-standings-card:has(.match-points-tooltip),
+.group-standings-card:has(.match-preds-info-tooltip),
+.schedule-matches-panel:has(.match-points-tooltip),
+.schedule-matches-panel:has(.match-preds-info-tooltip),
+.schedule-block:has(.match-points-tooltip),
+.schedule-block:has(.match-preds-info-tooltip) {
+  overflow: visible;
+  z-index: 2;
+}
+
+.group-standings-matches .schedule-match-wrap:first-child .match-points-tooltip,
+.group-standings-matches .schedule-match-wrap:first-child .match-preds-info-tooltip,
+.schedule-block-list > .schedule-match-wrap:first-child .match-points-tooltip,
+.schedule-block-list > .schedule-match-wrap:first-child .match-preds-info-tooltip {
+  bottom: auto;
+  top: calc(100% + 8px);
+}
+
+.group-standings-matches .schedule-match-wrap:first-child .match-points-tooltip::after,
+.schedule-block-list > .schedule-match-wrap:first-child .match-points-tooltip::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--dash-text, #1d3126);
 }
 
 .match-points-tooltip::after {
@@ -5768,6 +5806,8 @@ button.schedule-match-row:focus-visible {
   }
 
   .match-detail-body {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
     padding: 16px 0 max(24px, var(--safe-bottom));
   }
 
