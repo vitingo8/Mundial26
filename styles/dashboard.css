@@ -3914,6 +3914,13 @@ button.schedule-match-row:focus-visible {
   cursor: pointer;
 }
 
+@media (min-width: 640px) {
+  .player-detail-body {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+}
+
 .lineup-pitch-player--clickable {
   border: none;
   padding: 0;
