@@ -32,8 +32,9 @@ import {
 } from '../lib/predictionUtils'
 import GroupStatsTable from './dashboard/GroupStatsTable'
 import {
+  SCORING_COLUMN_LIMITS,
   getScoringDisputedLimits,
-  formatCategoryPct,
+  formatDisputedProgress,
   formatPtsOfMax,
 } from '../lib/scoringMaximum.js'
 import ParticipantPredictionsSheet from './dashboard/ParticipantPredictionsSheet'
@@ -465,29 +466,29 @@ export default function GroupDashboard({
 
 // ─── GROUP TAB ────────────────────────────────────────────────────────────────
 const RANKING_CHIP_DEFS = [
-  { key: 'inicioPts', disputedKey: 'inicioPts', css: 'inicio', title: 'Inicio' },
-  { key: 'knockoutPts', disputedKey: 'knockoutPts', css: 'ko', title: 'Eliminatorias' },
-  { key: 'especialPts', disputedKey: 'especialPts', css: 'esp', title: 'Especiales' },
-  { key: 'mvpPts', disputedKey: 'mvpPts', css: 'mvp', title: 'MVP' },
+  { key: 'inicioPts', disputedKey: 'inicioPts', limitKey: 'inicioPts', css: 'inicio', title: 'Inicio' },
+  { key: 'knockoutPts', disputedKey: 'knockoutPts', limitKey: 'knockoutPts', css: 'ko', title: 'Eliminatorias' },
+  { key: 'especialPts', disputedKey: 'especialPts', limitKey: 'especialPts', css: 'esp', title: 'Especiales' },
+  { key: 'mvpPts', disputedKey: 'mvpPts', limitKey: 'mvpPts', css: 'mvp', title: 'MVP' },
 ]
 
 function RankingScoreChips({ participant, disputedLimits }) {
-  const total = participant.total ?? 0
   return (
     <div className="ranking-chips">
       {RANKING_CHIP_DEFS.map(chip => {
         const value = participant[chip.key] ?? 0
         const disputed = disputedLimits[chip.disputedKey] ?? 0
-        const pct = formatCategoryPct(value, total)
+        const totalMax = SCORING_COLUMN_LIMITS[chip.limitKey] ?? 0
+        const progress = formatDisputedProgress(disputed, totalMax)
         return (
           <div key={chip.key} className="ranking-chip-col">
             <span
               className={`ranking-chip ranking-chip--${chip.css}`}
-              title={`${chip.title}: ${value} de ${disputed} pts disputados`}
+              title={`${chip.title}: ${value} de ${disputed} pts disputados (${progress})`}
             >
               {formatPtsOfMax(value, disputed)}
             </span>
-            <span className={`ranking-chip-pct ranking-chip-pct--${chip.css}`}>{pct}</span>
+            <span className={`ranking-chip-pct ranking-chip-pct--${chip.css}`}>{progress}</span>
           </div>
         )
       })}
