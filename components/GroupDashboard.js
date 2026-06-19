@@ -31,7 +31,11 @@ import {
   enrichLeaderboardWithStats,
 } from '../lib/predictionUtils'
 import GroupStatsTable from './dashboard/GroupStatsTable'
-import { SCORING_COLUMN_LIMITS, formatPtsOfMax } from '../lib/scoringMaximum.js'
+import {
+  getScoringDisputedLimits,
+  formatCategoryPct,
+  formatPtsOfMax,
+} from '../lib/scoringMaximum.js'
 import ParticipantPredictionsSheet from './dashboard/ParticipantPredictionsSheet'
 import ProfileTab from './ProfileTab'
 import ProfileMenuSheet from './ProfileMenuSheet'
@@ -460,6 +464,37 @@ export default function GroupDashboard({
 }
 
 // ─── GROUP TAB ────────────────────────────────────────────────────────────────
+const RANKING_CHIP_DEFS = [
+  { key: 'inicioPts', disputedKey: 'inicioPts', css: 'inicio', title: 'Inicio' },
+  { key: 'knockoutPts', disputedKey: 'knockoutPts', css: 'ko', title: 'Eliminatorias' },
+  { key: 'especialPts', disputedKey: 'especialPts', css: 'esp', title: 'Especiales' },
+  { key: 'mvpPts', disputedKey: 'mvpPts', css: 'mvp', title: 'MVP' },
+]
+
+function RankingScoreChips({ participant, disputedLimits }) {
+  const total = participant.total ?? 0
+  return (
+    <div className="ranking-chips">
+      {RANKING_CHIP_DEFS.map(chip => {
+        const value = participant[chip.key] ?? 0
+        const disputed = disputedLimits[chip.disputedKey] ?? 0
+        const pct = formatCategoryPct(value, total)
+        return (
+          <div key={chip.key} className="ranking-chip-col">
+            <span
+              className={`ranking-chip ranking-chip--${chip.css}`}
+              title={`${chip.title}: ${value} de ${disputed} pts disputados`}
+            >
+              {formatPtsOfMax(value, disputed)}
+            </span>
+            <span className={`ranking-chip-pct ranking-chip-pct--${chip.css}`}>{pct}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupMatches, knockoutMatches, wcMatches = [], onLeave, currentUserId }) {
   const [view, setView] = useState('ranking')
   const [viewingParticipant, setViewingParticipant] = useState(null)
@@ -470,6 +505,10 @@ function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupM
   const scoringGroup = useMemo(
     () => ({ ...group, results: groupResults }),
     [group, groupResults],
+  )
+  const disputedLimits = useMemo(
+    () => getScoringDisputedLimits(scoringGroup, scoringOpts),
+    [scoringGroup, scoringOpts],
   )
   const participantPublishedResults = useMemo(
     () => buildPublishedResultsMap(groupResults, 'group', groupMatches),
@@ -564,24 +603,11 @@ function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupM
                   <div className="ranking-score">
                     <span
                       className="ranking-pts"
-                      title={`${p.total ?? 0} de ${SCORING_COLUMN_LIMITS.total} pts`}
+                      title={`${p.total ?? 0} de ${disputedLimits.total} pts disputados`}
                     >
-                      {formatPtsOfMax(p.total, SCORING_COLUMN_LIMITS.total)}
+                      {formatPtsOfMax(p.total, disputedLimits.total)}
                     </span>
-                    <div className="ranking-chips">
-                      <span className="ranking-chip ranking-chip--inicio" title="Inicio">
-                        {formatPtsOfMax(p.inicioPts, SCORING_COLUMN_LIMITS.inicioPts)}
-                      </span>
-                      <span className="ranking-chip ranking-chip--ko" title="Eliminatorias">
-                        {formatPtsOfMax(p.knockoutPts, SCORING_COLUMN_LIMITS.knockoutPts)}
-                      </span>
-                      <span className="ranking-chip ranking-chip--esp" title="Especiales">
-                        {formatPtsOfMax(p.especialPts, SCORING_COLUMN_LIMITS.especialPts)}
-                      </span>
-                      <span className="ranking-chip ranking-chip--mvp" title="MVP">
-                        {formatPtsOfMax(p.mvpPts, SCORING_COLUMN_LIMITS.mvpPts)}
-                      </span>
-                    </div>
+                    <RankingScoreChips participant={p} disputedLimits={disputedLimits} />
                   </div>
                 </button>
               ))}
