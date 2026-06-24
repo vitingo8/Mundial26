@@ -39,9 +39,23 @@ export const viewport = {
   themeColor: '#49a942',
 }
 
+const CRITICAL_MOBILE_CSS = `
+@media (max-width:767px){
+  .bottom-nav,.dash-main-nav.bottom-nav{display:flex!important}
+  .tab-bar-desktop,.dash-tabs.tab-bar-desktop{display:none!important}
+}
+@media (min-width:768px){
+  .bottom-nav,.dash-main-nav.bottom-nav{display:none!important}
+  .tab-bar-desktop,.dash-tabs.tab-bar-desktop{display:flex!important}
+}
+`
+
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: CRITICAL_MOBILE_CSS }} />
+      </head>
       <body>
         <WcMatchesProvider>
           <PwaRegister />

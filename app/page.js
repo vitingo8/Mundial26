@@ -220,6 +220,55 @@ export default function Page() {
           onSwitchGroup={switchGroup}
         />
       )}
+      {screen === 'dashboard' && (!currentGroup || !currentUser) && (
+        <DashboardRestoring />
+      )}
+    </div>
+  )
+}
+
+function DashboardRestoring() {
+  return (
+    <div className="dashboard-app dashboard-app--restoring">
+      <header
+        className="dash-header dash-header--compact"
+        style={{ paddingTop: 'max(8px, var(--safe-top))' }}
+      >
+        <div className="dash-header-bar">
+          <div className="dash-header-title">
+            <div
+              className="dash-league-logo-placeholder"
+              style={{ width: 32, height: 32, borderRadius: 8, fontSize: '0.85rem' }}
+              aria-hidden="true"
+            >
+              …
+            </div>
+            <h1 className="dash-group-name" style={{ opacity: 0.5 }}>Cargando…</h1>
+          </div>
+        </div>
+      </header>
+      <main className="dash-content dash-content--restoring app-container app-container--wide">
+        <div className="dash-tab-panel dash-tab-panel--live" aria-busy="true">
+          <span className="dash-spinner dash-spinner--dark" aria-hidden="true" />
+          <p style={{ color: 'var(--muted)', fontSize: '0.85rem', fontWeight: 600 }}>Abriendo En Vivo…</p>
+        </div>
+      </main>
+      <nav className="bottom-nav dash-main-nav" aria-label="Navegación principal" aria-hidden="true">
+        <button type="button" className="bottom-nav-btn bottom-nav-btn--menu" tabIndex={-1}>
+          <span className="bottom-nav-icon" aria-hidden="true"><Icon name="bars3" /></span>
+          <span className="bottom-nav-label">Menú</span>
+        </button>
+        {['Ranking', 'Porra', 'Vivo'].map(label => (
+          <button
+            key={label}
+            type="button"
+            className={`bottom-nav-btn${label === 'Vivo' ? ' bottom-nav-btn--active' : ''}`}
+            tabIndex={-1}
+          >
+            <span className="bottom-nav-label">{label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   )
 }

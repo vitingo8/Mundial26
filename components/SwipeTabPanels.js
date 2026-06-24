@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 const MOBILE_MQ = '(max-width: 639px)'
 const COMMIT_RATIO = 0.22
@@ -34,6 +34,7 @@ function touchInNoSwipeZone(target) {
  * @param {Record<string, React.ReactNode>} props.panels
  * @param {boolean} [props.enabled]
  * @param {boolean} [props.panelScroll] — scroll vertical dentro de cada panel (diálogos)
+ * @param {boolean} [props.lazyMount] — montar paneles solo al visitarlos (más rápido al abrir)
  */
 export default function SwipeTabPanels({
   tabs,
@@ -43,6 +44,7 @@ export default function SwipeTabPanels({
   enabled = true,
   panelScroll = false,
   panelSwipeLocked = false,
+  lazyMount = false,
   className = '',
   viewportClassName = '',
 }) {
@@ -59,6 +61,7 @@ export default function SwipeTabPanels({
   const [dragX, setDragX] = useState(0)
   const [dragging, setDragging] = useState(false)
   const [animate, setAnimate] = useState(true)
+  const [visited, setVisited] = useState(() => new Set([activeTab]))
 
   onChangeRef.current = onChange
   tabsRef.current = tabs
@@ -69,6 +72,15 @@ export default function SwipeTabPanels({
   const activeIndex = Math.max(0, tabs.indexOf(activeTab))
 
   useEffect(() => {
+    setVisited(prev => {
+      if (prev.has(activeTab)) return prev
+      const next = new Set(prev)
+      next.add(activeTab)
+      return next
+    })
+  }, [activeTab])
+
+  useLayoutEffect(() => {
     const el = viewportRef.current
     if (!el) return undefined
     const measure = () => {
@@ -205,7 +217,11 @@ export default function SwipeTabPanels({
     panelScroll ? 'swipe-tabs-viewport--scroll-panels' : '',
     viewportClassName,
   ].filter(Boolean).join(' ')
-  const rootClass = ['swipe-tabs-root', className].filter(Boolean).join(' ')
+  const rootClass = [
+    'swipe-tabs-root',
+    width > 0 ? 'swipe-tabs-root--ready' : '',
+    className,
+  ].filter(Boolean).join(' ')
 
   return (
     <div className={rootClass}>
@@ -217,7 +233,9 @@ export default function SwipeTabPanels({
             transform: width ? `translate3d(${offset}px, 0, 0)` : `translate3d(-${activeIndex * 100}%, 0, 0)`,
           }}
         >
-          {tabs.map((tabId, index) => (
+          {tabs.map((tabId, index) => {
+            const shouldMount = !lazyMount || visited.has(tabId) || tabId === activeTab
+            return (
             <div
               key={tabId}
               className={`swipe-tabs-panel${panelScroll ? ' swipe-tabs-panel--scroll' : ''}`}
@@ -228,9 +246,10 @@ export default function SwipeTabPanels({
               role="tabpanel"
               aria-hidden={activeTab !== tabId}
             >
-              {panels[tabId] ?? null}
+              {shouldMount ? (panels[tabId] ?? null) : null}
             </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>

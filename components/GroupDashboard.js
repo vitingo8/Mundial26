@@ -136,27 +136,33 @@ export default function GroupDashboard({
   })
 
   const orphanGroupKeys = useMemo(
-    () => countOrphanPredKeys(user.predictions?.group, groupMatches),
-    [user.predictions?.group, groupMatches],
+    () => (tab === 'predictions'
+      ? countOrphanPredKeys(user.predictions?.group, groupMatches)
+      : 0),
+    [tab, user.predictions?.group, groupMatches],
   )
   const scoringOpts = useMemo(
     () => ({ groupMatches, knockoutMatches, fotmobStandings: wcStandings }),
     [groupMatches, knockoutMatches, wcStandings],
   )
   const provisionalResults = useMemo(
-    () => buildProvisionalResults(currentGroup?.results, wcMatches),
-    [currentGroup?.results, wcMatches],
+    () => (tab === 'group'
+      ? buildProvisionalResults(currentGroup?.results, wcMatches)
+      : (currentGroup?.results ?? {})),
+    [tab, currentGroup?.results, wcMatches],
   )
   const rankingProvisional = useMemo(
-    () => hasProvisionalLiveResults(wcMatches),
-    [wcMatches],
+    () => tab === 'group' && hasProvisionalLiveResults(wcMatches),
+    [tab, wcMatches],
   )
   const leaderboard = useMemo(
-    () => calcLeaderboard(
-      { ...currentGroup, results: provisionalResults },
-      scoringOpts,
-    ),
-    [currentGroup, provisionalResults, scoringOpts],
+    () => (tab === 'group'
+      ? calcLeaderboard(
+        { ...currentGroup, results: provisionalResults },
+        scoringOpts,
+      )
+      : []),
+    [tab, currentGroup, provisionalResults, scoringOpts],
   )
   const groupDeadlinePassed = isGroupDeadlinePassed(currentGroup)
   const bonusDeadlinePassed = isBonusDeadlinePassed(currentGroup)
@@ -377,6 +383,7 @@ export default function GroupDashboard({
             onChange={changeTab}
             enabled={!profileMenuOpen}
             panelScroll
+            lazyMount
             panels={{
               group: (
                 <GroupTab

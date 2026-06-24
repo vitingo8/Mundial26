@@ -315,6 +315,16 @@
   padding: 20px 18px 100px;
 }
 
+.dash-content--restoring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 40vh;
+  padding-bottom: calc(76px + var(--safe-bottom));
+}
+
 @media (max-width: 767px) {
   .dashboard-app {
     --dash-mobile-nav-height: calc(76px + var(--safe-bottom));
@@ -8810,6 +8820,15 @@ button.schedule-match-team:disabled {
 .swipe-tabs-root {
   --swipe-panel-gap: 12px;
   width: 100%;
+}
+
+.swipe-tabs-root:not(.swipe-tabs-root--ready) .swipe-tabs-viewport {
+  opacity: 0;
+}
+
+.swipe-tabs-root--ready .swipe-tabs-viewport {
+  opacity: 1;
+  transition: opacity 0.12s ease;
 }
 
 .swipe-tabs-viewport {

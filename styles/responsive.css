@@ -30,9 +30,9 @@
   }
 }
 
-/* Bottom nav (mobile main) */
+/* Bottom nav (mobile main) — mobile-first: visible by default, hidden on desktop */
 .bottom-nav {
-  display: none;
+  display: flex;
   position: fixed;
   bottom: 0;
   left: 0;
@@ -42,19 +42,24 @@
   border-top: 1px solid var(--border);
   padding-bottom: var(--safe-bottom);
   box-shadow: 0 -4px 20px rgba(29, 49, 38, 0.08);
+  justify-content: space-around;
+  align-items: stretch;
+  min-height: calc(64px + var(--safe-bottom));
 }
 
-@media (max-width: 767px) {
+.tab-bar-desktop,
+.dash-tabs.tab-bar-desktop {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
   .bottom-nav {
-    display: flex;
-    justify-content: space-around;
-    align-items: stretch;
-    min-height: calc(64px + var(--safe-bottom));
+    display: none;
   }
 
   .tab-bar-desktop,
   .dash-tabs.tab-bar-desktop {
-    display: none !important;
+    display: flex !important;
   }
 }
 
