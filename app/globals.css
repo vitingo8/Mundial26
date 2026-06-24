@@ -254,6 +254,27 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
   border-radius: 2px;
 }
 
+.app-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(16px, var(--safe-top)) 16px max(16px, var(--safe-bottom));
+}
+
+.app-splash-logo {
+  width: min(200px, 48vw);
+  height: auto;
+  object-fit: contain;
+}
+
+body:has(.app-splash) .site-footer,
+body:has(.app-splash) .live-floating-wrap {
+  display: none !important;
+}
+
 @media (max-width: 767px) {
   body:has(.dashboard-app) .site-footer {
     padding-bottom: calc(72px + var(--safe-bottom, 0px) + 14px);

@@ -13,6 +13,7 @@ import {
 import { fetchWcResource } from '../lib/footballData'
 import { enrichApiMatches } from '../lib/fifaMatchNumbers.js'
 import { buildCatalogApiMatches } from '../lib/catalogApiMatches.js'
+import { teamCrestUrl } from '../lib/mediaUrls.js'
 import {
   getWcMatchesPollIntervalMs,
   hasLiveWcMatches,
@@ -33,6 +34,24 @@ function getCatalogMatches() {
   return catalogMatchesMemo
 }
 
+function hydrateMatchCrests(matches) {
+  if (!Array.isArray(matches)) return matches
+  return matches.map(m => {
+    const home = m.homeTeam
+    const away = m.awayTeam
+    if (!home?.crest && !away?.crest && !home?.id && !away?.id) return m
+    return {
+      ...m,
+      homeTeam: home
+        ? { ...home, crest: home.crest ?? teamCrestUrl(home.id) ?? null }
+        : home,
+      awayTeam: away
+        ? { ...away, crest: away.crest ?? teamCrestUrl(away.id) ?? null }
+        : away,
+    }
+  })
+}
+
 function readCache({ allowStale = false } = {}) {
   if (typeof sessionStorage === 'undefined') return null
   try {
@@ -42,7 +61,7 @@ function readCache({ allowStale = false } = {}) {
     if (!Array.isArray(data) || !data.length) return null
     const ttl = live ? CACHE_TTL_LIVE : CACHE_TTL_IDLE
     if (!allowStale && Date.now() - ts > ttl) return null
-    return { matches: data, standings: standings ?? null }
+    return { matches: hydrateMatchCrests(data), standings: standings ?? null }
   } catch {
     return null
   }
@@ -116,10 +135,10 @@ export function WcMatchesProvider({ children }) {
           throw new Error('El calendario llegó vacío')
         }
         startTransition(() => {
-          setWcMatches(raw)
+          setWcMatches(hydrateMatchCrests(raw))
           setWcStandings(data.standings ?? null)
         })
-        writeCache(raw, data.standings ?? null)
+        writeCache(hydrateMatchCrests(raw), data.standings ?? null)
         if (data._source === 'catalog' || data._source === 'stale') {
           setApiError(
             data._source === 'stale'
