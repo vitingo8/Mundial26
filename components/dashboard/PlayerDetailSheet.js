@@ -489,9 +489,9 @@ export default function PlayerDetailSheet({
                   {Number(player.rating).toFixed(1)}
                 </span>
               )}
-              {player.countryFlagUrl && (
-                <img className="player-detail-flag" src={player.countryFlagUrl} alt="" loading="lazy" />
-              )}
+              <span className="player-detail-flag">
+                <TeamCrest src={player.countryFlagUrl} alt="" size={20} />
+              </span>
             </div>
             <h2 id="player-detail-title" className="player-detail-name">{player.name}</h2>
             <dl className="player-detail-meta">

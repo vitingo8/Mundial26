@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import TeamCrest from '../TeamCrest'
 import { Icon } from '../icons'
-import { teamCrestUrl } from '../../lib/mediaUrls.js'
 
 const FILTERS = [
   { id: 'match', label: 'Nota' },
@@ -106,9 +105,7 @@ function teamIndicatorFromLineup(lineup, filterId, teamRating) {
 function PitchPlayer({ player, isHome, filterId, vertical, onPlayerClick }) {
   const pos = pitchPosition(player.layout, isHome, vertical)
   const isClubFilter = filterId === 'team'
-  const clubCrest = isClubFilter && player.primaryTeamId
-    ? teamCrestUrl(player.primaryTeamId)
-    : null
+  const clubCrest = isClubFilter ? player.clubCrest ?? null : null
   const tone = filterId === 'match' ? ratingTone(player.rating) : 'neutral'
   const badge = filterValue(player, filterId)
   const hasGoal = player.events?.includes('goal')

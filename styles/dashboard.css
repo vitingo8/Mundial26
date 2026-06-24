@@ -3518,8 +3518,18 @@ button.schedule-match-row:focus-visible {
   height: 22px;
   border-radius: 999px;
   border: 2px solid #fff;
-  object-fit: cover;
-  background: #fff;
+  overflow: hidden;
+  background: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-detail-flag .team-crest-img,
+.player-detail-flag .team-crest-placeholder {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50%;
 }
 
 .player-detail-name {
@@ -8641,12 +8651,13 @@ button.schedule-match-team:disabled {
   .knockout-bracket-tree-wrap {
     padding-left: 32px;
     padding-right: 32px;
+    overflow-x: visible;
+    overflow-y: visible;
   }
 
   .knockout-bracket-tree {
-    width: max-content;
-    min-width: min(100%, 920px);
-    max-width: none;
+    min-width: 100%;
+    max-width: 100%;
     margin: 0 auto;
     padding-left: 16px;
     padding-right: 16px;
@@ -8665,10 +8676,8 @@ button.schedule-match-team:disabled {
     --bracket-score-w: 26px;
     --bracket-score-h: 26px;
     --bracket-score-fs: 0.78rem;
-    width: max-content;
+    width: 100%;
     max-width: 1500px;
-    margin-left: auto;
-    margin-right: auto;
   }
 }
 
@@ -8894,13 +8903,9 @@ button.schedule-match-team:disabled {
 
 @media (min-width: 900px) {
   .dash-swipe-tabs .swipe-tabs-viewport,
-  .dash-swipe-tabs .swipe-tabs-viewport--scroll-panels {
-    overflow: visible;
-  }
-
+  .dash-swipe-tabs .swipe-tabs-viewport--scroll-panels,
   .dash-swipe-tabs .swipe-tabs-panel--scroll {
-    overflow-x: auto;
-    overflow-y: visible;
+    overflow: visible;
   }
 }
 

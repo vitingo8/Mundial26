@@ -863,9 +863,7 @@ function PlayerHighlightRow({ player, cardType, onPlayerClick }) {
   const inner = (
     <>
       <div className="feed-player-info">
-        {player.teamCrest && (
-          <img className="feed-player-team-crest" src={player.teamCrest} alt="" loading="lazy" />
-        )}
+        <TeamCrest src={player.teamCrest} alt="" size={16} />
         <div>
           <p className="feed-player-name">
             {player.shirtNumber != null && <span>{player.shirtNumber} </span>}
@@ -910,9 +908,7 @@ function SubstitutionBox({ sub, onPlayerClick }) {
         <SubstitutionPlayerRow player={sub.playerIn} direction="in" onPlayerClick={onPlayerClick} />
         <SubstitutionPlayerRow player={sub.playerOut} direction="out" onPlayerClick={onPlayerClick} />
       </div>
-      {teamCrest && (
-        <img className="feed-sub-team-crest" src={teamCrest} alt="" loading="lazy" />
-      )}
+      <TeamCrest src={teamCrest} alt="" size={18} />
     </div>
   )
 }
