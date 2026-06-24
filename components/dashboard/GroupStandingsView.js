@@ -44,9 +44,9 @@ export default function GroupStandingsView({
     () =>
       buildQualificationPointsByTeam(
         { predictions: { group: preds } },
-        { groupMatches: matches, knockoutMatches, fotmobStandings },
+        { groupMatches: matches, knockoutMatches, fotmobStandings, apiMatches },
       ),
-    [matches, preds, knockoutMatches, fotmobStandings],
+    [matches, preds, knockoutMatches, fotmobStandings, apiMatches],
   )
 
   if (!groups.length) return null
@@ -57,8 +57,9 @@ export default function GroupStandingsView({
     <div className={`group-standings-grid${gridClassName ? ` ${gridClassName}` : ''}`}>
       {qualificationPts.ready && (
         <p className="group-standings-qual-hint" role="note">
-          Junto al equipo: <strong>+1</strong> si clasifica a dieciseisavos (FotMob) y <strong>+2</strong> si
-          además aciertas 1.º / 2.º / 3.º. Cuentan al 60&nbsp;% en el total del ranking.
+          Junto al equipo: <strong>+1</strong> si clasifica a dieciseisavos y <strong>+2</strong> en total
+          si además aciertas 1.º / 2.º / 3.º. Solo cuando <strong>todos</strong> los partidos de ese
+          grupo han terminado. Cuentan al 60&nbsp;% en el total del ranking.
         </p>
       )}
       {groups.map(group => (

@@ -142,8 +142,8 @@ export default function GroupDashboard({
     [tab, user.predictions?.group, groupMatches],
   )
   const scoringOpts = useMemo(
-    () => ({ groupMatches, knockoutMatches, fotmobStandings: wcStandings }),
-    [groupMatches, knockoutMatches, wcStandings],
+    () => ({ groupMatches, knockoutMatches, fotmobStandings: wcStandings, apiMatches: wcMatches }),
+    [groupMatches, knockoutMatches, wcStandings, wcMatches],
   )
   const provisionalResults = useMemo(
     () => (tab === 'group'
@@ -509,8 +509,8 @@ function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupM
   const [view, setView] = useState('ranking')
   const [viewingParticipant, setViewingParticipant] = useState(null)
   const scoringOpts = useMemo(
-    () => ({ groupMatches, knockoutMatches, fotmobStandings: wcStandings }),
-    [groupMatches, knockoutMatches, wcStandings],
+    () => ({ groupMatches, knockoutMatches, fotmobStandings: wcStandings, apiMatches: wcMatches }),
+    [groupMatches, knockoutMatches, wcStandings, wcMatches],
   )
   const scoringGroup = useMemo(
     () => ({ ...group, results: groupResults }),

@@ -221,8 +221,8 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
         <span className="stats-table-legend-swatch stats-table-legend-swatch--esp">Especiales</span>
       </div>
       <p className="stats-table-legend">
-        Clasif. solo cuenta plazas confirmadas en FotMob (verde). Pasa suma aciertos de quién
-        avanza en empates del bracket KO previsto (Inicio).
+        Clasif. solo cuenta plazas de grupos con todos sus partidos finalizados. Pasa suma aciertos
+        de quién avanza en empates del bracket KO previsto (Inicio).
       </p>
     </div>
   )
