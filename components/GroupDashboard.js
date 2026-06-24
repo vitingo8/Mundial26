@@ -110,7 +110,7 @@ export default function GroupDashboard({
   const matchRefs = useRef({})
   const { groups: userPorraGroups, hasMultiple: hasMultipleGroups } = useUserPorraGroups(user?.email)
 
-  const { wcMatches, setWcMatches, apiError: wcApiError, reload: reloadWc } = useWcMatches()
+  const { wcMatches, setWcMatches, wcStandings, apiError: wcApiError, reload: reloadWc } = useWcMatches()
   const groupMatches = useMemo(() => transformGroupMatches(wcMatches), [wcMatches])
   const knockoutMatches = useMemo(() => transformKnockoutMatches(wcMatches), [wcMatches])
   const isAdmin = user.is_admin
@@ -140,8 +140,8 @@ export default function GroupDashboard({
     [user.predictions?.group, groupMatches],
   )
   const scoringOpts = useMemo(
-    () => ({ groupMatches, knockoutMatches }),
-    [groupMatches, knockoutMatches],
+    () => ({ groupMatches, knockoutMatches, fotmobStandings: wcStandings }),
+    [groupMatches, knockoutMatches, wcStandings],
   )
   const provisionalResults = useMemo(
     () => buildProvisionalResults(currentGroup?.results, wcMatches),
@@ -387,6 +387,7 @@ export default function GroupDashboard({
                   groupMatches={groupMatches}
                   knockoutMatches={knockoutMatches}
                   wcMatches={wcMatches}
+                  wcStandings={wcStandings}
                   onLeave={onLeave}
                   currentUserId={user.id}
                 />
@@ -403,6 +404,7 @@ export default function GroupDashboard({
                   groupMatches={groupMatches} knockoutMatches={knockoutMatches} teamOptions={teamOptions.length ? teamOptions : ALL_TEAMS}
                   wcApiError={wcApiError} onReloadWc={reloadWc}
                   apiMatches={wcMatches}
+                  fotmobStandings={wcStandings}
                   groupPhase={currentGroup.phase}
                   orphanGroupKeys={orphanGroupKeys} matchRefs={matchRefs}
                   deadlines={{
@@ -496,12 +498,12 @@ function RankingScoreChips({ participant, disputedLimits }) {
   )
 }
 
-function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupMatches, knockoutMatches, wcMatches = [], onLeave, currentUserId }) {
+function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupMatches, knockoutMatches, wcMatches = [], wcStandings = null, onLeave, currentUserId }) {
   const [view, setView] = useState('ranking')
   const [viewingParticipant, setViewingParticipant] = useState(null)
   const scoringOpts = useMemo(
-    () => ({ groupMatches, knockoutMatches }),
-    [groupMatches, knockoutMatches],
+    () => ({ groupMatches, knockoutMatches, fotmobStandings: wcStandings }),
+    [groupMatches, knockoutMatches, wcStandings],
   )
   const scoringGroup = useMemo(
     () => ({ ...group, results: groupResults }),
@@ -624,6 +626,7 @@ function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupM
           knockoutMatches={knockoutMatches}
           publishedResults={participantPublishedResults}
           apiMatches={wcMatches}
+          fotmobStandings={wcStandings}
           currentUserId={currentUserId}
           bonusActuals={group.actuals}
           onClose={() => setViewingParticipant(null)}
@@ -656,7 +659,7 @@ function PredictionsTab({
   groupPhase, deadlines,
   orphanGroupKeys, matchRefs,
   user, groupId, group, onApplyMirror, onSwitchGroup, notify,
-  apiMatches = [],
+  apiMatches = [], fotmobStandings = null,
 }) {
   const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
   const [detailMatch, setDetailMatch] = useState(null)
@@ -786,6 +789,7 @@ function PredictionsTab({
           loadError={wcApiError}
           onRetry={onReloadWc}
           apiMatches={apiMatches}
+          fotmobStandings={fotmobStandings}
           onOpenMatch={openMatchDetail}
         />
       )}
@@ -845,7 +849,7 @@ function PredictionsTab({
 function GroupPhasePreds({
   preds, setPreds, inicioKoPreds, setInicioKoPreds,
   locked, matches = [], knockoutMatches = [], matchRefs, viewMode = 'daily', group,
-  loadError, onRetry, apiMatches = [], onOpenMatch,
+  loadError, onRetry, apiMatches = [], fotmobStandings = null, onOpenMatch,
 }) {
   const publishedResults = useMemo(
     () => buildPublishedResultsMap(group?.results, 'group', matches),
@@ -953,6 +957,7 @@ function GroupPhasePreds({
           publishedResults={publishedResults}
           knockoutMatches={knockoutMatches}
           apiMatches={apiMatches}
+          fotmobStandings={fotmobStandings}
           onOpenMatch={onOpenMatch}
           participants={group?.participants}
         />

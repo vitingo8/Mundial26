@@ -407,7 +407,7 @@ export default function GuidePage() {
               <span>+{SCORING.knockoutAdvance} pt</span>
             </div>
             <div className="guia-score-row">
-              <span>Clasificados a dieciseisavos (según API), por equipo que predijiste</span>
+              <span>Clasificados a dieciseisavos (según FotMob), por equipo que predijiste</span>
               <span>+{SCORING.groupQualifies} pt</span>
             </div>
             <div className="guia-score-row">

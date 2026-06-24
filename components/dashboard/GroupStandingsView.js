@@ -24,6 +24,7 @@ export default function GroupStandingsView({
   publishedResults = {},
   knockoutMatches = [],
   apiMatches = [],
+  fotmobStandings = null,
   onOpenMatch,
   participants = null,
   viewingParticipantPreds = false,
@@ -43,9 +44,9 @@ export default function GroupStandingsView({
     () =>
       buildQualificationPointsByTeam(
         { predictions: { group: preds } },
-        { groupMatches: matches, knockoutMatches },
+        { groupMatches: matches, knockoutMatches, fotmobStandings },
       ),
-    [matches, preds, knockoutMatches],
+    [matches, preds, knockoutMatches, fotmobStandings],
   )
 
   if (!groups.length) return null
@@ -56,7 +57,7 @@ export default function GroupStandingsView({
     <div className={`group-standings-grid${gridClassName ? ` ${gridClassName}` : ''}`}>
       {qualificationPts.ready && (
         <p className="group-standings-qual-hint" role="note">
-          Junto al equipo: <strong>+1</strong> si clasifica a dieciseisavos (API) y <strong>+2</strong> si
+          Junto al equipo: <strong>+1</strong> si clasifica a dieciseisavos (FotMob) y <strong>+2</strong> si
           además aciertas 1.º / 2.º / 3.º. Cuentan al 60&nbsp;% en el total del ranking.
         </p>
       )}

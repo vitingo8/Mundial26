@@ -23,6 +23,7 @@ export default function ParticipantPredictionsSheet({
   bonusActuals = {},
   publishedResults = {},
   apiMatches = [],
+  fotmobStandings = null,
   onClose,
   currentUserId,
 }) {
@@ -135,6 +136,7 @@ export default function ParticipantPredictionsSheet({
                 knockoutMatches={knockoutMatches}
                 publishedResults={publishedResults}
                 apiMatches={apiMatches}
+                fotmobStandings={fotmobStandings}
                 viewingParticipantPreds
               />
             )

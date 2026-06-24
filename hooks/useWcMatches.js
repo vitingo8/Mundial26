@@ -38,11 +38,11 @@ function readCache({ allowStale = false } = {}) {
   try {
     const raw = sessionStorage.getItem(CACHE_KEY)
     if (!raw) return null
-    const { ts, data, live } = JSON.parse(raw)
+    const { ts, data, standings, live } = JSON.parse(raw)
     if (!Array.isArray(data) || !data.length) return null
     const ttl = live ? CACHE_TTL_LIVE : CACHE_TTL_IDLE
     if (!allowStale && Date.now() - ts > ttl) return null
-    return data
+    return { matches: data, standings: standings ?? null }
   } catch {
     return null
   }
@@ -50,15 +50,21 @@ function readCache({ allowStale = false } = {}) {
 
 function readBootstrapMatches() {
   const cached = readCache({ allowStale: true })
-  if (cached?.length) return cached
+  if (cached?.matches?.length) return cached.matches
   return getCatalogMatches()
 }
 
-function writeCache(data) {
+function readBootstrapStandings() {
+  const cached = readCache({ allowStale: true })
+  return cached?.standings ?? null
+}
+
+function writeCache(data, standings = null) {
   if (typeof sessionStorage === 'undefined') return
   sessionStorage.setItem(CACHE_KEY, JSON.stringify({
     ts: Date.now(),
     data,
+    standings,
     live: hasLiveWcMatches(data),
   }))
 }
@@ -69,6 +75,7 @@ function writeCache(data) {
  */
 export function WcMatchesProvider({ children }) {
   const [wcMatches, setWcMatches] = useState(readBootstrapMatches)
+  const [wcStandings, setWcStandings] = useState(readBootstrapStandings)
   const [apiError, setApiError] = useState(null)
   const wcMatchesRef = useRef([])
   const loadInFlight = useRef(null)
@@ -76,7 +83,10 @@ export function WcMatchesProvider({ children }) {
 
   useLayoutEffect(() => {
     const cached = readCache({ allowStale: true })
-    if (cached?.length) setWcMatches(cached)
+    if (cached?.matches?.length) {
+      setWcMatches(cached.matches)
+      setWcStandings(cached.standings ?? null)
+    }
   }, [])
 
   const load = useCallback(async (force = false) => {
@@ -87,13 +97,15 @@ export function WcMatchesProvider({ children }) {
     const run = (async () => {
       if (!force) {
         const cached = readCache()
-        if (cached?.length) {
-          setWcMatches(cached)
-          return cached
+        if (cached?.matches?.length) {
+          setWcMatches(cached.matches)
+          setWcStandings(cached.standings ?? null)
+          return cached.matches
         }
         const stale = readCache({ allowStale: true })
-        if (stale?.length && !wcMatchesRef.current.length) {
-          setWcMatches(stale)
+        if (stale?.matches?.length && !wcMatchesRef.current.length) {
+          setWcMatches(stale.matches)
+          setWcStandings(stale.standings ?? null)
         }
       }
       setApiError(null)
@@ -105,8 +117,9 @@ export function WcMatchesProvider({ children }) {
         }
         startTransition(() => {
           setWcMatches(raw)
+          setWcStandings(data.standings ?? null)
         })
-        writeCache(raw)
+        writeCache(raw, data.standings ?? null)
         if (data._source === 'catalog' || data._source === 'stale') {
           setApiError(
             data._source === 'stale'
@@ -120,13 +133,15 @@ export function WcMatchesProvider({ children }) {
       } catch (e) {
         setApiError(e.message)
         const cached = readCache({ allowStale: true })
-        if (cached?.length) {
-          setWcMatches(cached)
+        if (cached?.matches?.length) {
+          setWcMatches(cached.matches)
+          setWcStandings(cached.standings ?? null)
           setApiError('Usando calendario guardado en el dispositivo')
         } else if (!wcMatchesRef.current.length) {
           setWcMatches(getCatalogMatches())
+          setWcStandings(null)
         }
-        return cached || wcMatchesRef.current
+        return cached?.matches || wcMatchesRef.current
       }
     })()
 
@@ -201,6 +216,8 @@ export function WcMatchesProvider({ children }) {
   const value = {
     wcMatches,
     setWcMatches,
+    wcStandings,
+    setWcStandings,
     apiError,
     reload,
     hasLive: hasLiveWcMatches(wcMatches),
