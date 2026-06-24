@@ -8644,8 +8644,9 @@ button.schedule-match-team:disabled {
   }
 
   .knockout-bracket-tree {
-    min-width: 100%;
-    max-width: 100%;
+    width: max-content;
+    min-width: min(100%, 920px);
+    max-width: none;
     margin: 0 auto;
     padding-left: 16px;
     padding-right: 16px;
@@ -8664,8 +8665,10 @@ button.schedule-match-team:disabled {
     --bracket-score-w: 26px;
     --bracket-score-h: 26px;
     --bracket-score-fs: 0.78rem;
-    width: 100%;
+    width: max-content;
     max-width: 1500px;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -8887,6 +8890,18 @@ button.schedule-match-team:disabled {
 
 .dash-swipe-tabs .swipe-tabs-viewport {
   overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .dash-swipe-tabs .swipe-tabs-viewport,
+  .dash-swipe-tabs .swipe-tabs-viewport--scroll-panels {
+    overflow: visible;
+  }
+
+  .dash-swipe-tabs .swipe-tabs-panel--scroll {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
 }
 
 .dash-swipe-tabs .swipe-tabs-viewport--scroll-panels {
