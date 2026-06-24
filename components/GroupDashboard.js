@@ -571,6 +571,7 @@ function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupM
             rows={tableRows}
             currentUserId={currentUserId}
             onViewParticipant={openParticipantPreds}
+            disputedLimits={disputedLimits}
           />
         </>
       ) : (

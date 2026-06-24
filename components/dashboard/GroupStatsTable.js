@@ -39,10 +39,18 @@ const PHASE_GROUPS = [
         limitKey: 'inicioResultadoPts',
       },
       {
-        key: 'inicioClasPasaPts',
+        key: 'qualificationWeighted',
         label: 'Clasif.',
-        title: `Clasificación a dieciseisavos + quién pasa en empate del KO previsto (máx. ${LIMITS.inicioClasPasaPts})`,
-        limitKey: 'inicioClasPasaPts',
+        title: 'Clasificación a dieciseisavos (solo plazas confirmadas en FotMob)',
+        limitKey: 'qualificationPts',
+        disputedKey: 'qualificationDisputedPts',
+      },
+      {
+        key: 'inicioAdvancePts',
+        label: 'Pasa',
+        title: 'Quién pasa en empate del KO previsto (Inicio)',
+        limitKey: 'inicioAdvancePts',
+        disputedKey: 'inicioAdvanceDisputedPts',
       },
     ],
   },
@@ -105,7 +113,7 @@ function PtsCell({ value, max, emphasize }) {
   )
 }
 
-export default function GroupStatsTable({ rows, currentUserId, onViewParticipant }) {
+export default function GroupStatsTable({ rows, currentUserId, onViewParticipant, disputedLimits = null }) {
   if (!rows.length) {
     return <p className="dash-empty">Sin participantes todavía</p>
   }
@@ -187,7 +195,9 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
                         </td>
                       )
                     }
-                    const max = LIMITS[col.limitKey]
+                    const max = col.disputedKey && disputedLimits
+                      ? (disputedLimits[col.disputedKey] ?? 0)
+                      : LIMITS[col.limitKey]
                     const value = row[col.key] ?? 0
                     return (
                       <td
@@ -211,7 +221,8 @@ export default function GroupStatsTable({ rows, currentUserId, onViewParticipant
         <span className="stats-table-legend-swatch stats-table-legend-swatch--esp">Especiales</span>
       </div>
       <p className="stats-table-legend">
-        Clasif. en Inicio suma clasificación a dieciseisavos y aciertos de quién pasa en empates del KO previsto.
+        Clasif. solo cuenta plazas confirmadas en FotMob (verde). Pasa suma aciertos de quién
+        avanza en empates del bracket KO previsto (Inicio).
       </p>
     </div>
   )
