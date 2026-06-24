@@ -801,28 +801,21 @@ function PredictionsTab({
         />
       )}
       {predPhase === 'knockout' && (
-        <>
-          {knockoutMatches.length > 0 && (
-            <p className="dash-phase-hint">
-              Partidos reales del Mundial. +3 y +5 solo si el cruce coincide con tu bracket de Inicio; siempre +1 si aciertas quién pasa.
-            </p>
-          )}
-          <KnockoutPreds
-            preds={koPreds}
-            setPreds={setKoPreds}
-            phaseLocked={phaseLocked}
-            koDeadlinePassed={koDeadlinePassed}
-            matches={knockoutMatches}
-            teamOptions={teamOptions}
-            matchRefs={matchRefs}
-            viewMode={effectiveViewMode}
-            group={group}
-            participant={user}
-            groupMatches={groupMatches}
-            apiMatches={apiMatches}
-            onOpenMatch={openMatchDetail}
-          />
-        </>
+        <KnockoutPreds
+          preds={koPreds}
+          setPreds={setKoPreds}
+          phaseLocked={phaseLocked}
+          koDeadlinePassed={koDeadlinePassed}
+          matches={knockoutMatches}
+          teamOptions={teamOptions}
+          matchRefs={matchRefs}
+          viewMode={effectiveViewMode}
+          group={group}
+          participant={user}
+          groupMatches={groupMatches}
+          apiMatches={apiMatches}
+          onOpenMatch={openMatchDetail}
+        />
       )}
       {predPhase === 'bonuses' && (
         <BonusPreds
