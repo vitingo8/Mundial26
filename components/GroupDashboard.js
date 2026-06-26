@@ -817,6 +817,7 @@ function PredictionsTab({
           participant={user}
           groupMatches={groupMatches}
           apiMatches={apiMatches}
+          fotmobStandings={fotmobStandings}
           onOpenMatch={openMatchDetail}
         />
       )}
@@ -1076,11 +1077,15 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
 function KnockoutPreds({
   preds, setPreds, phaseLocked, koDeadlinePassed,
   matches = [], teamOptions = [], matchRefs, viewMode = 'daily', group,
-  participant, groupMatches = [], apiMatches = [], onOpenMatch,
+  participant, groupMatches = [], apiMatches = [], fotmobStandings = null, onOpenMatch,
 }) {
   const scheduleMatches = useMemo(
-    () => buildEliminatoriasKnockoutSchedule(matches, preds),
-    [matches, preds],
+    () => buildEliminatoriasKnockoutSchedule(matches, preds, {
+      fotmobStandings,
+      groupMatches,
+      apiMatches,
+    }),
+    [matches, preds, fotmobStandings, groupMatches, apiMatches],
   )
   const knockoutScoringCtx = useMemo(
     () => buildKnockoutScoringContext(participant || { predictions: {} }, {
@@ -1119,7 +1124,7 @@ function KnockoutPreds({
       <>
         {!koLocked && (
           <p className="dash-phase-hint">
-            Dieciseisavos con equipos reales (API). Del octavo en adelante, el cuadro sale de tu porra: marcador y quién pasa.
+            Dieciseisavos con clasificados reales (FotMob). Del octavo en adelante, el cuadro sale de tu porra: marcador y quién pasa.
           </p>
         )}
         <KnockoutBracketView
@@ -1146,7 +1151,7 @@ function KnockoutPreds({
       <>
         {!koLocked && (
           <p className="dash-phase-hint">
-            Dieciseisavos con equipos reales (API). Del octavo en adelante, el cuadro sale de tu porra: marcador y quién pasa.
+            Dieciseisavos con clasificados reales (FotMob). Del octavo en adelante, el cuadro sale de tu porra: marcador y quién pasa.
           </p>
         )}
         <MatchDaySchedule
