@@ -17,7 +17,7 @@ import { focusAwayInRow, focusNextMatchHomeScore } from '../../lib/scheduleScore
 
 import ScoreInput from './ScoreInput'
 
-import { needsKnockoutAdvancePick } from '../../lib/knockoutAdvances'
+import { needsKnockoutAdvancePick, resolveKnockoutAdvanceSide } from '../../lib/knockoutAdvances'
 import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
 import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
 import { PorraLiveHeader } from './LiveResultRow'
@@ -50,6 +50,8 @@ function TeamBlock({
 
   voided = false,
 
+  advanceBadge = false,
+
 }) {
 
   const className = [
@@ -65,6 +67,8 @@ function TeamBlock({
     voided ? 'schedule-match-team--void' : '',
 
     pendingThird ? 'schedule-match-team--pending-third' : '',
+
+    advanceBadge ? 'schedule-match-team--advances' : '',
 
   ].filter(Boolean).join(' ')
 
@@ -84,7 +88,14 @@ function TeamBlock({
         <TeamCrest src={crest} alt={name} size={crestSize} />
       )}
 
-      <span className="schedule-match-team-name" title={pendingThirdSlot || name}>{name}</span>
+      <span className="schedule-match-team-name" title={pendingThirdSlot || name}>
+        {name}
+        {advanceBadge && crest ? (
+          <span className="schedule-match-advance-crest" title="Pasa de ronda" aria-hidden>
+            <TeamCrest src={crest} alt="" size={Math.max(12, crestSize - 12)} />
+          </span>
+        ) : null}
+      </span>
 
     </>
 
@@ -238,6 +249,11 @@ export default function MatchRow({
 
     knockoutAdvance && !readOnly && needsKnockoutAdvancePick(predRow) && onAdvance
 
+  const advanceSide = useMemo(() => {
+    if (!knockoutAdvance) return null
+    return resolveKnockoutAdvanceSide(predRow)
+  }, [knockoutAdvance, predRow])
+
   const isInicioKo = isInicioKoId(matchId)
 
   const inicioKoUiStatus = useMemo(() => {
@@ -309,8 +325,12 @@ export default function MatchRow({
 
   const participantPredRows = useMemo(() => {
     if (readOnly || !participants || !matchId) return []
-    return getParticipantPredsForMatch(participants, matchId, { groupMatches, knockoutMatches })
-  }, [readOnly, participants, matchId, groupMatches, knockoutMatches])
+    return getParticipantPredsForMatch(participants, matchId, {
+      groupMatches,
+      knockoutMatches,
+      match: { home, away, homeCrest, awayCrest },
+    })
+  }, [readOnly, participants, matchId, groupMatches, knockoutMatches, home, away, homeCrest, awayCrest])
 
   function setRowRef(el) {
 
@@ -437,6 +457,8 @@ export default function MatchRow({
         pendingThirdSlot={homePendingThirdSlot}
 
         voided={inicioKoVoid}
+
+        advanceBadge={advanceSide === 'home'}
 
       />
 
@@ -584,6 +606,8 @@ export default function MatchRow({
         pendingThirdSlot={awayPendingThirdSlot}
 
         voided={inicioKoVoid}
+
+        advanceBadge={advanceSide === 'away'}
 
       />
 

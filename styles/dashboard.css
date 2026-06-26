@@ -2004,8 +2004,17 @@
 }
 
 .match-preds-info-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.match-preds-info-advance-crest {
+  display: inline-flex;
+  line-height: 0;
   flex-shrink: 0;
 }
 
@@ -2103,7 +2112,11 @@
 }
 
 .schedule-match-team-name {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
   width: 100%;
   font-size: 0.75rem;
   font-weight: 600;
@@ -2113,6 +2126,16 @@
   word-break: break-word;
   overflow-wrap: anywhere;
   white-space: normal;
+}
+
+.schedule-match-advance-crest {
+  display: inline-flex;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.schedule-match-team--advances .schedule-match-team-name {
+  font-weight: 800;
 }
 
 .schedule-match-center {
@@ -8576,12 +8599,25 @@ button.schedule-match-team:disabled {
 .bracket-slot-name {
   flex: 1 1 auto;
   min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: var(--bracket-name-fs);
   font-weight: 700;
   line-height: 1.2;
+}
+
+.bracket-slot-name--advances {
+  font-weight: 800;
+}
+
+.bracket-slot-advance-crest {
+  display: inline-flex;
+  line-height: 0;
+  flex-shrink: 0;
 }
 
 .bracket-slot-score-wrap {

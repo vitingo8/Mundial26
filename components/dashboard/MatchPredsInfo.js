@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import { Icon } from '../icons'
+import TeamCrest from '../TeamCrest'
 
 /**
  * Icono «i» con tooltip minimalista: predicciones de todos los participantes en el partido.
@@ -49,6 +50,14 @@ export default function MatchPredsInfo({ rows = [], className = '' }) {
                 <span className="match-preds-info-name">{row.label}</span>
                 <span className="match-preds-info-score">
                   {row.home ?? '?'}–{row.away ?? '?'}
+                  {row.advanceCrest ? (
+                    <span
+                      className="match-preds-info-advance-crest"
+                      title={row.advanceName ? `Pasa: ${row.advanceName}` : 'Pasa de ronda'}
+                    >
+                      <TeamCrest src={row.advanceCrest} alt={row.advanceName || ''} size={14} />
+                    </span>
+                  ) : null}
                 </span>
               </li>
             ))}

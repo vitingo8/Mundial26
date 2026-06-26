@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { isMatchKickoffPassed } from '../../lib/deadlines'
 import TeamCrest from '../TeamCrest'
 import ScoreInput from './ScoreInput'
-import { needsKnockoutAdvancePick } from '../../lib/knockoutAdvances'
+import { needsKnockoutAdvancePick, resolveKnockoutAdvanceSide } from '../../lib/knockoutAdvances'
 import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
 import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
 import { PorraLiveHeader } from './LiveResultRow'
@@ -23,6 +23,7 @@ import { MatchStatus } from '../icons'
 function BracketTeam({
   name, crest, score, pred, side, onScore, onAdvance, locked, readOnly, pickable, eliminated,
   scoreExact = false, pendingThird = false, pendingThirdSlot = null, voided = false,
+  advanceBadge = false,
 }) {
   const inner = (
     <>
@@ -37,7 +38,14 @@ function BracketTeam({
           <TeamCrest src={crest} alt={name} size={16} />
         )}
       </span>
-      <span className={`bracket-slot-name${voided ? ' bracket-slot-name--void' : ''}`} title={pendingThirdSlot || name}>{name}</span>
+      <span className={`bracket-slot-name${voided ? ' bracket-slot-name--void' : ''}${advanceBadge ? ' bracket-slot-name--advances' : ''}`} title={pendingThirdSlot || name}>
+        {name}
+        {advanceBadge && crest ? (
+          <span className="bracket-slot-advance-crest" title="Pasa de ronda" aria-hidden>
+            <TeamCrest src={crest} alt="" size={12} />
+          </span>
+        ) : null}
+      </span>
       {!readOnly ? (
         <span className={`bracket-slot-score-wrap${scoreExact ? ' bracket-slot-score-wrap--exact' : ''}`}>
           <ScoreInput
@@ -92,6 +100,7 @@ export default function BracketMatchSlot({
   knockoutMatches = [],
   viewingParticipantPreds = false,
   inicioKnockoutScoring = null,
+  knockoutAdvance = false,
 }) {
   if (!match) return <div className="bracket-slot bracket-slot--empty" />
 
@@ -118,6 +127,7 @@ export default function BracketMatchSlot({
   }
   const pickAdvance =
     !readOnly && !matchLocked && needsKnockoutAdvancePick(predRow) && onAdvance
+  const advanceSide = knockoutAdvance ? resolveKnockoutAdvanceSide(predRow) : null
 
   const isInicioKo = isInicioKoId(match?.id)
 
@@ -198,8 +208,17 @@ export default function BracketMatchSlot({
 
   const participantPredRows = useMemo(() => {
     if (readOnly || !participants || !match?.id) return []
-    return getParticipantPredsForMatch(participants, match.id, { groupMatches, knockoutMatches })
-  }, [readOnly, participants, match?.id, groupMatches, knockoutMatches])
+    return getParticipantPredsForMatch(participants, match.id, {
+      groupMatches,
+      knockoutMatches,
+      match: {
+        home: match.home,
+        away: match.away,
+        homeCrest: match.homeCrest,
+        awayCrest: match.awayCrest,
+      },
+    })
+  }, [readOnly, participants, match?.id, groupMatches, knockoutMatches, match?.home, match?.away, match?.homeCrest, match?.awayCrest])
 
   const bubbleUserPred = viewingParticipantPreds ? predRow : null
   const bubbleProps = {
@@ -335,6 +354,7 @@ export default function BracketMatchSlot({
         pendingThird={match.homePendingThird}
         pendingThirdSlot={match.homePendingThirdSlot}
         voided={inicioKoVoid}
+        advanceBadge={advanceSide === 'home'}
       />
 
       <BracketTeam
@@ -353,6 +373,7 @@ export default function BracketMatchSlot({
         pendingThird={match.awayPendingThird}
         pendingThirdSlot={match.awayPendingThirdSlot}
         voided={inicioKoVoid}
+        advanceBadge={advanceSide === 'away'}
       />
       </div>
 

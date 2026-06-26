@@ -20,10 +20,8 @@ import {
   getDefaultKnockoutDeadline,
   getEffectiveGroupDeadline,
   getEffectiveBonusDeadline,
-  getEffectiveKnockoutDeadline,
   isGroupDeadlinePassed,
   isBonusDeadlinePassed,
-  isKnockoutDeadlinePassed,
 } from '../lib/deadlines'
 import {
   countFilledMatches, getUniqueTeamsFromMatches,
@@ -72,7 +70,8 @@ import KnockoutBracketView from './dashboard/KnockoutBracketView'
 import PredictedKnockoutSection from './dashboard/PredictedKnockoutSection'
 import { buildInicioKnockoutSchedule } from '../lib/knockoutBridge'
 import { buildEliminatoriasKnockoutSchedule } from '../lib/knockoutBridge'
-import { buildLiveKnockoutMatches, isKnockoutMatchPendingThird } from '../lib/hydrateKnockoutR32'
+import { buildLiveKnockoutMatches } from '../lib/hydrateKnockoutR32'
+import { isEliminatoriasMatchLocked } from '../lib/eliminatoriasMatchLock'
 import { patchKnockoutScore, patchKnockoutAdvance } from '../lib/knockoutAdvances'
 import { buildKnockoutScoringContext } from '../lib/knockoutMatchScoring'
 import { buildInicioKnockoutScoringState } from '../lib/inicioKnockoutScoring'
@@ -168,10 +167,8 @@ export default function GroupDashboard({
   )
   const groupDeadlinePassed = isGroupDeadlinePassed(currentGroup)
   const bonusDeadlinePassed = isBonusDeadlinePassed(currentGroup)
-  const koDeadlinePassed = isKnockoutDeadlinePassed(currentGroup)
   const effectiveGroupDeadline = getEffectiveGroupDeadline(currentGroup)
   const effectiveBonusDeadline = getEffectiveBonusDeadline(currentGroup)
-  const effectiveKnockoutDeadline = getEffectiveKnockoutDeadline(currentGroup)
   const teamOptions = useMemo(() => getUniqueTeamsFromMatches(groupMatches, knockoutMatches), [groupMatches, knockoutMatches])
   const adminBadges = isAdmin ? getAdminTaskBadges(currentGroup) : []
 
@@ -409,7 +406,6 @@ export default function GroupDashboard({
                   saving={saving} saveStatus={saveStatus} onSave={savePredictions}
                   groupDeadlinePassed={groupDeadlinePassed}
                   bonusDeadlinePassed={bonusDeadlinePassed}
-                  koDeadlinePassed={koDeadlinePassed}
                   groupMatches={groupMatches} knockoutMatches={knockoutMatches} teamOptions={teamOptions.length ? teamOptions : ALL_TEAMS}
                   wcApiError={wcApiError} onReloadWc={reloadWc}
                   apiMatches={wcMatches}
@@ -419,7 +415,6 @@ export default function GroupDashboard({
                   deadlines={{
                     group: effectiveGroupDeadline,
                     bonus: effectiveBonusDeadline,
-                    knockout: effectiveKnockoutDeadline,
                   }}
                   group={currentGroup}
                   user={user}
@@ -665,7 +660,7 @@ function PredictionsTab({
   predPhase, setPredPhase, groupPreds, setGroupPreds, koPreds, setKoPreds,
   inicioKoPreds, setInicioKoPreds,
   bonusPreds, setBonusPreds, saving, saveStatus, onSave,
-  groupDeadlinePassed, bonusDeadlinePassed, koDeadlinePassed,
+  groupDeadlinePassed, bonusDeadlinePassed,
   groupMatches, knockoutMatches, teamOptions, wcApiError, onReloadWc,
   groupPhase, deadlines,
   orphanGroupKeys, matchRefs,
@@ -713,9 +708,9 @@ function PredictionsTab({
     {
       id: 'knockout',
       label: 'Eliminatorias',
-      sub: 'KO real · 40%',
-      locked: koDeadlinePassed,
-      countdown: formatCountdown(msUntilDeadline(deadlines.knockout)),
+      sub: 'KO real · hasta el pitido',
+      locked: groupPhase === 'finished',
+      countdown: null,
     },
     {
       id: 'bonuses',
@@ -809,7 +804,6 @@ function PredictionsTab({
           preds={koPreds}
           setPreds={setKoPreds}
           phaseLocked={phaseLocked}
-          koDeadlinePassed={koDeadlinePassed}
           matches={knockoutMatches}
           teamOptions={teamOptions}
           matchRefs={matchRefs}
@@ -1097,7 +1091,7 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
 }
 
 function KnockoutPreds({
-  preds, setPreds, phaseLocked, koDeadlinePassed,
+  preds, setPreds, phaseLocked,
   matches = [], teamOptions = [], matchRefs, viewMode = 'daily', group,
   participant, groupMatches = [], apiMatches = [], fotmobStandings = null, onOpenMatch,
 }) {
@@ -1114,19 +1108,19 @@ function KnockoutPreds({
       groupMatches,
       knockoutMatches: matches,
       koPreds: preds,
+      fotmobStandings,
+      apiMatches,
     }),
-    [participant, groupMatches, matches, preds],
+    [participant, groupMatches, matches, preds, fotmobStandings, apiMatches],
   )
   const publishedResults = useMemo(
     () => buildPublishedResultsMap(group?.results, 'knockout', matches),
     [group?.results, matches],
   )
-  const koLocked = phaseLocked || koDeadlinePassed
+  const koLocked = phaseLocked
 
   function isKoMatchLocked(match) {
-    if (koLocked) return true
-    if (isKnockoutMatchPendingThird(match)) return true
-    return false
+    return isEliminatoriasMatchLocked(match, { phaseLocked: koLocked })
   }
 
   function setVal(id, key, val) {
@@ -1159,6 +1153,7 @@ function KnockoutPreds({
         participants={group?.participants}
         groupMatches={groupMatches}
         knockoutMatches={matches}
+        knockoutAdvance
       />
     )
   }
@@ -1626,15 +1621,15 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
             antes del primer partido. Incluye grupos, cuadro previsto de KO y goleador/MVP/etc.
           </p>
           <p className="dash-admin-note">
-            <strong>Eliminatorias (porra real, 40%):</strong> por defecto 28 jun 2026, 21:00 Madrid
-            (pitido del primer partido de eliminatorias). Hasta entonces se puede rellenar todo el cuadro.
+            <strong>Eliminatorias (porra real, 40%):</strong> cada partido se puede rellenar cuando
+            la API ya tiene los dos equipos definidos y hasta el pitido de ese partido.
           </p>
           <div>
             <label className="dash-field-label"><IconLabel icon="clock" iconSize="sm">Cierre Inicio + Especiales (Madrid)</IconLabel></label>
             <input type="datetime-local" className="dash-field-input" value={groupDeadline} onChange={e => setGroupDeadline(e.target.value)} />
           </div>
           <div>
-            <label className="dash-field-label"><IconLabel icon="bolt" iconSize="sm">Cierre Eliminatorias reales (Madrid)</IconLabel></label>
+            <label className="dash-field-label"><IconLabel icon="bolt" iconSize="sm">Referencia Eliminatorias (opcional, Madrid)</IconLabel></label>
             <input type="datetime-local" className="dash-field-input" value={knockoutDeadline} onChange={e => setKnockoutDeadline(e.target.value)} />
           </div>
           <div>
