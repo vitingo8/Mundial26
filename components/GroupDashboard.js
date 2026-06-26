@@ -72,6 +72,7 @@ import KnockoutBracketView from './dashboard/KnockoutBracketView'
 import PredictedKnockoutSection from './dashboard/PredictedKnockoutSection'
 import { buildInicioKnockoutSchedule } from '../lib/knockoutBridge'
 import { buildEliminatoriasKnockoutSchedule } from '../lib/knockoutBridge'
+import { buildLiveKnockoutMatches } from '../lib/hydrateKnockoutR32'
 import { patchKnockoutScore, patchKnockoutAdvance } from '../lib/knockoutAdvances'
 import { buildKnockoutScoringContext } from '../lib/knockoutMatchScoring'
 import { buildPublishedResultsMap } from '../lib/matchPointsDisplay'
@@ -435,6 +436,7 @@ export default function GroupDashboard({
                   group={currentGroup}
                   groupMatches={groupMatches}
                   knockoutMatches={knockoutMatches}
+                  fotmobStandings={wcStandings}
                   userPreds={user.predictions}
                   onGoToPrediction={goToPrediction}
                 />
@@ -1305,11 +1307,16 @@ function LiveTab({
   isActive = false,
   apiMatches = [],
   onFetch,
-  group, groupMatches, knockoutMatches, userPreds, onGoToPrediction,
+  group, groupMatches, knockoutMatches, fotmobStandings = null, userPreds, onGoToPrediction,
 }) {
   const [livePhase, setLivePhase] = useState('group')
   const [scheduleViewMode, setScheduleViewMode] = useState('daily')
   const [detailMatch, setDetailMatch] = useState(null)
+
+  const liveKnockoutMatches = useMemo(
+    () => buildLiveKnockoutMatches(knockoutMatches, fotmobStandings, groupMatches, apiMatches),
+    [knockoutMatches, fotmobStandings, groupMatches, apiMatches],
+  )
 
   function openMatchDetail(m) {
     const preds = livePhase === 'group' ? userPreds?.group : userPreds?.knockout
@@ -1334,7 +1341,7 @@ function LiveTab({
   const effectiveViewMode =
     livePhase === 'knockout' && scheduleViewMode === 'groups' ? 'daily' : scheduleViewMode
 
-  const phaseMatches = livePhase === 'group' ? groupMatches : knockoutMatches
+  const phaseMatches = livePhase === 'group' ? groupMatches : liveKnockoutMatches
   const phasePreds = livePhase === 'group' ? (userPreds?.group || {}) : (userPreds?.knockout || {})
   const hasSchedule = apiMatches.length > 0 || phaseMatches.length > 0
   const { pull, refreshing: pullRefreshing, hint: pullHint } = usePullToRefresh(onFetch, {
