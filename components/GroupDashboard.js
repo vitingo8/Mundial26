@@ -75,6 +75,7 @@ import { buildEliminatoriasKnockoutSchedule } from '../lib/knockoutBridge'
 import { buildLiveKnockoutMatches, isKnockoutMatchPendingThird } from '../lib/hydrateKnockoutR32'
 import { patchKnockoutScore, patchKnockoutAdvance } from '../lib/knockoutAdvances'
 import { buildKnockoutScoringContext } from '../lib/knockoutMatchScoring'
+import { buildInicioKnockoutScoringState } from '../lib/inicioKnockoutScoring'
 import { buildPublishedResultsMap } from '../lib/matchPointsDisplay'
 import { buildProvisionalResults, hasProvisionalLiveResults } from '../lib/syncResultsFromApi'
 import { SCORING as SCORING_RULES } from '../lib/gameData'
@@ -886,6 +887,21 @@ function GroupPhasePreds({
     [matches, preds, inicioKoPreds],
   )
 
+  const inicioKnockoutScoring = useMemo(
+    () => buildInicioKnockoutScoringState(
+      { predictions: { group: preds, inicioKnockout: inicioKoPreds } },
+      {
+        groupMatches: matches,
+        knockoutMatches,
+        knockoutResults: group?.results?.knockout,
+        groupResults: group?.results?.group,
+        fotmobStandings,
+        apiMatches,
+      },
+    ),
+    [matches, preds, inicioKoPreds, knockoutMatches, group?.results?.knockout, group?.results?.group, fotmobStandings, apiMatches],
+  )
+
   const dailyAllMatches = useMemo(() => {
     if (viewMode !== 'daily') return matches
     return [...matches, ...inicioKo.schedule]
@@ -986,6 +1002,7 @@ function GroupPhasePreds({
             participants={group?.participants}
             groupMatches={matches}
             knockoutMatches={knockoutMatches}
+            inicioKnockoutScoring={inicioKnockoutScoring}
           />
         </>
       ) : viewMode === 'daily' ? (
@@ -1001,6 +1018,8 @@ function GroupPhasePreds({
               viewMode={viewMode}
               hideSchedule
               publishedResults={publishedResults}
+              knockoutMatches={knockoutMatches}
+              inicioKnockoutScoring={inicioKnockoutScoring}
             />
           )}
           <MatchDaySchedule
@@ -1021,6 +1040,7 @@ function GroupPhasePreds({
             participants={group?.participants}
             groupMatches={matches}
             knockoutMatches={knockoutMatches}
+            inicioKnockoutScoring={inicioKnockoutScoring}
           />
         </>
       ) : (
@@ -1051,6 +1071,8 @@ function GroupPhasePreds({
             matchRefs={matchRefs}
             viewMode={viewMode}
             publishedResults={publishedResults}
+            knockoutMatches={knockoutMatches}
+            inicioKnockoutScoring={inicioKnockoutScoring}
           />
         </>
       )}

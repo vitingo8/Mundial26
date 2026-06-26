@@ -8,8 +8,12 @@ import { needsKnockoutAdvancePick } from '../../lib/knockoutAdvances'
 import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
 import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
 import { PorraLiveHeader } from './LiveResultRow'
-import { summarizeMatchPoints } from '../../lib/matchPointsDisplay'
+import { summarizeMatchPoints, isInicioKoId } from '../../lib/matchPointsDisplay'
 import { isExactScoreHit } from '../../lib/gameData'
+import {
+  getInicioKnockoutUiStatus,
+  summarizeInicioKnockoutMatchPoints,
+} from '../../lib/inicioKnockoutScoring'
 import { resolveKnockoutTeamsForScoring } from '../../lib/knockoutMatchScoring'
 import MatchPointsBubble from './MatchPointsBubble'
 import MatchPredsInfo from './MatchPredsInfo'
@@ -18,11 +22,11 @@ import { MatchStatus } from '../icons'
 
 function BracketTeam({
   name, crest, score, pred, side, onScore, onAdvance, locked, readOnly, pickable, eliminated,
-  scoreExact = false, pendingThird = false, pendingThirdSlot = null,
+  scoreExact = false, pendingThird = false, pendingThirdSlot = null, voided = false,
 }) {
   const inner = (
     <>
-      <span className="bracket-slot-crest">
+      <span className={`bracket-slot-crest${voided ? ' bracket-slot-crest--void' : ''}`}>
         {pendingThird ? (
           <span
             className="bracket-slot-pending-dot"
@@ -33,7 +37,7 @@ function BracketTeam({
           <TeamCrest src={crest} alt={name} size={16} />
         )}
       </span>
-      <span className="bracket-slot-name" title={pendingThirdSlot || name}>{name}</span>
+      <span className={`bracket-slot-name${voided ? ' bracket-slot-name--void' : ''}`} title={pendingThirdSlot || name}>{name}</span>
       {!readOnly ? (
         <span className={`bracket-slot-score-wrap${scoreExact ? ' bracket-slot-score-wrap--exact' : ''}`}>
           <ScoreInput
@@ -51,13 +55,13 @@ function BracketTeam({
   )
 
   if (!pickable) {
-    return <div className="bracket-slot-team">{inner}</div>
+    return <div className={`bracket-slot-team${voided ? ' bracket-slot-team--void' : ''}`}>{inner}</div>
   }
 
   return (
     <button
       type="button"
-      className={`bracket-slot-team bracket-slot-team--pick${eliminated ? ' bracket-slot-team--out' : ''}`}
+      className={`bracket-slot-team bracket-slot-team--pick${eliminated ? ' bracket-slot-team--out' : ''}${voided ? ' bracket-slot-team--void' : ''}`}
       disabled={locked}
       aria-pressed={!eliminated}
       aria-label={eliminated ? `${name} eliminado` : `${name} pasa de ronda`}
@@ -87,6 +91,7 @@ export default function BracketMatchSlot({
   groupMatches = [],
   knockoutMatches = [],
   viewingParticipantPreds = false,
+  inicioKnockoutScoring = null,
 }) {
   if (!match) return <div className="bracket-slot bracket-slot--empty" />
 
@@ -114,29 +119,82 @@ export default function BracketMatchSlot({
   const pickAdvance =
     !readOnly && !matchLocked && needsKnockoutAdvancePick(predRow) && onAdvance
 
+  const isInicioKo = isInicioKoId(match?.id)
+
+  const inicioKoUiStatus = useMemo(() => {
+    if (!isInicioKo || !inicioKnockoutScoring || !match) return null
+    return getInicioKnockoutUiStatus(
+      match.home,
+      match.away,
+      match.matchNumber,
+      inicioKnockoutScoring,
+    )
+  }, [isInicioKo, inicioKnockoutScoring, match])
+
+  const inicioKoVoid = inicioKoUiStatus?.void === true
+
   const knockoutScoringOpts = {
     knockout: true,
     predictedTeams: scoringTeams.predictedTeams,
     actualTeams: scoringTeams.actualTeams,
   }
 
-  const pointsSummary =
-    (!readOnly || viewingParticipantPreds) && publishedResult
-      ? summarizeMatchPoints(predRow, publishedResult, knockoutScoringOpts)
-      : null
+  const pointsSummary = useMemo(() => {
+    if (!readOnly && !viewingParticipantPreds) return null
+    if (inicioKoVoid) return null
+    if (isInicioKo && inicioKnockoutScoring) {
+      return summarizeInicioKnockoutMatchPoints(
+        predRow,
+        { home: match.home, away: match.away },
+        inicioKnockoutScoring,
+        match.matchNumber,
+      )
+    }
+    if (!publishedResult) return null
+    return summarizeMatchPoints(predRow, publishedResult, knockoutScoringOpts)
+  }, [readOnly, viewingParticipantPreds, inicioKoVoid, isInicioKo, inicioKnockoutScoring, publishedResult, predRow, match?.home, match?.away, knockoutScoringOpts])
 
-  const livePointsSummary =
-    (!readOnly || viewingParticipantPreds) && isApiLive && apiScore && !publishedResult
-      ? summarizeMatchPoints(predRow, apiScore, knockoutScoringOpts)
-      : null
+  const livePointsSummary = useMemo(() => {
+    if (inicioKoVoid) return null
+    if (isInicioKo && inicioKnockoutScoring) {
+      if (!isApiLive || !apiScore || publishedResult) return null
+      return summarizeInicioKnockoutMatchPoints(
+        predRow,
+        { home: match.home, away: match.away },
+        inicioKnockoutScoring,
+        match.matchNumber,
+      )
+    }
+    if (!isApiLive || !apiScore || publishedResult) return null
+    return summarizeMatchPoints(predRow, apiScore, knockoutScoringOpts)
+  }, [inicioKoVoid, isInicioKo, inicioKnockoutScoring, isApiLive, apiScore, publishedResult, predRow, match?.home, match?.away, knockoutScoringOpts])
 
-  const apiFinishedPointsSummary =
-    (!readOnly || viewingParticipantPreds) && isApiFinished && apiScore && !publishedResult
-      ? summarizeMatchPoints(predRow, apiScore, knockoutScoringOpts)
-      : null
+  const apiFinishedPointsSummary = useMemo(() => {
+    if (inicioKoVoid) return null
+    if (isInicioKo && inicioKnockoutScoring) {
+      if (!isApiFinished || !apiScore || publishedResult) return null
+      return summarizeInicioKnockoutMatchPoints(
+        predRow,
+        { home: match.home, away: match.away },
+        inicioKnockoutScoring,
+        match.matchNumber,
+      )
+    }
+    if (!isApiFinished || !apiScore || publishedResult) return null
+    return summarizeMatchPoints(predRow, apiScore, knockoutScoringOpts)
+  }, [inicioKoVoid, isInicioKo, inicioKnockoutScoring, isApiFinished, apiScore, publishedResult, predRow, match?.home, match?.away, knockoutScoringOpts])
 
   const resultForCompare = publishedResult || apiScore || null
-  const isExactHit = isExactScoreHit(predRow, resultForCompare, knockoutScoringOpts)
+  const isExactHit = inicioKoVoid
+    ? false
+    : isInicioKo && inicioKnockoutScoring
+      ? (summarizeInicioKnockoutMatchPoints(
+        predRow,
+        { home: match.home, away: match.away },
+        inicioKnockoutScoring,
+        match.matchNumber,
+      )?.split?.resultado ?? 0) > 0
+      : isExactScoreHit(predRow, resultForCompare, knockoutScoringOpts)
 
   const participantPredRows = useMemo(() => {
     if (readOnly || !participants || !match?.id) return []
@@ -154,7 +212,18 @@ export default function BracketMatchSlot({
     className: 'match-points-bubble-wrap--bracket',
   }
 
-  const pointsBubble = (() => {
+  const voidZeroBubble = inicioKoVoid ? (
+    <MatchPointsBubble
+      points={0}
+      detail="No se enfrentaron en la realidad"
+      publishedResult={publishedResult}
+      {...bubbleProps}
+      userPrediction={bubbleUserPred || predRow}
+    />
+  ) : null
+
+  const inlinePointsBubble = (() => {
+    if (inicioKoVoid) return null
     if (pointsSummary?.pts > 0) {
       return (
         <MatchPointsBubble
@@ -194,18 +263,38 @@ export default function BracketMatchSlot({
       ? ' bracket-slot--live'
       : isApiFinished
         ? ' bracket-slot--finished'
-        : ''
+        : inicioKoVoid
+          ? ' bracket-slot--void'
+          : ''
+
+  const shellClass = [
+    'bracket-slot-shell',
+    voidZeroBubble ? 'bracket-slot-shell--has-zero' : '',
+    inlinePointsBubble ? 'bracket-slot-shell--has-points' : '',
+  ].filter(Boolean).join(' ')
 
   return (
-    <div
-      className={`bracket-slot${slotStateClass}${readOnly && onGoToPrediction ? ' bracket-slot--clickable' : ''}${pointsBubble ? ' bracket-slot--has-points' : ''}`}
-      ref={matchRef}
+    <div className={shellClass} ref={matchRef}>
+      {voidZeroBubble && (
+        <div className="bracket-slot-bubble-overlay" aria-hidden="false">
+          <div className="bracket-slot-tag-row bracket-slot-tag-row--mirror" aria-hidden="true">
+            <div className="bracket-slot-tag">P{match.matchNumber}</div>
+            {!readOnly && participantPredRows.length > 0 && (
+              <MatchPredsInfo rows={participantPredRows} className="match-preds-info-wrap--bracket" />
+            )}
+          </div>
+          <div className="bracket-slot-scores-wrap bracket-slot-scores-wrap--has-points">
+            {voidZeroBubble}
+          </div>
+        </div>
+      )}
+      <div
+      className={`bracket-slot${slotStateClass}${readOnly && onGoToPrediction ? ' bracket-slot--clickable' : ''}${inlinePointsBubble ? ' bracket-slot--has-points' : ''}`}
       role={readOnly && onGoToPrediction ? 'button' : undefined}
       tabIndex={readOnly && onGoToPrediction ? 0 : undefined}
       onClick={readOnly && onGoToPrediction ? () => onGoToPrediction(match.id) : undefined}
       onKeyDown={readOnly && onGoToPrediction ? e => { if (e.key === 'Enter') onGoToPrediction(match.id) } : undefined}
     >
-      {pointsBubble}
       {showPorraHeader && (
         <PorraLiveHeader
           home={match.home}
@@ -227,7 +316,10 @@ export default function BracketMatchSlot({
         )}
       </div>
 
-      <BracketTeam
+      <div className={`bracket-slot-scores-wrap${inlinePointsBubble ? ' bracket-slot-scores-wrap--has-points' : ''}`}>
+        {inlinePointsBubble}
+
+        <BracketTeam
         name={match.home}
         crest={match.homeCrest}
         score={hasScore ? score.home : null}
@@ -242,6 +334,7 @@ export default function BracketMatchSlot({
         scoreExact={isExactHit}
         pendingThird={match.homePendingThird}
         pendingThirdSlot={match.homePendingThirdSlot}
+        voided={inicioKoVoid}
       />
 
       <BracketTeam
@@ -259,7 +352,9 @@ export default function BracketMatchSlot({
         scoreExact={isExactHit}
         pendingThird={match.awayPendingThird}
         pendingThirdSlot={match.awayPendingThirdSlot}
+        voided={inicioKoVoid}
       />
+      </div>
 
       {!readOnly && match.pendingThirdMatch && (
         <p className="bracket-slot-pending-hint">Tercero por confirmar — predicción bloqueada</p>
@@ -275,6 +370,7 @@ export default function BracketMatchSlot({
         </div>
       )}
 
+    </div>
     </div>
   )
 }

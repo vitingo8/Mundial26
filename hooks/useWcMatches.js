@@ -108,8 +108,8 @@ function writeCache(data, standings = null) {
  * (pausa con la pestaña oculta; reanuda al volver).
  */
 export function WcMatchesProvider({ children }) {
-  const [wcMatches, setWcMatches] = useState(readBootstrapMatches)
-  const [wcStandings, setWcStandings] = useState(readBootstrapStandings)
+  const [wcMatches, setWcMatches] = useState(getCatalogMatches)
+  const [wcStandings, setWcStandings] = useState(null)
   const [apiError, setApiError] = useState(null)
   const wcMatchesRef = useRef([])
   const loadInFlight = useRef(null)

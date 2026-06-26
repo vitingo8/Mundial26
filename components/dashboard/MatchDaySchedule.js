@@ -46,6 +46,7 @@ export default function MatchDaySchedule({
   participants = null,
   groupMatches = [],
   knockoutMatches = [],
+  inicioKnockoutScoring = null,
 }) {
   const rawById = useMemo(() => indexApiMatches(apiMatches), [apiMatches])
   const knockoutAdvanceDefault = schedulePhase === 'knockout'
@@ -171,6 +172,7 @@ export default function MatchDaySchedule({
         pendingThirdMatch={m.pendingThirdMatch}
         homePendingThirdSlot={m.homePendingThirdSlot}
         awayPendingThirdSlot={m.awayPendingThirdSlot}
+        inicioKnockoutScoring={inicioKnockoutScoring}
       />
     )
   }

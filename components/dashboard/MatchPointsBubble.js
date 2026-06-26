@@ -35,9 +35,11 @@ export default function MatchPointsBubble({
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [open])
 
-  if (!points || points <= 0 || !publishedResult) return null
+  if (points == null || points < 0) return null
+  if (points > 0 && !publishedResult) return null
 
-  const { home, away } = publishedResult
+  const isZero = points === 0
+  const { home, away } = publishedResult || {}
   const realScoreLabel = `${homeName || 'Local'} ${home}–${away} ${awayName || 'Visitante'}`
   const hasUserPred = userPrediction?.home != null || userPrediction?.away != null
   const userPredLabel = hasUserPred
@@ -47,18 +49,20 @@ export default function MatchPointsBubble({
 
   return (
     <div
-      className={`match-points-bubble-wrap${className ? ` ${className}` : ''}`}
+      className={`match-points-bubble-wrap${isZero ? ' match-points-bubble-wrap--zero-void' : ''}${className ? ` ${className}` : ''}`}
       ref={wrapRef}
     >
       <button
         type="button"
-        className={`match-points-bubble${provisional ? ' match-points-bubble--provisional' : ''}`}
+        className={`match-points-bubble${provisional ? ' match-points-bubble--provisional' : ''}${isZero ? ' match-points-bubble--zero' : ''}`}
         aria-expanded={open}
         aria-describedby={open ? tipId : undefined}
         aria-label={
-          provisional
-            ? `${points} puntos esperados (en vivo). Pulsa para ver el desglose`
-            : `${points} puntos. Pulsa para ver el desglose`
+          isZero
+            ? '0 puntos. Pulsa para ver el motivo'
+            : provisional
+              ? `${points} puntos esperados (en vivo). Pulsa para ver el desglose`
+              : `${points} puntos. Pulsa para ver el desglose`
         }
         onClick={e => {
           e.stopPropagation()
@@ -86,7 +90,7 @@ export default function MatchPointsBubble({
                 Real: <strong>{home}–{away}</strong>
               </p>
             </>
-          ) : (
+          ) : publishedResult ? (
             <>
               {userPredLabel && (
                 <p className="match-points-tooltip-pred">
@@ -104,7 +108,16 @@ export default function MatchPointsBubble({
                 <TeamCrest src={awayCrest} alt={awayName} size={14} />
               </div>
             </>
-          )}
+          ) : userPredLabel ? (
+            <div
+              className="match-points-tooltip-score"
+              aria-label={`Su porra: ${homeName || 'Local'} ${userPredLabel} ${awayName || 'Visitante'}`}
+            >
+              <TeamCrest src={homeCrest} alt={homeName} size={14} />
+              <span className="match-points-tooltip-goals">{userPredLabel}</span>
+              <TeamCrest src={awayCrest} alt={awayName} size={14} />
+            </div>
+          ) : null}
           {detail ? <p className="match-points-tooltip-detail">{detail}</p> : null}
         </div>
       )}

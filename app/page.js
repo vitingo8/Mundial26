@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import HomeScreen from '../components/HomeScreen'
 import { CreateScreen, JoinScreen } from '../components/CreateScreen'
 import GroupDashboard from '../components/GroupDashboard'
@@ -11,21 +11,61 @@ import {
   readDashboardCache,
   readInitialDashboardState,
   readStoredSession,
-  resolveInitialScreen,
   saveDashboardCache,
 } from '../lib/dashboardSessionCache'
 
 export default function Page() {
-  const initialDash = readInitialDashboardState()
-  const [screen, setScreen] = useState(resolveInitialScreen)
+  const [screen, setScreen] = useState('home')
   const [joinCode, setJoinCode] = useState('')
   const [joinEmail, setJoinEmail] = useState('')
   const [joinNewUser, setJoinNewUser] = useState(false)
-  const [currentGroup, setCurrentGroup] = useState(initialDash.group)
-  const [currentUser, setCurrentUser] = useState(initialDash.user)
+  const [currentGroup, setCurrentGroup] = useState(null)
+  const [currentUser, setCurrentUser] = useState(null)
   const [notification, setNotification] = useState(null)
+  const [clientReady, setClientReady] = useState(false)
+
+  useLayoutEffect(() => {
+    const hash = window.location.hash.replace('#', '')
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('join') || (hash.startsWith('join-') ? hash.replace('join-', '') : '')
+
+    if (code) {
+      setJoinCode(code)
+      setJoinEmail(getSavedEmail())
+      setJoinNewUser(false)
+      setScreen('join')
+      setClientReady(true)
+      return
+    }
+
+    const screenParam = params.get('screen')
+    if (screenParam === 'create') {
+      setScreen('create')
+      setClientReady(true)
+      return
+    }
+    if (screenParam === 'recover') {
+      setScreen('home')
+      setClientReady(true)
+      return
+    }
+
+    const session = readStoredSession()
+    if (session) {
+      const cached = readInitialDashboardState()
+      if (cached.group && cached.user) {
+        setCurrentGroup(cached.group)
+        setCurrentUser(cached.user)
+      }
+      setScreen('dashboard')
+    }
+
+    setClientReady(true)
+  }, [])
 
   useEffect(() => {
+    if (!clientReady) return
+
     const hash = window.location.hash.replace('#', '')
     const params = new URLSearchParams(window.location.search)
     const code = params.get('join') || (hash.startsWith('join-') ? hash.replace('join-', '') : '')
@@ -48,22 +88,15 @@ export default function Page() {
         return
       }
 
-      if (code) {
-        setJoinCode(code)
-        setJoinEmail(getSavedEmail())
-        setJoinNewUser(false)
-        setScreen('join')
-        return
-      }
+      if (code) return
 
       const screenParam = params.get('screen')
-      if (screenParam === 'create') setScreen('create')
-      else if (screenParam === 'recover') setScreen('home')
-      else if (screen !== 'join') setScreen('home')
+      if (screenParam === 'create' || screenParam === 'recover') return
+      if (screen !== 'join') setScreen('home')
     }
 
     void init()
-  }, [])
+  }, [clientReady])
 
   async function restoreSession(groupId, userId) {
     try {
@@ -160,6 +193,14 @@ export default function Page() {
       if (currentUser) saveDashboardCache(full, currentUser)
       return full
     }
+  }
+
+  if (!clientReady) {
+    return (
+      <div style={{ minHeight: '100vh', position: 'relative' }}>
+        <DashboardRestoring />
+      </div>
+    )
   }
 
   return (

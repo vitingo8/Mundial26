@@ -3,8 +3,12 @@
 import { useMemo, useRef } from 'react'
 
 import TeamCrest from '../TeamCrest'
-import { summarizeMatchPoints } from '../../lib/matchPointsDisplay'
+import { summarizeMatchPoints, isInicioKoId } from '../../lib/matchPointsDisplay'
 import { isExactScoreHit } from '../../lib/gameData'
+import {
+  getInicioKnockoutUiStatus,
+  summarizeInicioKnockoutMatchPoints,
+} from '../../lib/inicioKnockoutScoring'
 import MatchPointsBubble from './MatchPointsBubble'
 
 import { formatMatchKickoff, formatMatchShortDate } from '../../lib/matchSchedule'
@@ -44,6 +48,8 @@ function TeamBlock({
 
   pendingThirdSlot = null,
 
+  voided = false,
+
 }) {
 
   const className = [
@@ -55,6 +61,8 @@ function TeamBlock({
     pickable ? 'schedule-match-team--pick' : '',
 
     eliminated ? 'schedule-match-team--out' : '',
+
+    voided ? 'schedule-match-team--void' : '',
 
     pendingThird ? 'schedule-match-team--pending-third' : '',
 
@@ -198,6 +206,9 @@ export default function MatchRow({
 
   awayPendingThirdSlot = null,
 
+  /** Estado de puntuación KO previsto (Inicio ×0,6) */
+  inicioKnockoutScoring = null,
+
 }) {
 
   const rowRef = useRef(null)
@@ -227,6 +238,15 @@ export default function MatchRow({
 
     knockoutAdvance && !readOnly && needsKnockoutAdvancePick(predRow) && onAdvance
 
+  const isInicioKo = isInicioKoId(matchId)
+
+  const inicioKoUiStatus = useMemo(() => {
+    if (!isInicioKo || !inicioKnockoutScoring) return null
+    return getInicioKnockoutUiStatus(home, away, matchNumber, inicioKnockoutScoring)
+  }, [isInicioKo, inicioKnockoutScoring, home, away, matchNumber])
+
+  const inicioKoVoid = inicioKoUiStatus?.void === true
+
   const scoringOpts = useMemo(
     () => ({
       knockout: knockoutAdvance,
@@ -237,9 +257,17 @@ export default function MatchRow({
   )
 
   const pointsSummary = useMemo(() => {
+    if (isInicioKo && inicioKnockoutScoring) {
+      return summarizeInicioKnockoutMatchPoints(
+        predRow,
+        { home, away },
+        inicioKnockoutScoring,
+        matchNumber,
+      )
+    }
     if (!publishedResult) return null
     return summarizeMatchPoints(predRow, publishedResult, scoringOpts)
-  }, [publishedResult, homeVal, awayVal, advancesVal, scoringOpts])
+  }, [isInicioKo, inicioKnockoutScoring, publishedResult, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow])
 
   const apiScore = apiRaw ? getApiMatchDisplayScore(apiRaw) : null
   const isApiLive = apiRaw && isLiveMatchStatus(apiRaw.status)
@@ -247,20 +275,37 @@ export default function MatchRow({
   const showPorraHeader = !readOnly && apiRaw && apiScore && isPorraApiResultStatus(apiRaw.status)
 
   const livePointsSummary = useMemo(() => {
+    if (isInicioKo && inicioKnockoutScoring) {
+      if (!isApiLive || !apiScore || publishedResult) return null
+      return summarizeInicioKnockoutMatchPoints(predRow, { home, away }, inicioKnockoutScoring, matchNumber)
+    }
     if (!isApiLive || !apiScore || publishedResult) return null
     return summarizeMatchPoints(predRow, apiScore, scoringOpts)
-  }, [isApiLive, apiScore, publishedResult, homeVal, awayVal, advancesVal, scoringOpts])
+  }, [isInicioKo, inicioKnockoutScoring, isApiLive, apiScore, publishedResult, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow])
 
   const apiFinishedPointsSummary = useMemo(() => {
+    if (isInicioKo && inicioKnockoutScoring) {
+      if (!isApiFinished || !apiScore || publishedResult) return null
+      return summarizeInicioKnockoutMatchPoints(predRow, { home, away }, inicioKnockoutScoring, matchNumber)
+    }
     if (!isApiFinished || !apiScore || publishedResult) return null
     return summarizeMatchPoints(predRow, apiScore, scoringOpts)
-  }, [isApiFinished, apiScore, publishedResult, homeVal, awayVal, advancesVal, scoringOpts])
+  }, [isInicioKo, inicioKnockoutScoring, isApiFinished, apiScore, publishedResult, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow])
 
   const resultForCompare = publishedResult || apiScore || null
-  const isExactHit = useMemo(
-    () => isExactScoreHit(predRow, resultForCompare, scoringOpts),
-    [predRow, resultForCompare, scoringOpts],
-  )
+  const isExactHit = useMemo(() => {
+    if (inicioKoVoid) return false
+    if (isInicioKo && inicioKnockoutScoring) {
+      const s = summarizeInicioKnockoutMatchPoints(
+        predRow,
+        { home, away },
+        inicioKnockoutScoring,
+        matchNumber,
+      )
+      return (s?.split?.resultado ?? 0) > 0
+    }
+    return isExactScoreHit(predRow, resultForCompare, scoringOpts)
+  }, [inicioKoVoid, isInicioKo, inicioKnockoutScoring, predRow, home, away, resultForCompare, scoringOpts])
 
   const participantPredRows = useMemo(() => {
     if (readOnly || !participants || !matchId) return []
@@ -275,16 +320,28 @@ export default function MatchRow({
 
   }
 
-  const pointsBubble = (() => {
-    const bubbleUserPred = (readOnly || viewingParticipantPreds) ? predRow : null
-    const bubbleProps = {
-      userPrediction: bubbleUserPred,
-      highlightPrediction: viewingParticipantPreds,
-      homeCrest,
-      awayCrest,
-      homeName: home,
-      awayName: away,
-    }
+  const bubbleUserPred = (readOnly || viewingParticipantPreds) ? predRow : null
+  const bubbleProps = {
+    userPrediction: bubbleUserPred,
+    highlightPrediction: viewingParticipantPreds,
+    homeCrest,
+    awayCrest,
+    homeName: home,
+    awayName: away,
+  }
+
+  const voidZeroBubble = inicioKoVoid ? (
+    <MatchPointsBubble
+      points={0}
+      detail="No se enfrentaron en la realidad"
+      publishedResult={publishedResult}
+      {...bubbleProps}
+      userPrediction={bubbleUserPred || predRow}
+    />
+  ) : null
+
+  const inlinePointsBubble = (() => {
+    if (inicioKoVoid) return null
     if (publishedResult && pointsSummary?.pts > 0) {
       return (
         <MatchPointsBubble
@@ -319,13 +376,18 @@ export default function MatchRow({
     return null
   })()
 
+  const pointsBubble = voidZeroBubble || inlinePointsBubble
+
   const wrapClass = [
     'schedule-match-wrap',
     isApiLive ? 'schedule-match-wrap--live' : '',
     isApiFinished ? 'schedule-match-wrap--finished' : '',
   ].filter(Boolean).join(' ')
 
-  const rowStateClass = isApiLive ? ' schedule-match-row--live' : isApiFinished ? ' schedule-match-row--finished' : ''
+  const rowStateClass = [
+    isApiLive ? ' schedule-match-row--live' : isApiFinished ? ' schedule-match-row--finished' : '',
+    inicioKoVoid ? ' schedule-match-row--void' : '',
+  ].filter(Boolean).join('')
 
   return (
 
@@ -374,6 +436,8 @@ export default function MatchRow({
 
         pendingThirdSlot={homePendingThirdSlot}
 
+        voided={inicioKoVoid}
+
       />
 
       <div
@@ -410,7 +474,7 @@ export default function MatchRow({
 
         ) : showDenseScores ? (
 
-          <span className="schedule-match-scores-wrap">
+          <span className={`schedule-match-scores-wrap${pointsBubble ? ' schedule-match-scores-wrap--has-bubble' : ''}`}>
             {pointsBubble}
             <span
               className={`schedule-match-scoreline${isExactHit ? ' schedule-match-scoreline--exact' : ''}`}
@@ -426,7 +490,7 @@ export default function MatchRow({
 
           <>
 
-            <div className="schedule-match-scores-wrap">
+            <div className={`schedule-match-scores-wrap${pointsBubble ? ' schedule-match-scores-wrap--has-bubble' : ''}`}>
             {pointsBubble}
             <div className={`schedule-match-scores${isExactHit ? ' schedule-match-scores--exact' : ''}`}>
 
@@ -518,6 +582,8 @@ export default function MatchRow({
         pendingThird={awayPendingThird}
 
         pendingThirdSlot={awayPendingThirdSlot}
+
+        voided={inicioKoVoid}
 
       />
 
