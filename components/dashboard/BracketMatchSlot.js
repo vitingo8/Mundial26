@@ -18,14 +18,22 @@ import { MatchStatus } from '../icons'
 
 function BracketTeam({
   name, crest, score, pred, side, onScore, onAdvance, locked, readOnly, pickable, eliminated,
-  scoreExact = false,
+  scoreExact = false, pendingThird = false, pendingThirdSlot = null,
 }) {
   const inner = (
     <>
       <span className="bracket-slot-crest">
-        <TeamCrest src={crest} alt={name} size={16} />
+        {pendingThird ? (
+          <span
+            className="bracket-slot-pending-dot"
+            title={pendingThirdSlot ? `Mejor tercero: ${pendingThirdSlot}` : 'Mejor tercero por confirmar'}
+            aria-label="Tercero por confirmar"
+          />
+        ) : (
+          <TeamCrest src={crest} alt={name} size={16} />
+        )}
       </span>
-      <span className="bracket-slot-name" title={name}>{name}</span>
+      <span className="bracket-slot-name" title={pendingThirdSlot || name}>{name}</span>
       {!readOnly ? (
         <span className={`bracket-slot-score-wrap${scoreExact ? ' bracket-slot-score-wrap--exact' : ''}`}>
           <ScoreInput
@@ -87,7 +95,10 @@ export default function BracketMatchSlot({
     ? resolveKnockoutTeamsForScoring(match.id, publishedResult, knockoutScoringCtx)
     : {}
 
-  const matchLocked = locked || (getMatchLocked ? getMatchLocked(match) : isMatchKickoffPassed(match.utcDate))
+  const matchLocked =
+    locked ||
+    match?.pendingThirdMatch ||
+    (getMatchLocked ? getMatchLocked(match) : isMatchKickoffPassed(match.utcDate))
 
   const apiScore = apiRaw ? getApiMatchDisplayScore(apiRaw) : null
   const score = readOnly ? apiScore : null
@@ -229,6 +240,8 @@ export default function BracketMatchSlot({
         pickable={!!pickAdvance}
         eliminated={pickAdvance && pred.advances === 'away'}
         scoreExact={isExactHit}
+        pendingThird={match.homePendingThird}
+        pendingThirdSlot={match.homePendingThirdSlot}
       />
 
       <BracketTeam
@@ -244,7 +257,13 @@ export default function BracketMatchSlot({
         pickable={!!pickAdvance}
         eliminated={pickAdvance && pred.advances === 'home'}
         scoreExact={isExactHit}
+        pendingThird={match.awayPendingThird}
+        pendingThirdSlot={match.awayPendingThirdSlot}
       />
+
+      {!readOnly && match.pendingThirdMatch && (
+        <p className="bracket-slot-pending-hint">Tercero por confirmar — predicción bloqueada</p>
+      )}
 
       {readOnly && apiRaw?.status && (
         <MatchStatus status={apiRaw.status} highlight={apiRaw.status === 'IN_PLAY'} />

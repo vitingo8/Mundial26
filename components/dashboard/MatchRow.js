@@ -40,6 +40,10 @@ function TeamBlock({
 
   locked,
 
+  pendingThird = false,
+
+  pendingThirdSlot = null,
+
 }) {
 
   const className = [
@@ -52,6 +56,8 @@ function TeamBlock({
 
     eliminated ? 'schedule-match-team--out' : '',
 
+    pendingThird ? 'schedule-match-team--pending-third' : '',
+
   ].filter(Boolean).join(' ')
 
 
@@ -60,9 +66,17 @@ function TeamBlock({
 
     <>
 
-      <TeamCrest src={crest} alt={name} size={crestSize} />
+      {pendingThird ? (
+        <span
+          className="schedule-pending-third-dot"
+          title={pendingThirdSlot ? `Mejor tercero: ${pendingThirdSlot}` : 'Mejor tercero por confirmar'}
+          aria-label="Tercero por confirmar"
+        />
+      ) : (
+        <TeamCrest src={crest} alt={name} size={crestSize} />
+      )}
 
-      <span className="schedule-match-team-name">{name}</span>
+      <span className="schedule-match-team-name" title={pendingThirdSlot || name}>{name}</span>
 
     </>
 
@@ -173,6 +187,16 @@ export default function MatchRow({
   groupMatches = [],
 
   knockoutMatches = [],
+
+  homePendingThird = false,
+
+  awayPendingThird = false,
+
+  pendingThirdMatch = false,
+
+  homePendingThirdSlot = null,
+
+  awayPendingThirdSlot = null,
 
 }) {
 
@@ -346,6 +370,10 @@ export default function MatchRow({
 
         locked={locked}
 
+        pendingThird={homePendingThird}
+
+        pendingThirdSlot={homePendingThirdSlot}
+
       />
 
       <div
@@ -487,9 +515,17 @@ export default function MatchRow({
 
         locked={locked}
 
+        pendingThird={awayPendingThird}
+
+        pendingThirdSlot={awayPendingThirdSlot}
+
       />
 
     </div>
+
+    {pendingThirdMatch && !readOnly && (
+      <p className="schedule-match-pending-third-hint">Tercero por confirmar — predicción bloqueada</p>
+    )}
 
     </div>
 

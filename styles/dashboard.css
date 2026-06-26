@@ -8359,6 +8359,86 @@ button.schedule-match-team:disabled {
   height: var(--bracket-crest-sz) !important;
 }
 
+.bracket-slot-pending-dot,
+.schedule-pending-third-dot {
+  display: block;
+  width: var(--bracket-crest-sz, 16px);
+  height: var(--bracket-crest-sz, 16px);
+  border-radius: 50%;
+  background: #2ad572;
+  box-shadow: 0 0 0 2px rgba(42, 213, 114, 0.25);
+  flex-shrink: 0;
+}
+
+.schedule-pending-third-dot {
+  width: 14px;
+  height: 14px;
+}
+
+.bracket-slot-pending-hint,
+.schedule-match-pending-third-hint {
+  margin: 0.2rem 0 0;
+  padding: 0 0.35rem;
+  font-size: 0.62rem;
+  line-height: 1.25;
+  color: var(--text-muted, #8b949e);
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
+.ko-qualified-thirds-pending {
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(42, 213, 114, 0.08);
+  border: 1px solid rgba(42, 213, 114, 0.22);
+}
+
+.ko-qualified-thirds-pending-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-primary, #e6edf3);
+}
+
+.ko-qualified-thirds-pending-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.ko-qualified-thirds-pending-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--text-muted, #8b949e);
+}
+
+.ko-qualified-thirds-pending-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ad572;
+  flex-shrink: 0;
+}
+
+.ko-qualified-thirds-pending-dot--amber {
+  background: #ffd908;
+}
+
+.ko-qualified-thirds-pending-title--secondary {
+  margin-top: 0.55rem;
+}
+
+.schedule-match-team--pending-third .schedule-match-team-name {
+  color: var(--text-muted, #8b949e);
+  font-style: italic;
+}
+
 .bracket-slot-team--pick {
   cursor: pointer;
   border-radius: 4px;

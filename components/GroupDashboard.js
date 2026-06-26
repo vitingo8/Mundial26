@@ -69,10 +69,11 @@ import LiveMatchDaySchedule from './dashboard/LiveMatchDaySchedule'
 import LiveGroupStandingsView from './dashboard/LiveGroupStandingsView'
 import MatchDetailSheet from './dashboard/MatchDetailSheet'
 import KnockoutBracketView from './dashboard/KnockoutBracketView'
+import QualifiedThirdsPendingBanner from './dashboard/QualifiedThirdsPendingBanner'
 import PredictedKnockoutSection from './dashboard/PredictedKnockoutSection'
 import { buildInicioKnockoutSchedule } from '../lib/knockoutBridge'
 import { buildEliminatoriasKnockoutSchedule } from '../lib/knockoutBridge'
-import { buildLiveKnockoutMatches } from '../lib/hydrateKnockoutR32'
+import { buildLiveKnockoutMatches, buildKnockoutThirdPlacementContext, isKnockoutMatchPendingThird } from '../lib/hydrateKnockoutR32'
 import { patchKnockoutScore, patchKnockoutAdvance } from '../lib/knockoutAdvances'
 import { buildKnockoutScoringContext } from '../lib/knockoutMatchScoring'
 import { buildPublishedResultsMap } from '../lib/matchPointsDisplay'
@@ -1087,6 +1088,10 @@ function KnockoutPreds({
     }),
     [matches, preds, fotmobStandings, groupMatches, apiMatches],
   )
+  const thirdPlacement = useMemo(
+    () => buildKnockoutThirdPlacementContext(fotmobStandings, groupMatches, apiMatches),
+    [fotmobStandings, groupMatches, apiMatches],
+  )
   const knockoutScoringCtx = useMemo(
     () => buildKnockoutScoringContext(participant || { predictions: {} }, {
       groupMatches,
@@ -1101,8 +1106,10 @@ function KnockoutPreds({
   )
   const koLocked = phaseLocked || koDeadlinePassed
 
-  function isKoMatchLocked() {
-    return koLocked
+  function isKoMatchLocked(match) {
+    if (koLocked) return true
+    if (isKnockoutMatchPendingThird(match)) return true
+    return false
   }
 
   function setVal(id, key, val) {
@@ -1127,6 +1134,10 @@ function KnockoutPreds({
             Dieciseisavos con clasificados reales (FotMob). Del octavo en adelante, el cuadro sale de tu porra: marcador y quién pasa.
           </p>
         )}
+        <QualifiedThirdsPendingBanner
+          qualifiedItems={thirdPlacement.qualifiedThirdsPending}
+          pendingQualificationItems={thirdPlacement.thirdsPendingQualification}
+        />
         <KnockoutBracketView
           matches={scheduleMatches}
           preds={preds}
@@ -1154,6 +1165,10 @@ function KnockoutPreds({
             Dieciseisavos con clasificados reales (FotMob). Del octavo en adelante, el cuadro sale de tu porra: marcador y quién pasa.
           </p>
         )}
+        <QualifiedThirdsPendingBanner
+          qualifiedItems={thirdPlacement.qualifiedThirdsPending}
+          pendingQualificationItems={thirdPlacement.thirdsPendingQualification}
+        />
         <MatchDaySchedule
           matches={scheduleMatches}
           preds={preds}
@@ -1322,6 +1337,10 @@ function LiveTab({
     () => buildLiveKnockoutMatches(knockoutMatches, fotmobStandings, groupMatches, apiMatches),
     [knockoutMatches, fotmobStandings, groupMatches, apiMatches],
   )
+  const thirdPlacement = useMemo(
+    () => buildKnockoutThirdPlacementContext(fotmobStandings, groupMatches, apiMatches),
+    [fotmobStandings, groupMatches, apiMatches],
+  )
 
   function openMatchDetail(m) {
     const preds = livePhase === 'group' ? userPreds?.group : userPreds?.knockout
@@ -1409,13 +1428,21 @@ function LiveTab({
               onOpenMatch={openMatchDetail}
             />
           ) : effectiveViewMode === 'bracket' ? (
-            <KnockoutBracketView
-              matches={phaseMatches}
-              readOnly
-              apiMatches={apiMatches}
-              userPreds={phasePreds}
-              onGoToPrediction={onGoToPrediction}
-            />
+            <>
+              {livePhase === 'knockout' && (
+                <QualifiedThirdsPendingBanner
+                  qualifiedItems={thirdPlacement.qualifiedThirdsPending}
+                  pendingQualificationItems={thirdPlacement.thirdsPendingQualification}
+                />
+              )}
+              <KnockoutBracketView
+                matches={phaseMatches}
+                readOnly
+                apiMatches={apiMatches}
+                userPreds={phasePreds}
+                onGoToPrediction={onGoToPrediction}
+              />
+            </>
           ) : (
             <LiveMatchDaySchedule
               matches={phaseMatches}

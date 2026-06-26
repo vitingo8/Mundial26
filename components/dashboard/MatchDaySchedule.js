@@ -166,6 +166,11 @@ export default function MatchDaySchedule({
         participants={participants}
         groupMatches={groupMatches}
         knockoutMatches={knockoutMatches}
+        homePendingThird={m.homePendingThird}
+        awayPendingThird={m.awayPendingThird}
+        pendingThirdMatch={m.pendingThirdMatch}
+        homePendingThirdSlot={m.homePendingThirdSlot}
+        awayPendingThirdSlot={m.awayPendingThirdSlot}
       />
     )
   }
