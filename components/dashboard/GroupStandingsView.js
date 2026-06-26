@@ -9,6 +9,7 @@ import {
 } from '../../lib/groupQualificationScoring.js'
 import { indexApiMatches } from '../../lib/apiMatchScores'
 import { isPorraApiResultStatus } from '../../lib/matchDetail'
+import { formatStandingsTeamName } from '../../lib/teamNamesEs'
 import TeamCrest from '../TeamCrest'
 import MatchRow from './MatchRow'
 import BestThirdPlacesTable from './BestThirdPlacesTable'
@@ -87,7 +88,7 @@ export default function GroupStandingsView({
                   <tr key={team.name} className={i < 2 ? 'group-standings-row--qualify' : ''}>
                     <td className="group-standings-team">
                       <TeamCrest src={team.crest} alt={team.name} size={18} />
-                      <span className="group-standings-team-name">{team.name}</span>
+                      <span className="group-standings-team-name">{formatStandingsTeamName(team.name)}</span>
                       <QualificationPtsBadge entry={qualEntry} />
                     </td>
                     <td>{team.pts}</td>

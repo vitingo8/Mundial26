@@ -8,6 +8,7 @@ import {
   indexApiMatches,
   normalizeGroupKey,
 } from '../../lib/apiMatchScores'
+import { formatStandingsTeamName } from '../../lib/teamNamesEs'
 import TeamCrest from '../TeamCrest'
 import LiveResultRow from './LiveResultRow'
 
@@ -64,7 +65,7 @@ export default function MatchGroupStandingsPanel({
                 <tr key={team.name} className={i < 2 ? 'group-standings-row--qualify' : ''}>
                   <td className="group-standings-team">
                     <TeamCrest src={team.crest} alt={team.name} size={18} />
-                    <span className="group-standings-team-name">{team.name}</span>
+                    <span className="group-standings-team-name">{formatStandingsTeamName(team.name)}</span>
                   </td>
                   <td>{team.pts}</td>
                   <td className="gs-col-dg">{team.dg > 0 ? `+${team.dg}` : team.dg}</td>

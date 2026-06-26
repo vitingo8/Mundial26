@@ -1,5 +1,6 @@
 'use client'
 
+import { formatStandingsTeamName } from '../../lib/teamNamesEs'
 import TeamCrest from '../TeamCrest'
 import { lookupQualificationPoints } from '../../lib/groupQualificationScoring.js'
 import QualificationPtsBadge from './QualificationPtsBadge'
@@ -46,7 +47,7 @@ export default function BestThirdPlacesTable({ rows, combinationKey, qualificati
                 <td className="best-thirds-group">{row.group}</td>
                 <td className="best-thirds-team">
                   <TeamCrest src={row.crest} alt={row.name} size={18} />
-                  <span className="best-thirds-team-name">{row.name}</span>
+                  <span className="best-thirds-team-name">{formatStandingsTeamName(row.name)}</span>
                   <QualificationPtsBadge entry={qualEntry} />
                 </td>
                 <td>{row.pts}</td>
