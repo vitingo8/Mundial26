@@ -19,13 +19,28 @@ import {
   hasLiveWcMatches,
 } from '../lib/wcMatchesRefresh'
 
-const CACHE_KEY = 'porra_wc_matches'
+const CACHE_KEY = 'porra_wc_matches_v2'
 const CACHE_TTL_LIVE = 10 * 1000
 const CACHE_TTL_IDLE = 10 * 60 * 1000
 
 const WcMatchesContext = createContext(null)
 
 let catalogMatchesMemo = null
+
+function isLiveMatchSet(matches) {
+  return (matches || []).some(m => /^\d+$/.test(String(m.id)))
+}
+
+/** Calendario en vivo exige standings de FotMob en caché; el catálogo estático no. */
+function cacheHasStandings(matches, standings) {
+  if (!isLiveMatchSet(matches)) return true
+  return Boolean(standings?.ready && standings?.byGroup)
+}
+
+function cacheIsComplete(cached) {
+  if (!cached?.matches?.length) return false
+  return cacheHasStandings(cached.matches, cached.standings)
+}
 
 function getCatalogMatches() {
   if (!catalogMatchesMemo) {
@@ -116,13 +131,13 @@ export function WcMatchesProvider({ children }) {
     const run = (async () => {
       if (!force) {
         const cached = readCache()
-        if (cached?.matches?.length) {
+        if (cacheIsComplete(cached)) {
           setWcMatches(cached.matches)
           setWcStandings(cached.standings ?? null)
           return cached.matches
         }
         const stale = readCache({ allowStale: true })
-        if (stale?.matches?.length && !wcMatchesRef.current.length) {
+        if (stale?.matches?.length) {
           setWcMatches(stale.matches)
           setWcStandings(stale.standings ?? null)
         }
