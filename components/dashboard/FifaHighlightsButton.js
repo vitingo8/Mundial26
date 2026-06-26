@@ -10,7 +10,7 @@ import {
 } from '../../lib/fifaHighlights'
 
 const clientCache = new Map()
-const CLIENT_CACHE_VERSION = 'v6'
+const CLIENT_CACHE_VERSION = 'v8'
 
 async function loadHighlights(homeTeam, awayTeam) {
   const key = `${CLIENT_CACHE_VERSION}|${homeTeam}|${awayTeam}`
