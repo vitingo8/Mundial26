@@ -20,8 +20,10 @@ import ScoreInput from './ScoreInput'
 import { needsKnockoutAdvancePick, resolveKnockoutAdvanceSide } from '../../lib/knockoutAdvances'
 import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
 import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
+import { isFotmobCatalogMatchId, isMatchNotStarted } from '../../lib/matchHeadToHead'
 import { PorraLiveHeader } from './LiveResultRow'
 import MatchPredsInfo from './MatchPredsInfo'
+import MatchH2hInfo from './MatchH2hInfo'
 import { getParticipantPredsForMatch } from '../../lib/participantMatchPreds'
 
 
@@ -409,6 +411,11 @@ export default function MatchRow({
     inicioKoVoid ? ' schedule-match-row--void' : '',
   ].filter(Boolean).join('')
 
+  const showHeadToHeadBtn =
+    isFotmobCatalogMatchId(matchId)
+    && (!apiRaw || isMatchNotStarted(apiRaw.status))
+    && !readOnly
+
   return (
 
     <div className={wrapClass}>
@@ -476,9 +483,11 @@ export default function MatchRow({
 
             </span>
 
-            {!readOnly && participantPredRows.length > 0 && (
-              <MatchPredsInfo rows={participantPredRows} />
-            )}
+            <span className="schedule-match-tag-icons">
+              {!readOnly && participantPredRows.length > 0 && (
+                <MatchPredsInfo rows={participantPredRows} />
+              )}
+            </span>
 
           </span>
 
@@ -566,6 +575,16 @@ export default function MatchRow({
               <span className="schedule-match-kickoff">{kickoff}</span>
 
             ) : null}
+
+            {showHeadToHeadBtn && (
+              <MatchH2hInfo
+                matchId={matchId}
+                homeName={home}
+                awayName={away}
+                homeCrest={homeCrest}
+                awayCrest={awayCrest}
+              />
+            )}
 
             {knockoutAdvance && !readOnly ? (
               <p

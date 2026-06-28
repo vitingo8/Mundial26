@@ -6,6 +6,7 @@ import {
   getWcMatchesSafe,
   invalidateLiveCaches,
 } from '../../../lib/fotmobServerCache'
+import { userFacingError } from '../../../lib/userFacingError.js'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,7 +63,14 @@ export async function GET(request) {
       return NextResponse.json(catalogMatchesFallback(e.message))
     }
     return NextResponse.json(
-      { error: e.message || 'Error al consultar datos en vivo' },
+      {
+        error: userFacingError(
+          e.message,
+          resource === 'match'
+            ? 'No se pudo cargar el partido'
+            : 'No se pudo consultar los datos en vivo',
+        ),
+      },
       { status: 502 },
     )
   }

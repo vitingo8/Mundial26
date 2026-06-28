@@ -62,7 +62,7 @@ export default function RootLayout({ children }) {
           {children}
           <LiveFloatingButtons />
           <SiteFooter />
-          <Analytics />
+          {process.env.VERCEL === '1' && <Analytics />}
         </WcMatchesProvider>
       </body>
     </html>

@@ -7,6 +7,7 @@ import ScoreInput from './ScoreInput'
 import { needsKnockoutAdvancePick, resolveKnockoutAdvanceSide } from '../../lib/knockoutAdvances'
 import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
 import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
+import { isFotmobCatalogMatchId, isMatchNotStarted } from '../../lib/matchHeadToHead'
 import { PorraLiveHeader } from './LiveResultRow'
 import { summarizeMatchPoints, isInicioKoId } from '../../lib/matchPointsDisplay'
 import { isExactScoreHit } from '../../lib/gameData'
@@ -17,6 +18,7 @@ import {
 import { resolveKnockoutTeamsForScoring } from '../../lib/knockoutMatchScoring'
 import MatchPointsBubble from './MatchPointsBubble'
 import MatchPredsInfo from './MatchPredsInfo'
+import MatchH2hInfo from './MatchH2hInfo'
 import { getParticipantPredsForMatch } from '../../lib/participantMatchPreds'
 import { MatchStatus } from '../icons'
 
@@ -345,9 +347,11 @@ export default function BracketMatchSlot({
       )}
       <div className="bracket-slot-tag-row">
         <div className="bracket-slot-tag">P{match.matchNumber}</div>
-        {!readOnly && participantPredRows.length > 0 && (
-          <MatchPredsInfo rows={participantPredRows} className="match-preds-info-wrap--bracket" />
-        )}
+        <span className="schedule-match-tag-icons">
+          {!readOnly && participantPredRows.length > 0 && (
+            <MatchPredsInfo rows={participantPredRows} className="match-preds-info-wrap--bracket" />
+          )}
+        </span>
       </div>
 
       <div className={`bracket-slot-scores-wrap${inlinePointsBubble ? ' bracket-slot-scores-wrap--has-points' : ''}`}>
@@ -394,6 +398,19 @@ export default function BracketMatchSlot({
 
       {!readOnly && match.pendingThirdMatch && (
         <p className="bracket-slot-pending-hint">Tercero por confirmar — predicción bloqueada</p>
+      )}
+
+      {!readOnly
+        && isFotmobCatalogMatchId(match.id)
+        && (!apiRaw || isMatchNotStarted(apiRaw.status)) && (
+        <MatchH2hInfo
+          matchId={match.id}
+          homeName={match.home}
+          awayName={match.away}
+          homeCrest={match.homeCrest}
+          awayCrest={match.awayCrest}
+          variant="bracket"
+        />
       )}
 
       {readOnly && apiRaw?.status && (

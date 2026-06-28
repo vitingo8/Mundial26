@@ -8,6 +8,7 @@ import { Icon, MatchStatus, goalIconName } from '../icons'
 import LineupPitchView from './LineupPitchView'
 import MatchGroupStandingsPanel from './MatchGroupStandingsPanel'
 import MatchEventsTimeline from './MatchEventsTimeline'
+import MatchHeadToHeadPanel from './MatchHeadToHeadPanel'
 import PlayerDetailSheet from './PlayerDetailSheet'
 import YoutubeHighlightsPlayer from './YoutubeHighlightsPlayer'
 import { fetchWcMatchClient, formatStageLabel } from '../../lib/footballData'
@@ -28,6 +29,7 @@ import {
   pickStatsComparison,
   pickTeamStatistics,
 } from '../../lib/matchDetail'
+import { isMatchNotStarted } from '../../lib/matchHeadToHead'
 import { useSimulatedLiveClock } from '../../hooks/useSimulatedLiveClock'
 import { useMatchDetailHeaderCollapse } from '../../hooks/useMatchDetailHeaderCollapse'
 
@@ -143,7 +145,7 @@ export default function MatchDetailSheet({
       const data = await fetchWcMatchClient(currentMatchId, { force })
       setMatch(data)
     } catch (e) {
-      setError(e.message || 'No se pudo cargar el partido')
+      setError('No se pudo cargar el partido')
     } finally {
       setLoading(false)
     }
@@ -152,9 +154,17 @@ export default function MatchDetailSheet({
   const isGroupStage = match?.stage === 'GROUP_STAGE' || currentSummary?.stage === 'GROUP_STAGE'
     || Boolean(match?.group || currentSummary?.group)
   const showGroupStandings = isGroupStage && groupMatches.length > 0
+  const matchNotStarted = match ? isMatchNotStarted(match.status) : true
   const detailTabs = useMemo(
-    () => DETAIL_TABS.filter(tab => !tab.groupOnly || showGroupStandings),
-    [showGroupStandings],
+    () => DETAIL_TABS
+      .filter(tab => !tab.groupOnly || showGroupStandings)
+      .map(tab => {
+        if (tab.id === 'eventos' && matchNotStarted) {
+          return { id: 'h2h', label: 'Cara a Cara' }
+        }
+        return tab
+      }),
+    [showGroupStandings, matchNotStarted],
   )
   const detailTabIds = useMemo(() => detailTabs.map(t => t.id), [detailTabs])
 
@@ -607,6 +617,17 @@ export default function MatchDetailSheet({
                 ),
                 eventos: (
                   <MatchEventsTimeline items={eventsTimeline} onPlayerClick={openPlayer} />
+                ),
+                h2h: (
+                  <MatchHeadToHeadPanel
+                    headToHead={match.headToHead}
+                    homeName={homeDisplayName}
+                    awayName={awayDisplayName}
+                    homeCrest={homeCrest}
+                    awayCrest={awayCrest}
+                    teamColors={match?.teamColors}
+                    loading={loading && !match.headToHead}
+                  />
                 ),
                 directo: (
                   <section className="match-detail-section match-detail-section--directo">

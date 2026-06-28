@@ -435,6 +435,46 @@
   background: #f4f8f5;
 }
 
+.match-h2h-header {
+  align-items: flex-start;
+}
+
+.match-h2h-header-teams {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.match-h2h-header-vs {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--dash-muted);
+}
+
+.match-h2h-subtitle {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--dash-text);
+}
+
+.match-h2h-datetime {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: var(--dash-muted);
+}
+
+.match-h2h-pred {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  color: var(--dash-accent-deep);
+}
+
+.match-h2h-body {
+  padding-top: 8px;
+}
+
 .participant-preds-body .knockout-bracket-scene {
   width: 100%;
   max-width: 100%;
