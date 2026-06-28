@@ -8,7 +8,6 @@ import {
 } from '../../lib/knockoutBridge'
 import MatchDaySchedule from './MatchDaySchedule'
 import { patchKnockoutScore, patchKnockoutAdvance } from '../../lib/knockoutAdvances'
-import { countFilledMatches } from '../../lib/predictionUtils'
 
 export default function PredictedKnockoutSection({
   groupMatches,
@@ -40,9 +39,6 @@ export default function PredictedKnockoutSection({
   if (!groupMatches.length) return null
   if (hideSchedule && !error) return null
 
-  const filledGroup = countFilledMatches(groupPreds, groupMatches)
-  const showGroupHint = filledGroup === 0 && schedule.length === 0 && !error
-
   const sectionClass = [
     'predicted-knockout-section',
     hideSchedule ? 'predicted-knockout-section--embedded' : '',
@@ -60,12 +56,6 @@ export default function PredictedKnockoutSection({
             <span className="predicted-knockout-alert-detail">{getKnockoutErrorHint(error)}</span>
           )}
         </div>
-      )}
-
-      {showGroupHint && (
-        <p className="predicted-knockout-hint" role="status">
-          Rellena al menos un partido de grupos para calcular dieciseisavos y el cuadro previsto.
-        </p>
       )}
 
       {schedule.length > 0 && !hideSchedule && (

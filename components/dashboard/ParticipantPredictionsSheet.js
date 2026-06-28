@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { migratePredictionMap } from '../../lib/matchIdMap'
 import { normalizeInicioKoPreds, buildInicioKnockoutSchedule } from '../../lib/knockoutBridge'
+import { buildInicioKnockoutScoringState } from '../../lib/inicioKnockoutScoring'
+import { defaultParticipantSheetView } from '../../lib/defaultParticipantSheetView'
 import { countFilledMatches } from '../../lib/predictionUtils'
 import ParticipantDisplay, { ParticipantAvatar } from '../ParticipantDisplay'
 import GroupStandingsView from './GroupStandingsView'
@@ -16,18 +18,35 @@ const VIEWS = [
   { id: 'bonuses', label: 'Especiales' },
 ]
 
+function resolveDefaultView(ctx) {
+  return defaultParticipantSheetView(ctx)
+}
+
 export default function ParticipantPredictionsSheet({
   participant,
+  group,
   groupMatches,
   knockoutMatches = [],
   bonusActuals = {},
   publishedResults = {},
+  results = {},
   apiMatches = [],
   fotmobStandings = null,
   onClose,
   currentUserId,
 }) {
-  const [view, setView] = useState('groups')
+  const viewContext = useMemo(
+    () => ({
+      groupPhase: group?.phase,
+      group,
+      apiMatches,
+      groupMatches,
+      groupResults: results?.group ?? {},
+    }),
+    [group, apiMatches, groupMatches, results?.group],
+  )
+
+  const [view, setView] = useState(() => resolveDefaultView(viewContext))
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -36,7 +55,7 @@ export default function ParticipantPredictionsSheet({
 
   useEffect(() => {
     if (!participant) return
-    setView('groups')
+    setView(resolveDefaultView(viewContext))
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     function onKey(e) {
@@ -47,7 +66,7 @@ export default function ParticipantPredictionsSheet({
       document.body.style.overflow = prev
       document.removeEventListener('keydown', onKey)
     }
-  }, [participant?.id, onClose])
+  }, [participant?.id, viewContext, onClose])
 
   const { groupPreds, inicioKoPreds, bonusPreds } = useMemo(() => {
     const raw = participant?.predictions || {}
@@ -63,6 +82,30 @@ export default function ParticipantPredictionsSheet({
   const inicioKo = useMemo(
     () => buildInicioKnockoutSchedule(groupMatches, groupPreds, inicioKoPreds),
     [groupMatches, groupPreds, inicioKoPreds],
+  )
+
+  const inicioKnockoutScoring = useMemo(
+    () => buildInicioKnockoutScoringState(
+      { predictions: { group: groupPreds, inicioKnockout: inicioKoPreds } },
+      {
+        groupMatches,
+        knockoutMatches,
+        knockoutResults: results?.knockout,
+        groupResults: results?.group,
+        fotmobStandings,
+        apiMatches,
+      },
+    ),
+    [
+      groupPreds,
+      inicioKoPreds,
+      groupMatches,
+      knockoutMatches,
+      results?.knockout,
+      results?.group,
+      fotmobStandings,
+      apiMatches,
+    ],
   )
 
   const filledGroup = countFilledMatches(groupPreds, groupMatches)
@@ -153,12 +196,17 @@ export default function ParticipantPredictionsSheet({
               matches={inicioKo.schedule}
               preds={inicioKoPreds}
               locked
+              readOnly
               onScore={() => {}}
               onAdvance={() => {}}
               error={inicioKo.error}
               publishedResults={publishedResults}
               apiMatches={apiMatches}
+              groupMatches={groupMatches}
+              knockoutMatches={knockoutMatches}
+              inicioKnockoutScoring={inicioKnockoutScoring}
               viewingParticipantPreds
+              knockoutAdvance
             />
           )}
         </div>

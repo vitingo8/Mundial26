@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { buildEliminatoriasKnockoutSchedule, knockoutRealKoMatchId } from '../lib/knockoutBridge.js'
+import { buildEliminatoriasKnockoutSchedule, knockoutRealKoMatchId, lookupEliminatoriasKoPred } from '../lib/knockoutBridge.js'
 import { isEliminatoriasPredComplete } from '../lib/eliminatoriasReminder.js'
 import { isEliminatoriasMatchLocked } from '../lib/eliminatoriasMatchLock.js'
 import { transformGroupMatches, transformKnockoutMatches } from '../lib/footballData.js'
@@ -37,13 +37,7 @@ const knockoutMatches = transformKnockoutMatches(wcMatches)
 const now = new Date()
 
 function lookupKoPred(koPreds, match) {
-  const id = String(match.id)
-  if (koPreds[id]) return koPreds[id]
-  if (match.matchNumber != null) {
-    const alt = knockoutRealKoMatchId(match.matchNumber)
-    if (koPreds[alt]) return koPreds[alt]
-  }
-  return null
+  return lookupEliminatoriasKoPred(koPreds, match)
 }
 
 const schedule = buildEliminatoriasKnockoutSchedule(knockoutMatches, {}, {

@@ -2,6 +2,7 @@
 
 import BracketMatchSlot from './BracketMatchSlot'
 import BracketConnectorLane from './BracketConnectorLane'
+import { lookupBracketPred } from '../../lib/knockoutBridge'
 
 function SlotCell({ rowStart, rowSpan = 1, children }) {
   return (
@@ -21,7 +22,7 @@ function PairBlock({ rowStart, matches, getMatch, ...slotProps }) {
       <SlotCell key={n} rowStart={rowStart + idx} rowSpan={1}>
         <BracketMatchSlot
           match={m}
-          pred={slotProps.preds?.[m?.id] || {}}
+          pred={lookupBracketPred(slotProps.preds, m)}
           apiRaw={m ? slotProps.rawById?.[m.id] : null}
           userPred={slotProps.userPreds?.[m?.id]}
           matchRef={el => {
@@ -52,7 +53,7 @@ function BracketColumnGrid({ column, getMatch, ...slotProps }) {
           <SlotCell key={slot.match} rowStart={slot.rowStart} rowSpan={slot.rowSpan}>
             <BracketMatchSlot
               match={m}
-              pred={slotProps.preds?.[m?.id] || {}}
+              pred={lookupBracketPred(slotProps.preds, m)}
               apiRaw={m ? slotProps.rawById?.[m.id] : null}
               userPred={slotProps.userPreds?.[m?.id]}
               matchRef={el => {
@@ -117,7 +118,7 @@ export function BracketCenterOut({
               />
               <BracketMatchSlot
                 match={finalMatch}
-                pred={slotProps.preds?.[finalMatch?.id] || {}}
+                pred={lookupBracketPred(slotProps.preds, finalMatch)}
                 apiRaw={finalMatch ? slotProps.rawById?.[finalMatch.id] : null}
                 userPred={slotProps.userPreds?.[finalMatch?.id]}
                 matchRef={el => {
@@ -130,7 +131,7 @@ export function BracketCenterOut({
               <span className="bracket-center-sublabel">3.er puesto</span>
               <BracketMatchSlot
                 match={thirdMatch}
-                pred={slotProps.preds?.[thirdMatch?.id] || {}}
+                pred={lookupBracketPred(slotProps.preds, thirdMatch)}
                 apiRaw={thirdMatch ? slotProps.rawById?.[thirdMatch.id] : null}
                 userPred={slotProps.userPreds?.[thirdMatch?.id]}
                 matchRef={el => {

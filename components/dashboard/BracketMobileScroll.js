@@ -5,7 +5,7 @@ import BracketMatchSlot from './BracketMatchSlot'
 import { Icon } from '../icons'
 import { BRACKET_MOBILE_COLUMNS } from '../../lib/bracketMobileColumns'
 import { BRACKET_CENTER } from '../../lib/knockoutBracketTreeLayout'
-import { formatKnockoutErrorForUi, getKnockoutErrorHint } from '../../lib/knockoutBridge'
+import { formatKnockoutErrorForUi, getKnockoutErrorHint, lookupBracketPred } from '../../lib/knockoutBridge'
 
 function BracketMobileColumn({ column, getMatch, ...slotProps }) {
   const { layout } = column
@@ -50,7 +50,7 @@ function BracketMobileColumn({ column, getMatch, ...slotProps }) {
               )}
               <BracketMatchSlot
                 match={m}
-                pred={slotProps.preds?.[m?.id] || {}}
+                pred={lookupBracketPred(slotProps.preds, m)}
                 apiRaw={m ? slotProps.rawById?.[m.id] : null}
                 userPred={slotProps.userPreds?.[m?.id]}
                 matchRef={el => {

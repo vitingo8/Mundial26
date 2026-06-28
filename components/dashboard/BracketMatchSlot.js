@@ -115,16 +115,31 @@ export default function BracketMatchSlot({
     (getMatchLocked ? getMatchLocked(match) : isMatchKickoffPassed(match.utcDate))
 
   const apiScore = apiRaw ? getApiMatchDisplayScore(apiRaw) : null
-  const score = readOnly ? apiScore : null
-  const hasScore = score?.home != null && score?.away != null
-  const isApiLive = apiRaw && isLiveMatchStatus(apiRaw.status)
-  const isApiFinished = apiRaw?.status === 'FINISHED'
-  const showPorraHeader = !readOnly && apiRaw && apiScore && isPorraApiResultStatus(apiRaw.status)
   const predRow = {
     home: pred.home === '' || pred.home == null ? null : Number(pred.home),
     away: pred.away === '' || pred.away == null ? null : Number(pred.away),
     advances: pred.advances,
   }
+  const showParticipantPredScores = readOnly && viewingParticipantPreds
+  const score = showParticipantPredScores
+    ? null
+    : readOnly
+      ? apiScore
+      : null
+  const hasApiScore = score?.home != null && score?.away != null
+  const homeSlotScore = showParticipantPredScores
+    ? predRow.home
+    : hasApiScore
+      ? score.home
+      : null
+  const awaySlotScore = showParticipantPredScores
+    ? predRow.away
+    : hasApiScore
+      ? score.away
+      : null
+  const isApiLive = apiRaw && isLiveMatchStatus(apiRaw.status)
+  const isApiFinished = apiRaw?.status === 'FINISHED'
+  const showPorraHeader = !readOnly && apiRaw && apiScore && isPorraApiResultStatus(apiRaw.status)
   const pickAdvance =
     !readOnly && !matchLocked && needsKnockoutAdvancePick(predRow) && onAdvance
   const advanceSide = knockoutAdvance ? resolveKnockoutAdvanceSide(predRow) : null
@@ -341,7 +356,7 @@ export default function BracketMatchSlot({
         <BracketTeam
         name={match.home}
         crest={match.homeCrest}
-        score={hasScore ? score.home : null}
+        score={homeSlotScore}
         pred={pred.home}
         side="home"
         onScore={(side, v) => onScore?.(match.id, side, v)}
@@ -360,7 +375,7 @@ export default function BracketMatchSlot({
       <BracketTeam
         name={match.away}
         crest={match.awayCrest}
-        score={hasScore ? score.away : null}
+        score={awaySlotScore}
         pred={pred.away}
         side="away"
         onScore={(side, v) => onScore?.(match.id, side, v)}

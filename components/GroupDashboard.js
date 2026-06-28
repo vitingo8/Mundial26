@@ -53,7 +53,6 @@ import InviteButton from './InviteButton'
 import {
   PLAYER_SUGGESTIONS,
   GOALKEEPER_SUGGESTIONS,
-  isGoalkeeperSuggestion,
 } from '../lib/playerSuggestions'
 import {
   transformGroupMatches,
@@ -65,19 +64,18 @@ import GroupStandingsView from './dashboard/GroupStandingsView'
 import ScheduleViewTabs from './dashboard/ScheduleViewTabs'
 import LiveMatchDaySchedule from './dashboard/LiveMatchDaySchedule'
 import LiveGroupStandingsView from './dashboard/LiveGroupStandingsView'
+import LiveSpecialsPanel from './dashboard/LiveSpecialsPanel'
 import MatchDetailSheet from './dashboard/MatchDetailSheet'
 import KnockoutBracketView from './dashboard/KnockoutBracketView'
 import PredictedKnockoutSection from './dashboard/PredictedKnockoutSection'
-import { buildInicioKnockoutSchedule } from '../lib/knockoutBridge'
-import { buildEliminatoriasKnockoutSchedule } from '../lib/knockoutBridge'
+import { buildInicioKnockoutSchedule, buildEliminatoriasKnockoutSchedule, lookupEliminatoriasKoPred, lookupInicioKoPred } from '../lib/knockoutBridge'
 import { buildLiveKnockoutMatches } from '../lib/hydrateKnockoutR32'
 import { isEliminatoriasMatchLocked } from '../lib/eliminatoriasMatchLock'
 import { patchKnockoutScore, patchKnockoutAdvance } from '../lib/knockoutAdvances'
 import { buildKnockoutScoringContext } from '../lib/knockoutMatchScoring'
 import { buildInicioKnockoutScoringState } from '../lib/inicioKnockoutScoring'
-import EliminatoriasReminderBanner from './dashboard/EliminatoriasReminderBanner'
+import { buildProvisionalResults } from '../lib/syncResultsFromApi'
 import { buildPublishedResultsMap } from '../lib/matchPointsDisplay'
-import { buildProvisionalResults, hasProvisionalLiveResults } from '../lib/syncResultsFromApi'
 import { SCORING as SCORING_RULES } from '../lib/gameData'
 import { resetDashboardScroll } from '../lib/dashboardScroll'
 
@@ -152,10 +150,6 @@ export default function GroupDashboard({
       ? buildProvisionalResults(currentGroup?.results, wcMatches)
       : (currentGroup?.results ?? {})),
     [tab, currentGroup?.results, wcMatches],
-  )
-  const rankingProvisional = useMemo(
-    () => tab === 'group' && hasProvisionalLiveResults(wcMatches),
-    [tab, wcMatches],
   )
   const leaderboard = useMemo(
     () => (tab === 'group'
@@ -335,17 +329,6 @@ export default function GroupDashboard({
         </div>
       </header>
 
-      <EliminatoriasReminderBanner
-        groupId={currentGroup.id}
-        knockoutMatches={knockoutMatches}
-        koPreds={koPreds}
-        fotmobStandings={wcStandings}
-        groupMatches={groupMatches}
-        apiMatches={wcMatches}
-        groupPhase={currentGroup.phase}
-        onGoToMatch={goToPrediction}
-      />
-
       <ProfileMenuSheet
         open={profileMenuOpen}
         onClose={() => setProfileMenuOpen(false)}
@@ -402,7 +385,6 @@ export default function GroupDashboard({
               group: (
                 <GroupTab
                   leaderboard={leaderboard}
-                  rankingProvisional={rankingProvisional}
                   group={currentGroup}
                   groupResults={provisionalResults}
                   groupMatches={groupMatches}
@@ -518,7 +500,7 @@ function RankingScoreChips({ participant, disputedLimits }) {
   )
 }
 
-function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupMatches, knockoutMatches, wcMatches = [], wcStandings = null, onLeave, currentUserId }) {
+function GroupTab({ leaderboard, group, groupResults, groupMatches, knockoutMatches, wcMatches = [], wcStandings = null, onLeave, currentUserId }) {
   const [view, setView] = useState('ranking')
   const [viewingParticipant, setViewingParticipant] = useState(null)
   const scoringOpts = useMemo(
@@ -572,14 +554,6 @@ function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupM
 
       {view === 'table' ? (
         <>
-          <p className="ranking-hint">
-            Toca un jugador para ver su clasificación y cuadro.
-            {rankingProvisional && (
-              <span className="ranking-provisional-badge" title="Puntos con marcadores en vivo, sujetos a cambio">
-                Prov.
-              </span>
-            )}
-          </p>
           <GroupStatsTable
             rows={tableRows}
             currentUserId={currentUserId}
@@ -589,14 +563,6 @@ function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupM
         </>
       ) : (
         <>
-          <p className="ranking-hint">
-            Toca un jugador para ver su porra completa.
-            {rankingProvisional && (
-              <span className="ranking-provisional-badge" title="Puntos con marcadores en vivo, sujetos a cambio">
-                Prov.
-              </span>
-            )}
-          </p>
           <div className="ranking-board">
             <div className="ranking-list">
               {tableRows.map((p, i) => (
@@ -643,9 +609,11 @@ function GroupTab({ leaderboard, rankingProvisional, group, groupResults, groupM
       {viewingParticipant && (
         <ParticipantPredictionsSheet
           participant={viewingParticipant}
+          group={group}
           groupMatches={groupMatches}
           knockoutMatches={knockoutMatches}
           publishedResults={participantPublishedResults}
+          results={groupResults}
           apiMatches={wcMatches}
           fotmobStandings={wcStandings}
           currentUserId={currentUserId}
@@ -687,7 +655,10 @@ function PredictionsTab({
 
   function openMatchDetail(m) {
     const userPred =
-      groupPreds[m.id] ?? koPreds[m.id] ?? inicioKoPreds[m.id]
+      groupPreds[m.id]
+      ?? lookupEliminatoriasKoPred(koPreds, m)
+      ?? lookupInicioKoPred(inicioKoPreds, m)
+      ?? null
     setDetailMatch({
       id: m.id,
       home: m.home,
@@ -742,12 +713,6 @@ function PredictionsTab({
 
   return (
     <div className="dash-tab-panel">
-      {orphanGroupKeys > 0 && (
-        <div className="dash-banner dash-banner--info">
-          {orphanGroupKeys} predicción(es) no se pudieron enlazar al calendario actual.
-        </div>
-      )}
-
       {onApplyMirror && user?.email && (
         <PredictionMirrorPanel
           user={user}
@@ -996,11 +961,6 @@ function GroupPhasePreds({
         />
       ) : viewMode === 'bracket' ? (
         <>
-          {filled === 0 && inicioKo.schedule.length === 0 && !inicioKo.error && (
-            <p className="predicted-knockout-hint" role="status">
-              Rellena al menos un partido de grupos para calcular dieciseisavos y el cuadro previsto.
-            </p>
-          )}
           <KnockoutBracketView
             matches={inicioKo.schedule}
             preds={inicioKoPreds}
@@ -1274,9 +1234,6 @@ function BonusPreds({ preds, setPreds, locked, actuals = {} }) {
             onChange={e => setPreds(p => ({ ...p, [f.id]: e.target.value }))}
             disabled={locked}
           />
-          {f.goalkeepersOnly && pred && !isGoalkeeperSuggestion(pred) && (
-            <p className="dash-bonus-hint">Solo porteros — elige uno de la lista o escribe un portero.</p>
-          )}
           {actual && pred && (
             <div className={`dash-bonus-result${hit ? ' dash-bonus-result--hit' : ''}`}>
               <span>Real: <strong>{actual}</strong></span>
@@ -1373,15 +1330,22 @@ function LiveTab({
 
   const phaseMatches = livePhase === 'group' ? groupMatches : liveKnockoutMatches
   const phasePreds = livePhase === 'group' ? (userPreds?.group || {}) : (userPreds?.knockout || {})
-  const hasSchedule = apiMatches.length > 0 || phaseMatches.length > 0
+  const hasSchedule = apiMatches.length > 0 || groupMatches.length > 0 || liveKnockoutMatches.length > 0
+  const isSpecialsPhase = livePhase === 'specials'
   const { pull, refreshing: pullRefreshing, hint: pullHint } = usePullToRefresh(onFetch, {
-    enabled: isActive && !detailMatch,
+    enabled: isActive && !detailMatch && !isSpecialsPhase,
     getScrollElement: () => document.querySelector('.dash-swipe-tabs .swipe-tabs-panel[aria-hidden="false"]'),
   })
+
+  useEffect(() => {
+    if (!isActive) return
+    fetch('/api/fotmob/specials').catch(() => {})
+  }, [isActive])
 
   const livePhases = [
     { id: 'group', label: 'Fase de grupos', icon: PHASE_ICONS.group },
     { id: 'knockout', label: 'Eliminatorias', icon: PHASE_ICONS.knockout },
+    { id: 'specials', label: 'Especiales', icon: PHASE_ICONS.bonuses },
   ]
 
   return (
@@ -1396,24 +1360,26 @@ function LiveTab({
         </div>
       )}
 
-      {hasSchedule && (
-        <>
-          <div className="dash-phase-picker" role="tablist">
-            {livePhases.map(p => (
-              <button
-                key={p.id}
-                type="button"
-                role="tab"
-                aria-pressed={livePhase === p.id}
-                className="dash-phase-btn"
-                onClick={() => setLivePhase(p.id)}
-              >
-                <span className="dash-phase-icon"><Icon name={p.icon} /></span>
-                <span className="dash-phase-label">{p.label}</span>
-              </button>
-            ))}
-          </div>
+      <div className="dash-phase-picker" role="tablist" aria-label="Fase en vivo">
+        {livePhases.map(p => (
+          <button
+            key={p.id}
+            type="button"
+            role="tab"
+            aria-pressed={livePhase === p.id}
+            className="dash-phase-btn"
+            onClick={() => setLivePhase(p.id)}
+          >
+            <span className="dash-phase-icon"><Icon name={p.icon} /></span>
+            <span className="dash-phase-label">{p.label}</span>
+          </button>
+        ))}
+      </div>
 
+      {isSpecialsPhase ? (
+        <LiveSpecialsPanel isActive={isActive} />
+      ) : hasSchedule ? (
+        <>
           <ScheduleViewTabs
             value={effectiveViewMode}
             onChange={handleScheduleViewMode}
@@ -1421,11 +1387,7 @@ function LiveTab({
             showBracket={livePhase === 'knockout'}
           />
 
-          {!phaseMatches.length && effectiveViewMode !== 'bracket' ? (
-            <div style={s.apiCard}>
-              <div style={s.apiMsg}>No hay partidos en esta fase.</div>
-            </div>
-          ) : effectiveViewMode === 'groups' ? (
+          {!phaseMatches.length && effectiveViewMode !== 'bracket' ? null : effectiveViewMode === 'groups' ? (
             <LiveGroupStandingsView
               matches={phaseMatches}
               apiMatches={apiMatches}
@@ -1455,7 +1417,7 @@ function LiveTab({
             />
           )}
         </>
-      )}
+      ) : null}
 
       {detailMatch && (
         <MatchDetailSheet
@@ -1513,10 +1475,6 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
   const [tournamentPhase, setTournamentPhase] = useState(group.phase || 'group')
   const [actuals, setActuals] = useState(group.actuals || {})
   const [saving, setSaving] = useState(false)
-
-  const storedGroup = Object.keys(group.results?.group || {}).length
-  const storedKo = Object.keys(group.results?.knockout || {}).length
-  const hasStoredResults = storedGroup > 0 || storedKo > 0
 
   async function saveDeadlines() {
     setSaving(true)
@@ -1590,10 +1548,6 @@ function AdminTab({ group, setGroup, refreshGroup, notify, wcMatches = [], userI
           </button>
         ))}
       </div>
-
-      {!hasStoredResults && (
-        <p className="admin-sync-hint">Los resultados se actualizan solos al finalizar cada partido.</p>
-      )}
 
       {adminTab === 'settings' && (
         <div className="dash-card profile-form">

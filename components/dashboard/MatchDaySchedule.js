@@ -10,6 +10,7 @@ import {
 } from '../../lib/matchSchedule'
 
 import { groupMatchesByKnockoutRound } from '../../lib/knockoutBracketDisplay'
+import { lookupEliminatoriasKoPred } from '../../lib/knockoutBridge'
 
 import DayTabs from './DayTabs'
 import { indexApiMatches } from '../../lib/apiMatchScores'
@@ -133,6 +134,10 @@ export default function MatchDaySchedule({
     const scoringTeams = knockoutScoringCtx
       ? resolveKnockoutTeamsForScoring(m.id, publishedResult, knockoutScoringCtx)
       : {}
+    const predRow =
+      schedulePhase === 'knockout'
+        ? lookupEliminatoriasKoPred(preds, m) || {}
+        : preds[m.id] || {}
     return (
       <MatchRow
         key={m.id}
@@ -146,11 +151,11 @@ export default function MatchDaySchedule({
         matchNumber={m.matchNumber}
         fifaMatchLabel={m.fifaMatchLabel}
         knockoutMatchupLabel={m.knockoutMatchupLabel}
-        homeVal={preds[m.id]?.home ?? ''}
-        awayVal={preds[m.id]?.away ?? ''}
+        homeVal={predRow.home ?? ''}
+        awayVal={predRow.away ?? ''}
         onHome={v => onScore(m.id, 'home', v)}
         onAway={v => onScore(m.id, 'away', v)}
-        advancesVal={preds[m.id]?.advances}
+        advancesVal={predRow.advances}
         onAdvance={side => onAdvance?.(m.id, side)}
         knockoutAdvance={showAdvancePicker(m)}
         locked={locked || (getMatchLocked ? getMatchLocked(m) : false)}
