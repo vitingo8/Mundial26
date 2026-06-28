@@ -75,6 +75,7 @@ import { isEliminatoriasMatchLocked } from '../lib/eliminatoriasMatchLock'
 import { patchKnockoutScore, patchKnockoutAdvance } from '../lib/knockoutAdvances'
 import { buildKnockoutScoringContext } from '../lib/knockoutMatchScoring'
 import { buildInicioKnockoutScoringState } from '../lib/inicioKnockoutScoring'
+import EliminatoriasReminderBanner from './dashboard/EliminatoriasReminderBanner'
 import { buildPublishedResultsMap } from '../lib/matchPointsDisplay'
 import { buildProvisionalResults, hasProvisionalLiveResults } from '../lib/syncResultsFromApi'
 import { SCORING as SCORING_RULES } from '../lib/gameData'
@@ -169,7 +170,10 @@ export default function GroupDashboard({
   const bonusDeadlinePassed = isBonusDeadlinePassed(currentGroup)
   const effectiveGroupDeadline = getEffectiveGroupDeadline(currentGroup)
   const effectiveBonusDeadline = getEffectiveBonusDeadline(currentGroup)
-  const teamOptions = useMemo(() => getUniqueTeamsFromMatches(groupMatches, knockoutMatches), [groupMatches, knockoutMatches])
+  const teamOptions = useMemo(
+    () => getUniqueTeamsFromMatches(groupMatches, knockoutMatches),
+    [groupMatches, knockoutMatches],
+  )
   const adminBadges = isAdmin ? getAdminTaskBadges(currentGroup) : []
 
   useAutoSyncResults({
@@ -330,6 +334,17 @@ export default function GroupDashboard({
           </div>
         </div>
       </header>
+
+      <EliminatoriasReminderBanner
+        groupId={currentGroup.id}
+        knockoutMatches={knockoutMatches}
+        koPreds={koPreds}
+        fotmobStandings={wcStandings}
+        groupMatches={groupMatches}
+        apiMatches={wcMatches}
+        groupPhase={currentGroup.phase}
+        onGoToMatch={goToPrediction}
+      />
 
       <ProfileMenuSheet
         open={profileMenuOpen}
@@ -693,7 +708,7 @@ function PredictionsTab({
 
   const effectiveViewMode = (() => {
     if (predPhase === 'knockout') {
-      if (scheduleViewMode === 'groups' || scheduleViewMode === 'bracket') return 'full'
+      if (scheduleViewMode === 'groups') return 'full'
       return scheduleViewMode
     }
     return scheduleViewMode
@@ -780,7 +795,7 @@ function PredictionsTab({
           value={effectiveViewMode}
           onChange={handleScheduleViewMode}
           showGroups={predPhase === 'group'}
-          showBracket={predPhase === 'group'}
+          showBracket={predPhase === 'group' || predPhase === 'knockout'}
         />
       )}
 
