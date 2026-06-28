@@ -102,7 +102,7 @@ export default function GroupDashboard({
   group, user, refreshGroup, setCurrentUser, notify, onLeave, onGoHome, onSwitchGroup,
 }) {
   const [tab, setTab] = useState('live')
-  const [predPhase, setPredPhase] = useState('group')
+  const [predPhase, setPredPhase] = useState('knockout')
   const [scrollToMatchId, setScrollToMatchId] = useState(null)
   const [currentGroup, setCurrentGroup] = useState(group)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
@@ -691,9 +691,13 @@ function PredictionsTab({
     writeScheduleViewMode(mode)
   }
 
-  const effectiveViewMode = predPhase === 'knockout' && scheduleViewMode === 'groups'
-    ? 'daily'
-    : scheduleViewMode
+  const effectiveViewMode = (() => {
+    if (predPhase === 'knockout') {
+      if (scheduleViewMode === 'groups' || scheduleViewMode === 'bracket') return 'full'
+      return scheduleViewMode
+    }
+    return scheduleViewMode
+  })()
 
   const phaseLocked = isPhaseLocked(groupPhase, predPhase, false, false)
 
@@ -776,7 +780,7 @@ function PredictionsTab({
           value={effectiveViewMode}
           onChange={handleScheduleViewMode}
           showGroups={predPhase === 'group'}
-          showBracket
+          showBracket={predPhase === 'group'}
         />
       )}
 
@@ -1169,6 +1173,7 @@ function KnockoutPreds({
         onAdvance={setAdvance}
         schedulePhase="knockout"
         viewMode={viewMode}
+        flatMatchesPanel
         publishedResults={publishedResults}
         knockoutScoringCtx={knockoutScoringCtx}
         apiMatches={apiMatches}
@@ -1319,7 +1324,7 @@ function LiveTab({
   onFetch,
   group, groupMatches, knockoutMatches, fotmobStandings = null, userPreds, onGoToPrediction,
 }) {
-  const [livePhase, setLivePhase] = useState('group')
+  const [livePhase, setLivePhase] = useState('knockout')
   const [scheduleViewMode, setScheduleViewMode] = useState('daily')
   const [detailMatch, setDetailMatch] = useState(null)
 

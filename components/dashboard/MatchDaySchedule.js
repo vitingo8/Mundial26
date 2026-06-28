@@ -180,17 +180,25 @@ export default function MatchDaySchedule({
   const matchesBody =
     sections.length === 0 || listEmpty ? (
       <p className="schedule-empty-day">No hay partidos este día</p>
-    ) : fullView && schedulePhase !== 'knockout' ? (
+    ) : fullView ? (
       <div className="schedule-full-list">
-        {dayMatches.map((m, i) => {
-          const dayKey = matchDateKey(m.utcDate)
-          const prevKey = i > 0 ? matchDateKey(dayMatches[i - 1].utcDate) : null
-          const showDay = dayKey !== prevKey
+        {(schedulePhase === 'knockout' ? filteredMatches : dayMatches).map((m, i, arr) => {
+          const prev = i > 0 ? arr[i - 1] : null
+          let header = null
+          if (schedulePhase === 'knockout') {
+            if (prev?.roundId !== m.roundId) {
+              header = m.roundLabel || m.roundId || null
+            }
+          } else {
+            const dayKey = matchDateKey(m.utcDate)
+            const prevKey = prev ? matchDateKey(prev.utcDate) : null
+            if (dayKey !== prevKey) header = formatFullDayLabel(m.utcDate)
+          }
           return (
             <div key={m.id}>
-              {showDay && (
-                <div className="schedule-full-day-label">{formatFullDayLabel(m.utcDate)}</div>
-              )}
+              {header ? (
+                <div className="schedule-full-day-label">{header}</div>
+              ) : null}
               {renderMatchRow(m, true)}
             </div>
           )

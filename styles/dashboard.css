@@ -2679,6 +2679,20 @@ button.porra-live-strip {
   background: rgba(29, 49, 38, 0.08);
 }
 
+@media (max-width: 639px) {
+  .schedule-panel--knockout:not(.schedule-panel--full) .schedule-matches-panel {
+    overflow: visible;
+  }
+
+  .schedule-panel--knockout .schedule-block {
+    overflow: visible;
+  }
+
+  .schedule-panel--knockout.schedule-panel--full {
+    gap: 0;
+  }
+}
+
 @media (max-width: 767px) {
   .porra-live-strip {
     padding: 6px 8px 5px;
