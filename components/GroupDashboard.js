@@ -102,7 +102,7 @@ import {
 export default function GroupDashboard({
   group, user, refreshGroup, setCurrentUser, notify, onLeave, onGoHome, onSwitchGroup,
 }) {
-  const [tab, setTab] = useState('live')
+  const [tab, setTab] = useState('predictions')
   const [predPhase, setPredPhase] = useState('knockout')
   const [scrollToMatchId, setScrollToMatchId] = useState(null)
   const [scheduleNav, setScheduleNav] = useState(null)
@@ -200,6 +200,20 @@ export default function GroupDashboard({
 
   useEffect(() => { const t = setInterval(handleRefresh, 60000); return () => clearInterval(t) }, [currentGroup.id])
   useEffect(() => { setPredPhase(getDefaultPredPhase(currentGroup.phase)) }, [currentGroup.phase])
+
+  /** Primera entrada al dashboard en la sesión → Porra · Eliminatorias · Día de hoy */
+  useEffect(() => {
+    if (typeof sessionStorage === 'undefined') return
+    if (sessionStorage.getItem('porra_porra_landing')) return
+    sessionStorage.setItem('porra_porra_landing', '1')
+    writeScheduleViewMode('daily')
+    setPredPhase('knockout')
+    setTab('predictions')
+    setScheduleNav({
+      viewMode: 'daily',
+      dayKey: scheduleAnchorDateKey('knockout'),
+    })
+  }, [])
 
   function changeTab(next) {
     if (next === tab) return
@@ -679,7 +693,7 @@ function PredictionsTab({
   onScheduleNavConsumed,
 }) {
   const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
-  const [focusDayKey, setFocusDayKey] = useState(null)
+  const [focusDayKey, setFocusDayKey] = useState(() => scheduleAnchorDateKey('knockout'))
   const [detailMatch, setDetailMatch] = useState(null)
 
   useEffect(() => {
