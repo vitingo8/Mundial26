@@ -413,6 +413,7 @@
 
   .dash-tab-panel {
     animation: dashFadeInMobile 0.2s ease both;
+    min-width: 0;
   }
 
   @keyframes dashFadeInMobile {
@@ -1971,6 +1972,55 @@
   margin-bottom: 0;
 }
 
+/* Eliminatorias · vista Día — una tarjeta redondeada (como Todo) */
+.schedule-panel--knockout:not(.schedule-panel--full) {
+  background: var(--white, #fff);
+  border: 1px solid var(--dash-border, #e8efe9);
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(29, 49, 38, 0.08);
+  overflow: hidden;
+  gap: 0;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.schedule-panel--knockout:not(.schedule-panel--full) .schedule-day-picker {
+  min-width: 0;
+}
+
+.schedule-panel--knockout:not(.schedule-panel--full) .schedule-day-tabs {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  border-bottom: 1px solid var(--dash-border, #e8efe9);
+}
+
+.schedule-panel--knockout:not(.schedule-panel--full) .schedule-matches-panel--flat {
+  min-width: 0;
+}
+
+.schedule-panel--knockout:not(.schedule-panel--full) .schedule-block {
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.schedule-panel--knockout:not(.schedule-panel--full) .schedule-block + .schedule-block {
+  border-top: 1px solid var(--dash-border, #e8efe9);
+}
+
+.schedule-panel--knockout:not(.schedule-panel--full) .schedule-block-header--round {
+  background: #f4f8f5;
+  border-bottom: 1px solid var(--dash-border, #e8efe9);
+}
+
+.schedule-panel--knockout:not(.schedule-panel--full):has(.match-preds-info-wrap--open) {
+  overflow: visible;
+}
+
 .schedule-block-header--round {
   font-size: 0.72rem;
   font-weight: 800;
@@ -3235,15 +3285,32 @@ button.porra-live-strip {
 
 @media (max-width: 639px) {
   .schedule-panel--knockout:not(.schedule-panel--full) .schedule-matches-panel {
+    overflow: hidden;
+  }
+
+  .schedule-panel--knockout:not(.schedule-panel--full) .schedule-matches-panel:has(.match-preds-info-wrap--open) {
     overflow: visible;
   }
 
-  .schedule-panel--knockout .schedule-block {
+  .schedule-panel--knockout:not(.schedule-panel--full) .schedule-block {
+    overflow: hidden;
+  }
+
+  .schedule-panel--knockout:not(.schedule-panel--full) .schedule-block:has(.match-preds-info-wrap--open) {
     overflow: visible;
   }
 
   .schedule-panel--knockout.schedule-panel--full {
     gap: 0;
+  }
+
+  /* Bracket / otros: tooltips fuera del bloque */
+  .schedule-panel--knockout.schedule-panel--full .schedule-matches-panel {
+    overflow: visible;
+  }
+
+  .schedule-panel--knockout.schedule-panel--full .schedule-block {
+    overflow: visible;
   }
 }
 

@@ -82,9 +82,14 @@ export default function Page() {
           setScreen('join')
           return
         }
+        const cached = readDashboardCache(groupId, userId)
+        if (cached?.group && cached?.user) {
+          void restoreSession(groupId, userId)
+          return
+        }
         const ok = await restoreSession(groupId, userId)
         if (ok) return
-        if (!readDashboardCache(groupId, userId)) setScreen('home')
+        setScreen('home')
         return
       }
 

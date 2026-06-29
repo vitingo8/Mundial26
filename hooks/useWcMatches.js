@@ -235,7 +235,8 @@ export function WcMatchesProvider({ children }) {
       if (e.persisted) refreshNow()
     }
 
-    scheduleNext()
+    const bootDelay = getWcMatchesPollIntervalMs(wcMatchesRef.current, { visible: isVisible() }) ?? 60_000
+    scheduleNext(bootDelay)
     document.addEventListener('visibilitychange', onVisibilityChange)
     window.addEventListener('pageshow', onPageShow)
 

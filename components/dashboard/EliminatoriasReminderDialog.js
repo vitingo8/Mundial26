@@ -26,6 +26,22 @@ export default function EliminatoriasReminderDialog({
   const [dismissed, setDismissed] = useState([])
   const [suppressed, setSuppressed] = useState(false)
   const [tick, setTick] = useState(0)
+  const [checksEnabled, setChecksEnabled] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    const id = typeof requestIdleCallback !== 'undefined'
+      ? requestIdleCallback(() => { if (!cancelled) setChecksEnabled(true) }, { timeout: 2000 })
+      : setTimeout(() => { if (!cancelled) setChecksEnabled(true) }, 300)
+    return () => {
+      cancelled = true
+      if (typeof cancelIdleCallback !== 'undefined' && typeof requestIdleCallback !== 'undefined') {
+        cancelIdleCallback(id)
+      } else {
+        clearTimeout(id)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     setDismissed(readElimReminderDismissed(groupId))
@@ -38,16 +54,19 @@ export default function EliminatoriasReminderDialog({
   }, [])
 
   const matches = useMemo(
-    () => getEliminatoriasReminderMatches({
-      knockoutMatches,
-      koPreds,
-      fotmobStandings,
-      groupMatches,
-      apiMatches,
-      dismissedIds: dismissed,
-      groupPhase,
-    }),
-    [knockoutMatches, koPreds, fotmobStandings, groupMatches, apiMatches, dismissed, groupPhase, tick],
+    () => {
+      if (!checksEnabled) return []
+      return getEliminatoriasReminderMatches({
+        knockoutMatches,
+        koPreds,
+        fotmobStandings,
+        groupMatches,
+        apiMatches,
+        dismissedIds: dismissed,
+        groupPhase,
+      })
+    },
+    [checksEnabled, knockoutMatches, koPreds, fotmobStandings, groupMatches, apiMatches, dismissed, groupPhase, tick],
   )
 
   const open = matches.length > 0 && !suppressed

@@ -105,8 +105,12 @@ export default function GroupDashboard({
   const [tab, setTab] = useState('predictions')
   const [predPhase, setPredPhase] = useState('knockout')
   const [scrollToMatchId, setScrollToMatchId] = useState(null)
-  const [scheduleNav, setScheduleNav] = useState(null)
+  const [scheduleNav, setScheduleNav] = useState(() => ({
+    viewMode: 'daily',
+    dayKey: scheduleAnchorDateKey('knockout'),
+  }))
   const [currentGroup, setCurrentGroup] = useState(group)
+  const landedGroupIdRef = useRef(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const contentRef = useRef(null)
   const changeTabRef = useRef(() => {})
@@ -201,8 +205,10 @@ export default function GroupDashboard({
   useEffect(() => { const t = setInterval(handleRefresh, 60000); return () => clearInterval(t) }, [currentGroup.id])
   useEffect(() => { setPredPhase(getDefaultPredPhase(currentGroup.phase)) }, [currentGroup.phase])
 
-  /** Cada entrada al dashboard → Porra · Eliminatorias · Día de hoy */
+  /** Cada entrada / cambio de grupo → Porra · Eliminatorias · Día de hoy */
   useEffect(() => {
+    if (landedGroupIdRef.current === currentGroup.id) return
+    landedGroupIdRef.current = currentGroup.id
     writeScheduleViewMode('daily')
     setPredPhase('knockout')
     setTab('predictions')
