@@ -5,7 +5,6 @@ import { supabase } from '../lib/supabase'
 import { getStoredWriteToken } from '../lib/sessionToken'
 import { resizeLogoFile } from '../lib/participantProfile'
 import { ParticipantAvatar } from './ParticipantDisplay'
-import PredictionMirrorPanel from './PredictionMirrorPanel'
 import { Icon } from './icons'
 
 export default function ProfileTab({
@@ -164,16 +163,6 @@ export default function ProfileTab({
         </button>
       )}
 
-      {onApplyMirror && (
-        <PredictionMirrorPanel
-          user={user}
-          currentGroupId={groupId}
-          currentPredictions={currentPredictions}
-          onApplyToCurrent={onApplyMirror}
-          onSwitchGroup={onSwitchGroup}
-          notify={notify}
-        />
-      )}
     </div>
   )
 }

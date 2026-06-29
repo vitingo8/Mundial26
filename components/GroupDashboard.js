@@ -38,7 +38,7 @@ import {
 import ParticipantPredictionsSheet from './dashboard/ParticipantPredictionsSheet'
 import ProfileTab from './ProfileTab'
 import ProfileMenuSheet from './ProfileMenuSheet'
-import PredictionMirrorPanel from './PredictionMirrorPanel'
+import PredictionExportSheet from './PredictionExportSheet'
 import { useUserPorraGroups } from '../hooks/useUserPorraGroups'
 import ParticipantDisplay, { ParticipantAvatar } from './ParticipantDisplay'
 import {
@@ -201,11 +201,8 @@ export default function GroupDashboard({
   useEffect(() => { const t = setInterval(handleRefresh, 60000); return () => clearInterval(t) }, [currentGroup.id])
   useEffect(() => { setPredPhase(getDefaultPredPhase(currentGroup.phase)) }, [currentGroup.phase])
 
-  /** Primera entrada al dashboard en la sesión → Porra · Eliminatorias · Día de hoy */
+  /** Cada entrada al dashboard → Porra · Eliminatorias · Día de hoy */
   useEffect(() => {
-    if (typeof sessionStorage === 'undefined') return
-    if (sessionStorage.getItem('porra_porra_landing')) return
-    sessionStorage.setItem('porra_porra_landing', '1')
     writeScheduleViewMode('daily')
     setPredPhase('knockout')
     setTab('predictions')
@@ -213,7 +210,7 @@ export default function GroupDashboard({
       viewMode: 'daily',
       dayKey: scheduleAnchorDateKey('knockout'),
     })
-  }, [])
+  }, [currentGroup.id])
 
   function changeTab(next) {
     if (next === tab) return
@@ -340,6 +337,21 @@ export default function GroupDashboard({
               <Icon name="academicCap" size="sm" />
               <span className="header-action-btn__text">Guía</span>
             </Link>
+            {hasMultipleGroups && (
+              <PredictionExportSheet
+                user={user}
+                currentGroupId={currentGroup.id}
+                currentGroupName={currentGroup.name}
+                sourcePredictions={{
+                  group: groupPreds,
+                  knockout: koPreds,
+                  inicioKnockout: inicioKoPreds,
+                  bonuses: bonusPreds,
+                }}
+                onBeforeExport={flushSave}
+                notify={notify}
+              />
+            )}
             <InviteButton group={currentGroup} notify={notify} />
             <InstallAppButton variant="header" notify={notify} />
             <button
@@ -766,22 +778,6 @@ function PredictionsTab({
 
   return (
     <div className="dash-tab-panel">
-      {onApplyMirror && user?.email && (
-        <PredictionMirrorPanel
-          user={user}
-          currentGroupId={groupId}
-          currentPredictions={{
-            group: groupPreds,
-            knockout: koPreds,
-            inicioKnockout: inicioKoPreds,
-            bonuses: bonusPreds,
-          }}
-          onApplyToCurrent={onApplyMirror}
-          onSwitchGroup={onSwitchGroup}
-          notify={notify}
-        />
-      )}
-
       <div className="dash-phase-picker" role="tablist">
         {phases.map(p => (
           <button
