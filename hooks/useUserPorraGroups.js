@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { findParticipantsByEmail, hasMultiplePorraGroups } from '../lib/participantLookup'
-import { perfMark } from '../lib/startupPerf'
+import { F, perfMark } from '../lib/startupPerf'
 
 function defer(fn) {
   if (typeof requestIdleCallback !== 'undefined') {
@@ -38,12 +38,15 @@ export function useUserPorraGroups(email) {
     setLoading(true)
 
     const taskId = defer(() => {
-      perfMark('useUserPorraGroups idle callback')
+      perfMark(F.IDLE, 'useUserPorraGroups — tarea diferida (requestIdleCallback)')
       ;(async () => {
         try {
           const t0 = performance.now()
           const multi = await hasMultiplePorraGroups(supabase, email)
-          perfMark('hasMultiplePorraGroups ✓', { ms: Math.round(performance.now() - t0), multi })
+          perfMark(F.SUPABASE, 'hasMultiplePorraGroups', {
+            duracion_ms: Math.round(performance.now() - t0),
+            varios_grupos: multi,
+          })
           if (cancelled) return
           setHasMultiple(multi)
           if (!multi) {
@@ -52,7 +55,10 @@ export function useUserPorraGroups(email) {
           }
           const t1 = performance.now()
           const all = await findParticipantsByEmail(supabase, email)
-          perfMark('findParticipantsByEmail ✓', { ms: Math.round(performance.now() - t1), count: all.length })
+          perfMark(F.SUPABASE, 'findParticipantsByEmail', {
+            duracion_ms: Math.round(performance.now() - t1),
+            grupos_encontrados: all.length,
+          })
           if (!cancelled) setGroups(all)
         } catch {
           if (!cancelled) {

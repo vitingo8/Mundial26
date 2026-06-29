@@ -54,6 +54,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <head>
+        <meta name="mobile-web-app-capable" content="yes" />
         <style dangerouslySetInnerHTML={{ __html: CRITICAL_MOBILE_CSS }} />
       </head>
       <body>

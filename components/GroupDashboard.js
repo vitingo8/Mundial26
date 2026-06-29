@@ -40,7 +40,7 @@ import ProfileTab from './ProfileTab'
 import ProfileMenuSheet from './ProfileMenuSheet'
 import PredictionExportSheet from './PredictionExportSheet'
 import { useUserPorraGroups } from '../hooks/useUserPorraGroups'
-import { perfMark } from '../lib/startupPerf'
+import { F, perfMark } from '../lib/startupPerf'
 import ParticipantDisplay, { ParticipantAvatar } from './ParticipantDisplay'
 import {
   readScheduleViewMode,
@@ -119,9 +119,32 @@ export default function GroupDashboard({
   const matchRefs = useRef({})
   const { groups: userPorraGroups, hasMultiple: hasMultipleGroups } = useUserPorraGroups(user?.email)
 
+  const transformPerfRef = useRef({ group: false, knockout: false })
   const { wcMatches, setWcMatches, wcStandings, apiError: wcApiError, reload: reloadWc } = useWcMatches()
-  const groupMatches = useMemo(() => transformGroupMatches(wcMatches), [wcMatches])
-  const knockoutMatches = useMemo(() => transformKnockoutMatches(wcMatches), [wcMatches])
+  const groupMatches = useMemo(() => {
+    const t0 = performance.now()
+    const out = transformGroupMatches(wcMatches)
+    if (!transformPerfRef.current.group && wcMatches?.length) {
+      transformPerfRef.current.group = true
+      perfMark(F.DASHBOARD, 'Transformar partidos de grupos', {
+        duracion_ms: Math.round(performance.now() - t0),
+        count: out.length,
+      })
+    }
+    return out
+  }, [wcMatches])
+  const knockoutMatches = useMemo(() => {
+    const t0 = performance.now()
+    const out = transformKnockoutMatches(wcMatches)
+    if (!transformPerfRef.current.knockout && wcMatches?.length) {
+      transformPerfRef.current.knockout = true
+      perfMark(F.DASHBOARD, 'Transformar partidos eliminatorias', {
+        duracion_ms: Math.round(performance.now() - t0),
+        count: out.length,
+      })
+    }
+    return out
+  }, [wcMatches])
 
   useEffect(() => {
     onMounted?.()
@@ -129,8 +152,12 @@ export default function GroupDashboard({
 
   useEffect(() => {
     if (!wcMatches?.length) return
-    perfMark('GroupDashboard partidos listos', { count: wcMatches.length })
-  }, [wcMatches?.length])
+    perfMark(F.DASHBOARD, 'Calendario disponible en dashboard', {
+      partidos: wcMatches.length,
+      grupos: groupMatches.length,
+      eliminatorias: knockoutMatches.length,
+    })
+  }, [wcMatches?.length, groupMatches.length, knockoutMatches.length])
   const isAdmin = user.is_admin
 
   const syncCurrentUser = useCallback((updatedUser) => {
@@ -220,7 +247,7 @@ export default function GroupDashboard({
   useEffect(() => {
     if (landedGroupIdRef.current === currentGroup.id) return
     landedGroupIdRef.current = currentGroup.id
-    perfMark('GroupDashboard aterrizaje Porra/Eliminatorias/Hoy')
+    perfMark(F.DASHBOARD, 'Aterrizaje Porra → Eliminatorias → Día hoy', { groupId: currentGroup.id })
     writeScheduleViewMode('daily')
     setPredPhase('knockout')
     setTab('predictions')

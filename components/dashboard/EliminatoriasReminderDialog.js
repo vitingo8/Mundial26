@@ -11,7 +11,7 @@ import {
   writeElimReminderDismissed,
 } from '../../lib/eliminatoriasReminder'
 import { lookupEliminatoriasKoPred } from '../../lib/knockoutBridge'
-import { perfMark } from '../../lib/startupPerf'
+import { F, perfMark } from '../../lib/startupPerf'
 import { Icon } from '../icons'
 
 export default function EliminatoriasReminderDialog({
@@ -34,13 +34,13 @@ export default function EliminatoriasReminderDialog({
     const id = typeof requestIdleCallback !== 'undefined'
       ? requestIdleCallback(() => {
           if (!cancelled) {
-            perfMark('EliminatoriasReminder checks habilitados (idle)')
+            perfMark(F.IDLE, 'Aviso eliminatorias — cálculos habilitados (idle)')
             setChecksEnabled(true)
           }
         }, { timeout: 2000 })
       : setTimeout(() => {
           if (!cancelled) {
-            perfMark('EliminatoriasReminder checks habilitados (timeout)')
+            perfMark(F.IDLE, 'Aviso eliminatorias — cálculos habilitados (timeout 300ms)')
             setChecksEnabled(true)
           }
         }, 300)
@@ -77,9 +77,9 @@ export default function EliminatoriasReminderDialog({
         dismissedIds: dismissed,
         groupPhase,
       })
-      perfMark('getEliminatoriasReminderMatches', {
-        ms: Math.round(performance.now() - t0),
-        pending: result.length,
+      perfMark(F.IDLE, 'Calcular avisos eliminatorias pendientes', {
+        duracion_ms: Math.round(performance.now() - t0),
+        partidos_pendientes: result.length,
       })
       return result
     },

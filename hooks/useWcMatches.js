@@ -18,7 +18,7 @@ import {
   getWcMatchesPollIntervalMs,
   hasLiveWcMatches,
 } from '../lib/wcMatchesRefresh'
-import { perfMark, perfSync } from '../lib/startupPerf'
+import { F, perfMark, perfSync } from '../lib/startupPerf'
 
 const CACHE_KEY = 'porra_wc_matches_v2'
 const CACHE_TTL_LIVE = 10 * 1000
@@ -45,7 +45,7 @@ function cacheIsComplete(cached) {
 
 function getCatalogMatches() {
   if (!catalogMatchesMemo) {
-    catalogMatchesMemo = perfSync('getCatalogMatches (catálogo estático)', () =>
+    catalogMatchesMemo = perfSync(F.MATCHES, 'Construir catálogo FIFA estático (104 partidos)', () =>
       enrichApiMatches(buildCatalogApiMatches()),
     )
   }
@@ -85,10 +85,25 @@ function readCache({ allowStale = false } = {}) {
   }
 }
 
-function readBootstrapMatches() {
+function readInitialWcMatches() {
   const cached = readCache({ allowStale: true })
   if (cached?.matches?.length) return cached.matches
-  return getCatalogMatches()
+  return []
+}
+
+function deferCatalogBuild(setWcMatches) {
+  const build = () => {
+    perfMark(F.MATCHES, 'Idle callback — construyendo catálogo FIFA')
+    startTransition(() => {
+      setWcMatches(getCatalogMatches())
+      perfMark(F.MATCHES, 'Catálogo FIFA aplicado al estado')
+    })
+  }
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(build, { timeout: 800 })
+  } else {
+    setTimeout(build, 0)
+  }
 }
 
 function readBootstrapStandings() {
@@ -111,23 +126,27 @@ function writeCache(data, standings = null) {
  * (pausa con la pestaña oculta; reanuda al volver).
  */
 export function WcMatchesProvider({ children }) {
-  const [wcMatches, setWcMatches] = useState(getCatalogMatches)
-  const [wcStandings, setWcStandings] = useState(null)
+  const [wcMatches, setWcMatches] = useState(readInitialWcMatches)
+  const [wcStandings, setWcStandings] = useState(readBootstrapStandings)
   const [apiError, setApiError] = useState(null)
   const wcMatchesRef = useRef([])
   const loadInFlight = useRef(null)
   wcMatchesRef.current = wcMatches
 
   useLayoutEffect(() => {
-    perfMark('WcMatchesProvider useLayoutEffect')
+    perfMark(F.MATCHES, 'WcMatchesProvider — hidratación inicial')
     const cached = readCache({ allowStale: true })
     if (cached?.matches?.length) {
-      perfMark('WcMatches caché sessionStorage', { count: cached.matches.length })
+      perfMark(F.MATCHES, 'Partidos desde sessionStorage', {
+        count: cached.matches.length,
+        tiene_standings: Boolean(cached.standings?.ready),
+      })
       setWcMatches(cached.matches)
       setWcStandings(cached.standings ?? null)
-    } else {
-      perfMark('WcMatches sin caché (catálogo en useState inicial)')
+      return
     }
+    perfMark(F.MATCHES, 'Sin caché de partidos — catálogo se construirá en idle')
+    deferCatalogBuild(setWcMatches)
   }, [])
 
   const load = useCallback(async (force = false) => {
@@ -139,14 +158,14 @@ export function WcMatchesProvider({ children }) {
       if (!force) {
         const cached = readCache()
         if (cacheIsComplete(cached)) {
-          perfMark('WcMatches load: caché fresca, sin red')
+          perfMark(F.MATCHES, 'Fetch omitido — caché de partidos aún válida')
           setWcMatches(cached.matches)
           setWcStandings(cached.standings ?? null)
           return cached.matches
         }
         const stale = readCache({ allowStale: true })
         if (stale?.matches?.length) {
-          perfMark('WcMatches load: caché stale mientras fetch', { count: stale.matches.length })
+          perfMark(F.MATCHES, 'Mostrando caché antigua mientras se pide red', { count: stale.matches.length })
           setWcMatches(stale.matches)
           setWcStandings(stale.standings ?? null)
         }
@@ -154,14 +173,18 @@ export function WcMatchesProvider({ children }) {
       setApiError(null)
       try {
         const t0 = performance.now()
-        perfMark(`WcMatches fetch${force ? ' (force)' : ''}…`)
+        perfMark(F.MATCHES, `Petición HTTP calendario${force ? ' (forzada)' : ''} — inicio`)
         const data = await fetchWcResource('matches', force ? { force: '1' } : {})
         const fetchMs = Math.round(performance.now() - t0)
         const raw = data.matches || []
         if (!raw.length) {
           throw new Error('El calendario llegó vacío')
         }
-        perfMark('WcMatches fetch ✓', { ms: fetchMs, source: data._source, count: raw.length })
+        perfMark(F.MATCHES, 'Petición HTTP calendario — fin', {
+          duracion_ms: fetchMs,
+          fuente: data._source,
+          partidos: raw.length,
+        })
         startTransition(() => {
           setWcMatches(hydrateMatchCrests(raw))
           setWcStandings(data.standings ?? null)
@@ -203,8 +226,8 @@ export function WcMatchesProvider({ children }) {
   const reload = useCallback(() => load(true), [load])
 
   useEffect(() => {
-    perfMark('WcMatches load() programado')
-    void load(false).then(() => perfMark('WcMatches load() inicial terminado'))
+    perfMark(F.MATCHES, 'Programada carga inicial de partidos')
+    void load(false).then(() => perfMark(F.MATCHES, 'Carga inicial de partidos terminada'))
   }, [load])
 
   useEffect(() => {
