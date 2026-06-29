@@ -6,6 +6,7 @@ import { isPredPhaseEditable } from '../lib/phaseLock'
 import { normalizeInicioKoPreds } from '../lib/knockoutBridge'
 import { normalizePredictions } from '../lib/predictionMirror'
 import { migrateParticipantPredictions } from '../lib/matchIdMap'
+import { F, perfMark } from '../lib/startupPerf'
 
 const AUTOSAVE_MS = 2000
 const EMPTY_BONUSES = { topScorer: '', topKeeper: '', topAssists: '', mvp: '' }
@@ -36,18 +37,25 @@ export function usePredictions({
   groupMatches = [],
   knockoutMatches = [],
 }) {
-  const [groupPreds, setGroupPreds] = useState(() =>
-    hydratePredictions(user.predictions, groupMatches, knockoutMatches).group,
-  )
-  const [koPreds, setKoPreds] = useState(() =>
-    hydratePredictions(user.predictions, groupMatches, knockoutMatches).knockout,
-  )
-  const [inicioKoPreds, setInicioKoPreds] = useState(() =>
-    hydratePredictions(user.predictions, groupMatches, knockoutMatches).inicioKnockout,
-  )
-  const [bonusPreds, setBonusPreds] = useState(() =>
-    hydratePredictions(user.predictions, groupMatches, knockoutMatches).bonuses,
-  )
+  // Compute hydratePredictions once; share across all 4 useState initialisers
+  // (previously called 4× independently, running migrateParticipantPredictions 4×).
+  const _initPreds = useRef(null)
+  function _getInitPreds() {
+    if (!_initPreds.current) {
+      const t0 = typeof performance !== 'undefined' ? performance.now() : 0
+      _initPreds.current = hydratePredictions(user.predictions, groupMatches, knockoutMatches)
+      perfMark(F.DASHBOARD, 'usePredictions — hidratación inicial', {
+        duracion_ms: Math.round((typeof performance !== 'undefined' ? performance.now() : 0) - t0),
+        group_keys: Object.keys(_initPreds.current.group).length,
+        ko_keys: Object.keys(_initPreds.current.knockout).length,
+      })
+    }
+    return _initPreds.current
+  }
+  const [groupPreds, setGroupPreds] = useState(() => _getInitPreds().group)
+  const [koPreds, setKoPreds] = useState(() => _getInitPreds().knockout)
+  const [inicioKoPreds, setInicioKoPreds] = useState(() => _getInitPreds().inicioKnockout)
+  const [bonusPreds, setBonusPreds] = useState(() => _getInitPreds().bonuses)
   const [savingManual, setSavingManual] = useState(false)
   const [saveStatus, setSaveStatus] = useState('saved')
   const skipAutoSave = useRef(true)

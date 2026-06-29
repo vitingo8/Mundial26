@@ -86,9 +86,15 @@ function readCache({ allowStale = false } = {}) {
 }
 
 function readInitialWcMatches() {
+  const t0 = typeof performance !== 'undefined' ? performance.now() : 0
   const cached = readCache({ allowStale: true })
-  if (cached?.matches?.length) return cached.matches
-  return []
+  const result = cached?.matches?.length ? cached.matches : []
+  perfMark(F.MATCHES, 'readInitialWcMatches (useState sync)', {
+    duracion_ms: Math.round((typeof performance !== 'undefined' ? performance.now() : 0) - t0),
+    count: result.length,
+    tiene_standings: Boolean(cached?.standings?.ready),
+  })
+  return result
 }
 
 function deferCatalogBuild(setWcMatches) {
@@ -137,16 +143,18 @@ export function WcMatchesProvider({ children }) {
     perfMark(F.MATCHES, 'WcMatchesProvider — hidratación inicial')
     const cached = readCache({ allowStale: true })
     if (cached?.matches?.length) {
-      perfMark(F.MATCHES, 'Partidos desde sessionStorage', {
+      perfMark(F.MATCHES, 'Caché encontrada (useState ya hidratado)', {
         count: cached.matches.length,
         tiene_standings: Boolean(cached.standings?.ready),
       })
-      setWcMatches(cached.matches)
-      setWcStandings(cached.standings ?? null)
+      // wcMatches y wcStandings ya están poblados desde useState(readInitialWcMatches)
+      // y useState(readBootstrapStandings). No se necesita setWcMatches aquí para
+      // evitar el re-render innecesario que provocaba antes.
       return
     }
     perfMark(F.MATCHES, 'Sin caché de partidos — catálogo se construirá en idle')
     deferCatalogBuild(setWcMatches)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const load = useCallback(async (force = false) => {

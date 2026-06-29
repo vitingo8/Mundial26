@@ -19,7 +19,7 @@ function CrestPlaceholder({ size }) {
   )
 }
 
-export default function TeamCrest({ src, alt = '', size = 24 }) {
+export default function TeamCrest({ src, alt = '', size = 24, loading = 'lazy' }) {
   const cleanSrc = typeof src === 'string' ? src.trim() : src
   const [failed, setFailed] = useState(false)
 
@@ -44,7 +44,7 @@ export default function TeamCrest({ src, alt = '', size = 24 }) {
         objectFit: 'contain',
         flexShrink: 0,
       }}
-      loading="lazy"
+      loading={loading}
       onError={() => setFailed(true)}
     />
   )
