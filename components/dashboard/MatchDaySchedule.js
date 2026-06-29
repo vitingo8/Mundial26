@@ -48,6 +48,8 @@ export default function MatchDaySchedule({
   groupMatches = [],
   knockoutMatches = [],
   inicioKnockoutScoring = null,
+  /** Fuerza la pestaña de día (p. ej. «hoy» desde aviso de porra). */
+  focusDayKey = null,
 }) {
   const rawById = useMemo(() => indexApiMatches(apiMatches), [apiMatches])
   const knockoutAdvanceDefault = schedulePhase === 'knockout'
@@ -69,13 +71,17 @@ export default function MatchDaySchedule({
       setSelectedDay(null)
       return
     }
+    if (focusDayKey && days.some(d => d.key === focusDayKey)) {
+      setSelectedDay(focusDayKey)
+      return
+    }
     setSelectedDay(prev => {
       if (prev && days.some(d => d.key === prev)) return prev
       const todayTab = days.find(d => d.key === today)
       const anchorTab = days.find(d => d.key === anchor)
       return todayTab?.key ?? anchorTab?.key ?? days[0].key
     })
-  }, [days, today, anchor, fullView])
+  }, [days, today, anchor, fullView, focusDayKey])
 
   const filteredMatches = useMemo(() => {
     return matches
@@ -237,9 +243,7 @@ export default function MatchDaySchedule({
         </div>
       )}
 
-      {flatMatchesPanel ? matchesBody : (
-        <div className={matchesPanelClass}>{matchesBody}</div>
-      )}
+      <div className={matchesPanelClass}>{matchesBody}</div>
     </div>
   )
 }

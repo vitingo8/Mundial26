@@ -1,9 +1,10 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { isMatchKickoffPassed } from '../../lib/deadlines'
 import TeamCrest from '../TeamCrest'
 import ScoreInput from './ScoreInput'
+import { focusAwayInRow, focusNextMatchHomeScore } from '../../lib/scheduleScoreFocus'
 import { needsKnockoutAdvancePick, resolveKnockoutAdvanceSide } from '../../lib/knockoutAdvances'
 import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
 import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
@@ -25,7 +26,7 @@ import { MatchStatus } from '../icons'
 function BracketTeam({
   name, crest, score, pred, side, onScore, onAdvance, locked, readOnly, pickable, eliminated,
   scoreExact = false, pendingThird = false, pendingThirdSlot = null, voided = false,
-  advanceBadge = false,
+  advanceBadge = false, onFilled,
 }) {
   const inner = (
     <>
@@ -56,6 +57,7 @@ function BracketTeam({
             disabled={locked}
             ariaLabel={`Goles ${name}`}
             scoreSide={side}
+            onFilled={onFilled}
           />
         </span>
       ) : score != null ? (
@@ -104,6 +106,8 @@ export default function BracketMatchSlot({
   inicioKnockoutScoring = null,
   knockoutAdvance = false,
 }) {
+  const slotRowRef = useRef(null)
+
   if (!match) return <div className="bracket-slot bracket-slot--empty" />
 
   const publishedResult = publishedResults[match?.id]
@@ -326,6 +330,7 @@ export default function BracketMatchSlot({
       )}
       <div
       className={`bracket-slot${slotStateClass}${readOnly && onGoToPrediction ? ' bracket-slot--clickable' : ''}${inlinePointsBubble ? ' bracket-slot--has-points' : ''}`}
+      ref={slotRowRef}
       role={readOnly && onGoToPrediction ? 'button' : undefined}
       tabIndex={readOnly && onGoToPrediction ? 0 : undefined}
       onClick={readOnly && onGoToPrediction ? () => onGoToPrediction(match.id) : undefined}
@@ -374,6 +379,7 @@ export default function BracketMatchSlot({
         pendingThirdSlot={match.homePendingThirdSlot}
         voided={inicioKoVoid}
         advanceBadge={advanceSide === 'home'}
+        onFilled={() => focusAwayInRow(slotRowRef.current)}
       />
 
       <BracketTeam
@@ -393,6 +399,7 @@ export default function BracketMatchSlot({
         pendingThirdSlot={match.awayPendingThirdSlot}
         voided={inicioKoVoid}
         advanceBadge={advanceSide === 'away'}
+        onFilled={() => focusNextMatchHomeScore(slotRowRef.current)}
       />
       </div>
 

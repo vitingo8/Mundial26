@@ -78,6 +78,8 @@ import { buildProvisionalResults } from '../lib/syncResultsFromApi'
 import { buildPublishedResultsMap } from '../lib/matchPointsDisplay'
 import { SCORING as SCORING_RULES } from '../lib/gameData'
 import { resetDashboardScroll } from '../lib/dashboardScroll'
+import EliminatoriasReminderDialog from './dashboard/EliminatoriasReminderDialog'
+import { scheduleAnchorDateKey } from '../lib/matchSchedule'
 
 function isInicioKoMatchId(id) {
   const s = String(id)
@@ -103,6 +105,7 @@ export default function GroupDashboard({
   const [tab, setTab] = useState('live')
   const [predPhase, setPredPhase] = useState('knockout')
   const [scrollToMatchId, setScrollToMatchId] = useState(null)
+  const [scheduleNav, setScheduleNav] = useState(null)
   const [currentGroup, setCurrentGroup] = useState(group)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const contentRef = useRef(null)
@@ -236,6 +239,17 @@ export default function GroupDashboard({
     changeTab('predictions')
   }
 
+  function goToPorraFromReminder(match) {
+    writeScheduleViewMode('daily')
+    setScheduleNav({
+      viewMode: 'daily',
+      dayKey: scheduleAnchorDateKey('knockout'),
+    })
+    if (match?.id) setScrollToMatchId(String(match.id))
+    setPredPhase('knockout')
+    changeTab('predictions')
+  }
+
   async function savePredictions() { await persistPredictions(true) }
 
   const navTabs = [
@@ -339,6 +353,16 @@ export default function GroupDashboard({
         onOpenAdmin={isAdmin ? () => changeTab('admin') : undefined}
         onSwitchGroup={onSwitchGroup}
       />
+      <EliminatoriasReminderDialog
+        groupId={currentGroup.id}
+        knockoutMatches={knockoutMatches}
+        koPreds={koPreds}
+        fotmobStandings={wcStandings}
+        groupMatches={groupMatches}
+        apiMatches={wcMatches}
+        groupPhase={currentGroup.phase}
+        onGoToPorra={goToPorraFromReminder}
+      />
       <main ref={contentRef} className="dashboard-content dash-content app-container app-container--wide">
         {tab === 'profile' ? (
           <div className="dash-tab-scroll">
@@ -409,6 +433,8 @@ export default function GroupDashboard({
                   fotmobStandings={wcStandings}
                   groupPhase={currentGroup.phase}
                   orphanGroupKeys={orphanGroupKeys} matchRefs={matchRefs}
+                  scheduleNav={scheduleNav}
+                  onScheduleNavConsumed={() => setScheduleNav(null)}
                   deadlines={{
                     group: effectiveGroupDeadline,
                     bonus: effectiveBonusDeadline,
@@ -649,9 +675,22 @@ function PredictionsTab({
   orphanGroupKeys, matchRefs,
   user, groupId, group, onApplyMirror, onSwitchGroup, notify,
   apiMatches = [], fotmobStandings = null,
+  scheduleNav = null,
+  onScheduleNavConsumed,
 }) {
   const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
+  const [focusDayKey, setFocusDayKey] = useState(null)
   const [detailMatch, setDetailMatch] = useState(null)
+
+  useEffect(() => {
+    if (!scheduleNav) return
+    if (scheduleNav.viewMode) {
+      setScheduleViewMode(scheduleNav.viewMode)
+      writeScheduleViewMode(scheduleNav.viewMode)
+    }
+    if (scheduleNav.dayKey) setFocusDayKey(scheduleNav.dayKey)
+    onScheduleNavConsumed?.()
+  }, [scheduleNav, onScheduleNavConsumed])
 
   function openMatchDetail(m) {
     const userPred =
@@ -798,6 +837,7 @@ function PredictionsTab({
           apiMatches={apiMatches}
           fotmobStandings={fotmobStandings}
           onOpenMatch={openMatchDetail}
+          focusDayKey={focusDayKey}
         />
       )}
       {predPhase === 'bonuses' && (
@@ -1073,6 +1113,7 @@ function KnockoutPreds({
   preds, setPreds, phaseLocked,
   matches = [], teamOptions = [], matchRefs, viewMode = 'daily', group,
   participant, groupMatches = [], apiMatches = [], fotmobStandings = null, onOpenMatch,
+  focusDayKey = null,
 }) {
   const scheduleMatches = useMemo(
     () => buildEliminatoriasKnockoutSchedule(matches, preds, {
@@ -1156,6 +1197,7 @@ function KnockoutPreds({
         participants={group?.participants}
         groupMatches={groupMatches}
         knockoutMatches={matches}
+        focusDayKey={focusDayKey}
       />
     )
   }
