@@ -13,6 +13,7 @@ import {
   readStoredSession,
   saveDashboardCache,
 } from '../lib/dashboardSessionCache'
+import { perfAsync, perfMark } from '../lib/startupPerf'
 
 export default function Page() {
   const [screen, setScreen] = useState('home')
@@ -25,6 +26,7 @@ export default function Page() {
   const [clientReady, setClientReady] = useState(false)
 
   useLayoutEffect(() => {
+    perfMark('page useLayoutEffect inicio')
     const hash = window.location.hash.replace('#', '')
     const params = new URLSearchParams(window.location.search)
     const code = params.get('join') || (hash.startsWith('join-') ? hash.replace('join-', '') : '')
@@ -54,13 +56,17 @@ export default function Page() {
     if (session) {
       const cached = readInitialDashboardState()
       if (cached.group && cached.user) {
+        perfMark('caché dashboard encontrada', { groupId: cached.group.id })
         setCurrentGroup(cached.group)
         setCurrentUser(cached.user)
+      } else {
+        perfMark('sesión sin caché dashboard', { groupId: session.groupId })
       }
       setScreen('dashboard')
     }
 
     setClientReady(true)
+    perfMark('page clientReady', { screen: session ? 'dashboard' : 'pending' })
   }, [])
 
   useEffect(() => {
@@ -71,6 +77,7 @@ export default function Page() {
     const code = params.get('join') || (hash.startsWith('join-') ? hash.replace('join-', '') : '')
 
     async function init() {
+      perfMark('page init()')
       const session = readStoredSession()
 
       if (session) {
@@ -84,9 +91,11 @@ export default function Page() {
         }
         const cached = readDashboardCache(groupId, userId)
         if (cached?.group && cached?.user) {
+          perfMark('restoreSession en background (hay caché)')
           void restoreSession(groupId, userId)
           return
         }
+        perfMark('restoreSession bloqueante (sin caché)')
         const ok = await restoreSession(groupId, userId)
         if (ok) return
         setScreen('home')
@@ -104,30 +113,43 @@ export default function Page() {
   }, [clientReady])
 
   async function restoreSession(groupId, userId) {
-    try {
-      const { data: group } = await supabase.from('porra_groups').select('*').eq('id', groupId).single()
-      const { data: participants } = await supabase
-        .from('porra_participants')
-        .select('*')
-        .eq('group_id', groupId)
+    return perfAsync('restoreSession Supabase', async () => {
+      try {
+        const t0 = performance.now()
+        const { data: group } = await supabase.from('porra_groups').select('*').eq('id', groupId).single()
+        const tGroup = Math.round(performance.now() - t0)
+        const t1 = performance.now()
+        const { data: participants } = await supabase
+          .from('porra_participants')
+          .select('*')
+          .eq('group_id', groupId)
+        const tParticipants = Math.round(performance.now() - t1)
 
-      if (group && participants) {
-        const user = participants.find(p => p.id === userId)
-        if (user) {
-          if (typeof window !== 'undefined') sessionStorage.removeItem('porra_at_home')
-          const fullGroup = {
-            ...group,
-            participants: Object.fromEntries(participants.map(p => [p.id, p])),
+        if (group && participants) {
+          const user = participants.find(p => p.id === userId)
+          if (user) {
+            if (typeof window !== 'undefined') sessionStorage.removeItem('porra_at_home')
+            const fullGroup = {
+              ...group,
+              participants: Object.fromEntries(participants.map(p => [p.id, p])),
+            }
+            setCurrentGroup(fullGroup)
+            setCurrentUser(user)
+            saveDashboardCache(fullGroup, user)
+            setScreen('dashboard')
+            perfMark('restoreSession queries', {
+              porra_groups_ms: tGroup,
+              participants_ms: tParticipants,
+              nParticipants: participants.length,
+            })
+            return true
           }
-          setCurrentGroup(fullGroup)
-          setCurrentUser(user)
-          saveDashboardCache(fullGroup, user)
-          setScreen('dashboard')
-          return true
         }
+      } catch (err) {
+        perfMark('restoreSession error', { error: String(err?.message || err) })
       }
-    } catch { /* ignore */ }
-    return false
+      return false
+    })
   }
 
   function notify(msg, type = 'success') {
@@ -264,6 +286,7 @@ export default function Page() {
           onLeave={clearSession}
           onGoHome={goToHome}
           onSwitchGroup={switchGroup}
+          onMounted={() => perfMark('GroupDashboard montado (UI visible)')}
         />
       )}
       {screen === 'dashboard' && (!currentGroup || !currentUser) && (

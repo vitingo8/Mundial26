@@ -18,6 +18,7 @@ import {
   getWcMatchesPollIntervalMs,
   hasLiveWcMatches,
 } from '../lib/wcMatchesRefresh'
+import { perfMark, perfSync } from '../lib/startupPerf'
 
 const CACHE_KEY = 'porra_wc_matches_v2'
 const CACHE_TTL_LIVE = 10 * 1000
@@ -44,7 +45,9 @@ function cacheIsComplete(cached) {
 
 function getCatalogMatches() {
   if (!catalogMatchesMemo) {
-    catalogMatchesMemo = enrichApiMatches(buildCatalogApiMatches())
+    catalogMatchesMemo = perfSync('getCatalogMatches (catálogo estático)', () =>
+      enrichApiMatches(buildCatalogApiMatches()),
+    )
   }
   return catalogMatchesMemo
 }
@@ -116,10 +119,14 @@ export function WcMatchesProvider({ children }) {
   wcMatchesRef.current = wcMatches
 
   useLayoutEffect(() => {
+    perfMark('WcMatchesProvider useLayoutEffect')
     const cached = readCache({ allowStale: true })
     if (cached?.matches?.length) {
+      perfMark('WcMatches caché sessionStorage', { count: cached.matches.length })
       setWcMatches(cached.matches)
       setWcStandings(cached.standings ?? null)
+    } else {
+      perfMark('WcMatches sin caché (catálogo en useState inicial)')
     }
   }, [])
 
@@ -132,23 +139,29 @@ export function WcMatchesProvider({ children }) {
       if (!force) {
         const cached = readCache()
         if (cacheIsComplete(cached)) {
+          perfMark('WcMatches load: caché fresca, sin red')
           setWcMatches(cached.matches)
           setWcStandings(cached.standings ?? null)
           return cached.matches
         }
         const stale = readCache({ allowStale: true })
         if (stale?.matches?.length) {
+          perfMark('WcMatches load: caché stale mientras fetch', { count: stale.matches.length })
           setWcMatches(stale.matches)
           setWcStandings(stale.standings ?? null)
         }
       }
       setApiError(null)
       try {
+        const t0 = performance.now()
+        perfMark(`WcMatches fetch${force ? ' (force)' : ''}…`)
         const data = await fetchWcResource('matches', force ? { force: '1' } : {})
+        const fetchMs = Math.round(performance.now() - t0)
         const raw = data.matches || []
         if (!raw.length) {
           throw new Error('El calendario llegó vacío')
         }
+        perfMark('WcMatches fetch ✓', { ms: fetchMs, source: data._source, count: raw.length })
         startTransition(() => {
           setWcMatches(hydrateMatchCrests(raw))
           setWcStandings(data.standings ?? null)
@@ -190,7 +203,8 @@ export function WcMatchesProvider({ children }) {
   const reload = useCallback(() => load(true), [load])
 
   useEffect(() => {
-    load(false)
+    perfMark('WcMatches load() programado')
+    void load(false).then(() => perfMark('WcMatches load() inicial terminado'))
   }, [load])
 
   useEffect(() => {

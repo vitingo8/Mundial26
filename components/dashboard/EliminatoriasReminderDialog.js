@@ -11,6 +11,7 @@ import {
   writeElimReminderDismissed,
 } from '../../lib/eliminatoriasReminder'
 import { lookupEliminatoriasKoPred } from '../../lib/knockoutBridge'
+import { perfMark } from '../../lib/startupPerf'
 import { Icon } from '../icons'
 
 export default function EliminatoriasReminderDialog({
@@ -31,8 +32,18 @@ export default function EliminatoriasReminderDialog({
   useEffect(() => {
     let cancelled = false
     const id = typeof requestIdleCallback !== 'undefined'
-      ? requestIdleCallback(() => { if (!cancelled) setChecksEnabled(true) }, { timeout: 2000 })
-      : setTimeout(() => { if (!cancelled) setChecksEnabled(true) }, 300)
+      ? requestIdleCallback(() => {
+          if (!cancelled) {
+            perfMark('EliminatoriasReminder checks habilitados (idle)')
+            setChecksEnabled(true)
+          }
+        }, { timeout: 2000 })
+      : setTimeout(() => {
+          if (!cancelled) {
+            perfMark('EliminatoriasReminder checks habilitados (timeout)')
+            setChecksEnabled(true)
+          }
+        }, 300)
     return () => {
       cancelled = true
       if (typeof cancelIdleCallback !== 'undefined' && typeof requestIdleCallback !== 'undefined') {
@@ -56,7 +67,8 @@ export default function EliminatoriasReminderDialog({
   const matches = useMemo(
     () => {
       if (!checksEnabled) return []
-      return getEliminatoriasReminderMatches({
+      const t0 = performance.now()
+      const result = getEliminatoriasReminderMatches({
         knockoutMatches,
         koPreds,
         fotmobStandings,
@@ -65,6 +77,11 @@ export default function EliminatoriasReminderDialog({
         dismissedIds: dismissed,
         groupPhase,
       })
+      perfMark('getEliminatoriasReminderMatches', {
+        ms: Math.round(performance.now() - t0),
+        pending: result.length,
+      })
+      return result
     },
     [checksEnabled, knockoutMatches, koPreds, fotmobStandings, groupMatches, apiMatches, dismissed, groupPhase, tick],
   )

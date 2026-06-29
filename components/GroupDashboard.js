@@ -40,6 +40,7 @@ import ProfileTab from './ProfileTab'
 import ProfileMenuSheet from './ProfileMenuSheet'
 import PredictionExportSheet from './PredictionExportSheet'
 import { useUserPorraGroups } from '../hooks/useUserPorraGroups'
+import { perfMark } from '../lib/startupPerf'
 import ParticipantDisplay, { ParticipantAvatar } from './ParticipantDisplay'
 import {
   readScheduleViewMode,
@@ -101,6 +102,7 @@ import {
 
 export default function GroupDashboard({
   group, user, refreshGroup, setCurrentUser, notify, onLeave, onGoHome, onSwitchGroup,
+  onMounted,
 }) {
   const [tab, setTab] = useState('predictions')
   const [predPhase, setPredPhase] = useState('knockout')
@@ -120,6 +122,15 @@ export default function GroupDashboard({
   const { wcMatches, setWcMatches, wcStandings, apiError: wcApiError, reload: reloadWc } = useWcMatches()
   const groupMatches = useMemo(() => transformGroupMatches(wcMatches), [wcMatches])
   const knockoutMatches = useMemo(() => transformKnockoutMatches(wcMatches), [wcMatches])
+
+  useEffect(() => {
+    onMounted?.()
+  }, [onMounted])
+
+  useEffect(() => {
+    if (!wcMatches?.length) return
+    perfMark('GroupDashboard partidos listos', { count: wcMatches.length })
+  }, [wcMatches?.length])
   const isAdmin = user.is_admin
 
   const syncCurrentUser = useCallback((updatedUser) => {
@@ -209,6 +220,7 @@ export default function GroupDashboard({
   useEffect(() => {
     if (landedGroupIdRef.current === currentGroup.id) return
     landedGroupIdRef.current = currentGroup.id
+    perfMark('GroupDashboard aterrizaje Porra/Eliminatorias/Hoy')
     writeScheduleViewMode('daily')
     setPredPhase('knockout')
     setTab('predictions')
