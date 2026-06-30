@@ -17,7 +17,7 @@ import { focusAwayInRow, focusNextMatchHomeScore } from '../../lib/scheduleScore
 
 import ScoreInput from './ScoreInput'
 
-import { needsKnockoutAdvancePick, resolveKnockoutAdvanceSide } from '../../lib/knockoutAdvances'
+import { needsKnockoutAdvancePick, resolveKnockoutAdvanceSide, enrichKnockoutResultWithAdvances } from '../../lib/knockoutAdvances'
 import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
 import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
 import { isFotmobCatalogMatchId, isMatchNotStarted } from '../../lib/matchHeadToHead'
@@ -265,6 +265,13 @@ export default function MatchRow({
 
   const inicioKoVoid = inicioKoUiStatus?.void === true
 
+  const resultForScoring = useMemo(() => {
+    if (isInicioKo) return publishedResult
+    const base = publishedResult || (apiRaw ? getApiMatchDisplayScore(apiRaw) : null)
+    if (!base || !knockoutAdvance || !apiRaw) return base
+    return enrichKnockoutResultWithAdvances(base, apiRaw)
+  }, [isInicioKo, publishedResult, apiRaw, knockoutAdvance])
+
   const scoringOpts = useMemo(
     () => ({
       knockout: knockoutAdvance,
@@ -283,9 +290,9 @@ export default function MatchRow({
         matchNumber,
       )
     }
-    if (!publishedResult) return null
-    return summarizeMatchPoints(predRow, publishedResult, scoringOpts)
-  }, [isInicioKo, inicioKnockoutScoring, publishedResult, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow])
+    if (!resultForScoring) return null
+    return summarizeMatchPoints(predRow, resultForScoring, scoringOpts)
+  }, [isInicioKo, inicioKnockoutScoring, resultForScoring, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow])
 
   const apiScore = apiRaw ? getApiMatchDisplayScore(apiRaw) : null
   const isApiLive = apiRaw && isLiveMatchStatus(apiRaw.status)
@@ -298,19 +305,22 @@ export default function MatchRow({
       return summarizeInicioKnockoutMatchPoints(predRow, { home, away }, inicioKnockoutScoring, matchNumber)
     }
     if (!isApiLive || !apiScore || publishedResult) return null
-    return summarizeMatchPoints(predRow, apiScore, scoringOpts)
-  }, [isInicioKo, inicioKnockoutScoring, isApiLive, apiScore, publishedResult, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow])
+    const liveResult = knockoutAdvance && apiRaw
+      ? enrichKnockoutResultWithAdvances(apiScore, apiRaw)
+      : apiScore
+    return summarizeMatchPoints(predRow, liveResult, scoringOpts)
+  }, [isInicioKo, inicioKnockoutScoring, isApiLive, apiScore, publishedResult, apiRaw, knockoutAdvance, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow])
 
   const apiFinishedPointsSummary = useMemo(() => {
     if (isInicioKo && inicioKnockoutScoring) {
       if (!isApiFinished || !apiScore || publishedResult) return null
       return summarizeInicioKnockoutMatchPoints(predRow, { home, away }, inicioKnockoutScoring, matchNumber)
     }
-    if (!isApiFinished || !apiScore || publishedResult) return null
-    return summarizeMatchPoints(predRow, apiScore, scoringOpts)
-  }, [isInicioKo, inicioKnockoutScoring, isApiFinished, apiScore, publishedResult, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow])
+    if (!isApiFinished || !resultForScoring) return null
+    return summarizeMatchPoints(predRow, resultForScoring, scoringOpts)
+  }, [isInicioKo, inicioKnockoutScoring, isApiFinished, apiScore, publishedResult, resultForScoring, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow])
 
-  const resultForCompare = publishedResult || apiScore || null
+  const resultForCompare = resultForScoring || publishedResult || apiScore || null
   const isExactHit = useMemo(() => {
     if (inicioKoVoid) return false
     if (isInicioKo && inicioKnockoutScoring) {
