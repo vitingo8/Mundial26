@@ -4293,6 +4293,30 @@ button.schedule-match-row:focus-visible {
   letter-spacing: 0.02em;
 }
 
+.match-events-pen-dot {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.match-events-pen-dot--scored {
+  color: #15803d;
+}
+
+.match-events-pen-dot--missed {
+  color: #dc2626;
+}
+
+.match-events-event--pen {
+  gap: 8px;
+}
+
 /* Ficha de jugador */
 .player-detail-backdrop {
   position: fixed;

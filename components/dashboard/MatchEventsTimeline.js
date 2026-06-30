@@ -195,10 +195,57 @@ function EventCardContent({ item, side, onPlayerClick }) {
   )
 }
 
+function EventPenaltyShootoutContent({ item, side, onPlayerClick }) {
+  const scoreLabel = formatScoreLabel(item.penScore)
+  const scored = item.outcome === 'scored'
+  return (
+    <div className={`match-events-event match-events-event--pen match-events-event--${side}`}>
+      {side === 'away' && (
+        <span
+          className={`match-events-pen-dot${scored ? ' match-events-pen-dot--scored' : ' match-events-pen-dot--missed'}`}
+          aria-hidden="true"
+        >
+          {scored ? '●' : '✕'}
+        </span>
+      )}
+      <EventPlayerAvatar
+        photoUrl={item.photoUrl}
+        name={item.playerName}
+        playerId={item.playerId}
+        onClick={onPlayerClick}
+      />
+      <div className="match-events-event-body">
+        <EventPlayerName
+          name={item.playerName}
+          playerId={item.playerId}
+          onPlayerClick={onPlayerClick}
+        />
+        {scoreLabel && (
+          <p className="match-events-score-inline">({scoreLabel})</p>
+        )}
+        {item.subtext && (
+          <p className="match-events-sub">{item.subtext}</p>
+        )}
+      </div>
+      {side === 'home' && (
+        <span
+          className={`match-events-pen-dot${scored ? ' match-events-pen-dot--scored' : ' match-events-pen-dot--missed'}`}
+          aria-hidden="true"
+        >
+          {scored ? '●' : '✕'}
+        </span>
+      )}
+    </div>
+  )
+}
+
 function EventSideContent({ item, onPlayerClick }) {
   if (item.isHome == null) return null
   const side = item.isHome ? 'home' : 'away'
   if (item.kind === 'goal') return <EventGoalContent item={item} side={side} onPlayerClick={onPlayerClick} />
+  if (item.kind === 'penShootout') {
+    return <EventPenaltyShootoutContent item={item} side={side} onPlayerClick={onPlayerClick} />
+  }
   if (item.kind === 'sub') return <EventSubContent item={item} side={side} onPlayerClick={onPlayerClick} />
   if (item.kind === 'card') return <EventCardContent item={item} side={side} onPlayerClick={onPlayerClick} />
   return null
@@ -213,7 +260,7 @@ function CenterMarkerRow({ item }) {
     )
   }
 
-  if (item.kind === 'half') {
+  if (item.kind === 'half' || item.kind === 'penShootoutHeader') {
     return (
       <li className="match-events-row match-events-row--marker">
         <div className="match-events-half">
@@ -241,7 +288,7 @@ export default function MatchEventsTimeline({ items, onPlayerClick }) {
     <section className="match-detail-section match-detail-section--events">
       <ul className="match-events-list">
         {items.map(item => {
-          if (item.kind === 'half' || item.kind === 'addedTime') {
+          if (item.kind === 'half' || item.kind === 'addedTime' || item.kind === 'penShootoutHeader') {
             return <CenterMarkerRow key={item.id} item={item} />
           }
 
@@ -252,7 +299,7 @@ export default function MatchEventsTimeline({ items, onPlayerClick }) {
                 {item.isHome === true && <EventSideContent item={item} onPlayerClick={onPlayerClick} />}
               </div>
               <div className="match-events-col match-events-col--time">
-                {minuteLabel !== '—' && (
+                {minuteLabel !== '—' && item.kind !== 'penShootout' && (
                   <span className="match-events-minute">{minuteLabel}</span>
                 )}
               </div>
