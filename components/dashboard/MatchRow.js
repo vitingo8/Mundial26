@@ -17,7 +17,8 @@ import { focusAwayInRow, focusNextMatchHomeScore } from '../../lib/scheduleScore
 
 import ScoreInput from './ScoreInput'
 
-import { needsKnockoutAdvancePick, resolveKnockoutAdvanceSide, enrichKnockoutResultWithAdvances } from '../../lib/knockoutAdvances'
+import { needsKnockoutAdvancePick, resolveKnockoutAdvanceSide } from '../../lib/knockoutAdvances'
+import { enrichKnockoutResultWithAdvances } from '../../lib/knockoutRegulationScore'
 import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
 import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
 import { isFotmobCatalogMatchId, isMatchNotStarted } from '../../lib/matchHeadToHead'
