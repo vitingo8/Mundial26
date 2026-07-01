@@ -36,7 +36,7 @@ function clamp(n, min, max) {
 /**
  * Icono «i» con tooltip minimalista: predicciones de todos los participantes en el partido.
  */
-export default function MatchPredsInfo({ rows = [], resultUpdatedAt = null, className = '' }) {
+export default function MatchPredsInfo({ rows = [], className = '' }) {
   const [open, setOpen] = useState(false)
   const [placement, setPlacement] = useState('above')
   const [tipStyle, setTipStyle] = useState(null)
@@ -143,7 +143,14 @@ export default function MatchPredsInfo({ rows = [], resultUpdatedAt = null, clas
           <ul className="match-preds-info-list">
             {rows.map(row => (
               <li key={row.id} className="match-preds-info-row">
-                <span className="match-preds-info-name">{row.label}</span>
+                <span className="match-preds-info-name">
+                  <span className="match-preds-info-name-text">{row.label}</span>
+                  {row.savedAt ? (
+                    <span className="match-preds-info-saved-at">
+                      {formatMadridShortDateTime(row.savedAt)}
+                    </span>
+                  ) : null}
+                </span>
                 <span className="match-preds-info-score">
                   {row.home ?? '?'}–{row.away ?? '?'}
                   {row.advanceCrest ? (
@@ -158,11 +165,6 @@ export default function MatchPredsInfo({ rows = [], resultUpdatedAt = null, clas
               </li>
             ))}
           </ul>
-          {resultUpdatedAt && (
-            <p className="match-preds-info-tooltip-updated">
-              Resultado actualizado: {formatMadridShortDateTime(resultUpdatedAt)}
-            </p>
-          )}
         </div>,
         document.body,
       )

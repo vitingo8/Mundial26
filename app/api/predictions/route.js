@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyWriteToken } from '../../../lib/sessionToken'
+import { stampPredictionsOnSave } from '../../../lib/predictionTimestamps'
 
 function getAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -25,7 +26,7 @@ export async function PATCH(request) {
     const supabase = getAdmin()
     const { data: row } = await supabase
       .from('porra_participants')
-      .select('id, group_id')
+      .select('id, group_id, predictions')
       .eq('id', userId)
       .single()
 
@@ -33,9 +34,11 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Participante no encontrado' }, { status: 404 })
     }
 
+    const stamped = stampPredictionsOnSave(predictions, row.predictions)
+
     const { error } = await supabase
       .from('porra_participants')
-      .update({ predictions, updated_at: new Date().toISOString() })
+      .update({ predictions: stamped, updated_at: new Date().toISOString() })
       .eq('id', userId)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -137,7 +137,6 @@ export default function MatchDaySchedule({
 
   function renderMatchRow(m, compact = false) {
     const publishedResult = publishedResults[m.id]
-    const resultUpdatedAt = publishedResult?._updatedAt || null
     const scoringTeams = knockoutScoringCtx
       ? resolveKnockoutTeamsForScoring(m.id, publishedResult, knockoutScoringCtx)
       : {}
@@ -169,7 +168,6 @@ export default function MatchDaySchedule({
         compact={compact}
         showMatchDate={schedulePhase === 'knockout'}
         publishedResult={publishedResult}
-        resultUpdatedAt={resultUpdatedAt}
         knockoutScoringTeams={scoringTeams}
         apiRaw={rawById[m.id]}
         onOpenLiveDetail={

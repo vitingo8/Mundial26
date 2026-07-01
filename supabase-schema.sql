@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS porra_participants (
   name TEXT NOT NULL,
   email TEXT NOT NULL,                 -- obligatorio; recuperación de cuenta
   is_admin BOOLEAN DEFAULT FALSE,
-  predictions JSONB DEFAULT '{"group":{}, "knockout":{}, "bonuses":{}}',
+  predictions JSONB DEFAULT '{"group":{}, "knockout":{}, "bonuses":{}}', -- por partido: { home, away, t?: ISO } hora en que se guardó
   pin_hash TEXT,                         -- hash SHA-256 del PIN opcional (re-entrada)
   team_name TEXT,                        -- nombre del equipo en la porra (opcional)
   team_logo TEXT,                        -- data URL del escudo (opcional)

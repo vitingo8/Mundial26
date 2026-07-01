@@ -111,7 +111,6 @@ export default function BracketMatchSlot({
   if (!match) return <div className="bracket-slot bracket-slot--empty" />
 
   const publishedResult = publishedResults[match?.id]
-  const resultUpdatedAt = publishedResult?._updatedAt || null
   const scoringTeams = knockoutScoringCtx
     ? resolveKnockoutTeamsForScoring(match.id, publishedResult, knockoutScoringCtx)
     : {}
@@ -321,7 +320,7 @@ export default function BracketMatchSlot({
           <div className="bracket-slot-tag-row bracket-slot-tag-row--mirror" aria-hidden="true">
             <div className="bracket-slot-tag">P{match.matchNumber}</div>
             {!readOnly && participantPredRows.length > 0 && (
-              <MatchPredsInfo rows={participantPredRows} resultUpdatedAt={resultUpdatedAt} className="match-preds-info-wrap--bracket" />
+              <MatchPredsInfo rows={participantPredRows} className="match-preds-info-wrap--bracket" />
             )}
           </div>
           <div className="bracket-slot-scores-wrap bracket-slot-scores-wrap--has-points">
@@ -355,7 +354,7 @@ export default function BracketMatchSlot({
         <div className="bracket-slot-tag">P{match.matchNumber}</div>
         <span className="schedule-match-tag-icons">
           {!readOnly && participantPredRows.length > 0 && (
-            <MatchPredsInfo rows={participantPredRows} resultUpdatedAt={resultUpdatedAt} className="match-preds-info-wrap--bracket" />
+            <MatchPredsInfo rows={participantPredRows} className="match-preds-info-wrap--bracket" />
           )}
         </span>
       </div>

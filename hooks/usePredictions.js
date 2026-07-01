@@ -7,12 +7,13 @@ import { normalizeInicioKoPreds } from '../lib/knockoutBridge'
 import { normalizePredictions } from '../lib/predictionMirror'
 import { migrateParticipantPredictions } from '../lib/matchIdMap'
 import { F, perfMark } from '../lib/startupPerf'
+import { stampPredictionsOnSave, stripPredTimestampsForCompare } from '../lib/predictionTimestamps'
 
 const AUTOSAVE_MS = 2000
 const EMPTY_BONUSES = { topScorer: '', topKeeper: '', topAssists: '', mvp: '' }
 
 function predictionsEqual(a, b) {
-  return JSON.stringify(a) === JSON.stringify(b)
+  return JSON.stringify(stripPredTimestampsForCompare(a)) === JSON.stringify(stripPredTimestampsForCompare(b))
 }
 
 function hydratePredictions(raw, groupMatches, knockoutMatches) {
@@ -103,12 +104,7 @@ export function usePredictions({
       return false
     }
 
-    const predictions = {
-      group: predsRef.current.group,
-      knockout: predsRef.current.knockout,
-      inicioKnockout: predsRef.current.inicioKnockout,
-      bonuses: predsRef.current.bonuses,
-    }
+    const predictions = stampPredictionsOnSave(predsRef.current, user.predictions)
     saveInFlight.current = true
     if (manual) {
       setSavingManual(true)
