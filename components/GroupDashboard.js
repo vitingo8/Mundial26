@@ -498,7 +498,7 @@ export default function GroupDashboard({
                   koPreds={koPreds} setKoPreds={setKoPreds}
                   inicioKoPreds={inicioKoPreds} setInicioKoPreds={setInicioKoPreds}
                   bonusPreds={bonusPreds} setBonusPreds={setBonusPreds}
-                  saving={saving} saveStatus={saveStatus} onSave={savePredictions}
+                  saving={saving} saveStatus={saveStatus} onSave={savePredictions} flushSave={flushSave}
                   groupDeadlinePassed={groupDeadlinePassed}
                   bonusDeadlinePassed={bonusDeadlinePassed}
                   groupMatches={groupMatches} knockoutMatches={knockoutMatches} teamOptions={teamOptions.length ? teamOptions : ALL_TEAMS}
@@ -728,21 +728,47 @@ function GroupTab({ leaderboard, group, groupResults, groupMatches, knockoutMatc
 }
 
 // ─── PREDICTIONS TAB ──────────────────────────────────────────────────────────
-function SaveStatusBar({ status }) {
-  if (status !== 'error') return null
+function SaveStatusBar({ status, onRetry }) {
+  if (status === 'error') {
+    return (
+      <div className="dash-save-status" style={{ color: 'var(--dash-red)' }} role="alert">
+        <Icon name="exclamationTriangle" size="sm" />
+        No se pudo guardar
+        {onRetry ? (
+          <button type="button" className="dash-save-retry-btn" onClick={onRetry}>
+            Reintentar
+          </button>
+        ) : null}
+      </div>
+    )
+  }
 
-  return (
-    <div className="dash-save-status" style={{ color: 'var(--dash-red)' }} role="alert">
-      <Icon name="exclamationTriangle" size="sm" style={{ marginRight: 4 }} />
-      No se pudo guardar — pulsa «Guardar ahora» o sigue editando para reintentar
-    </div>
-  )
+  if (status === 'saving') {
+    return (
+      <div className="dash-save-status dash-save-status--subtle" role="status" aria-live="polite">
+        <Icon name="arrowPath" size="sm" />
+        Guardando…
+      </div>
+    )
+  }
+
+  if (status === 'pending') {
+    return (
+      <div className="dash-save-status dash-save-status--subtle" role="status" aria-live="polite">
+        Cambios pendientes…
+      </div>
+    )
+  }
+
+  if (status === 'saved') return null
+
+  return null
 }
 
 function PredictionsTab({
   predPhase, setPredPhase, groupPreds, setGroupPreds, koPreds, setKoPreds,
   inicioKoPreds, setInicioKoPreds,
-  bonusPreds, setBonusPreds, saving, saveStatus, onSave,
+  bonusPreds, setBonusPreds, saving, saveStatus, onSave, flushSave,
   groupDeadlinePassed, bonusDeadlinePassed,
   groupMatches, knockoutMatches, teamOptions, wcApiError, onReloadWc,
   groupPhase, deadlines,
@@ -800,6 +826,11 @@ function PredictionsTab({
 
   const phaseLocked = isPhaseLocked(groupPhase, predPhase, false, false)
 
+  function handlePredPhaseChange(next) {
+    if (next !== predPhase) void flushSave?.()
+    setPredPhase(next)
+  }
+
   const phases = [
     {
       id: 'group',
@@ -834,7 +865,7 @@ function PredictionsTab({
             role="tab"
             aria-pressed={predPhase === p.id}
             className="dash-phase-btn"
-            onClick={() => setPredPhase(p.id)}
+            onClick={() => handlePredPhaseChange(p.id)}
           >
             <span className="dash-phase-icon"><Icon name={PHASE_ICONS[p.id]} /></span>
             <span className="dash-phase-body">
@@ -850,7 +881,7 @@ function PredictionsTab({
         ))}
       </div>
 
-      <SaveStatusBar status={saveStatus} />
+      <SaveStatusBar status={saveStatus} onRetry={saveStatus === 'error' ? onSave : undefined} />
 
       {(predPhase === 'group' || predPhase === 'knockout') && (
         <ScheduleViewTabs
@@ -906,10 +937,6 @@ function PredictionsTab({
           actuals={group?.actuals}
         />
       )}
-
-      <button type="button" className="dash-save-manual" style={s.saveBtn} onClick={onSave}>
-        <SaveButtonLabel saving={saving}>Guardar ahora</SaveButtonLabel>
-      </button>
 
       {detailMatch && (
         <MatchDetailSheet

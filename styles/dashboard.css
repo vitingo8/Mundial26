@@ -1446,6 +1446,23 @@
   padding: 4px;
 }
 
+.dash-save-status--ok {
+  color: var(--dash-accent);
+}
+
+.dash-save-retry-btn {
+  margin-left: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .dashboard-app .dash-save-manual {
   margin-top: 12px;
   opacity: 0.9;

@@ -9,7 +9,7 @@ import { migrateParticipantPredictions } from '../lib/matchIdMap'
 import { F, perfMark } from '../lib/startupPerf'
 import { stampPredictionsOnSave, stripPredTimestampsForCompare } from '../lib/predictionTimestamps'
 
-const AUTOSAVE_MS = 2000
+const AUTOSAVE_MS = 1000
 const EMPTY_BONUSES = { topScorer: '', topKeeper: '', topAssists: '', mvp: '' }
 
 function predictionsEqual(a, b) {
@@ -64,6 +64,7 @@ export function usePredictions({
   const pendingRef = useRef(false)
   const saveInFlight = useRef(false)
   const debounceTimer = useRef(null)
+  const lastSavedPredictionsRef = useRef(user.predictions || {})
   const predsRef = useRef({
     group: groupPreds,
     knockout: koPreds,
@@ -92,7 +93,8 @@ export function usePredictions({
       setBonusPreds(next.bonuses)
     })
     skipAutoSave.current = true
-  }, [user.id, user.updated_at, groupMatches, knockoutMatches])
+    lastSavedPredictionsRef.current = user.predictions || {}
+  }, [user.id, user.updated_at, user.predictions, groupMatches, knockoutMatches])
 
   const runSave = useCallback(async (manual = false) => {
     if (saveInFlight.current) {
@@ -104,7 +106,7 @@ export function usePredictions({
       return false
     }
 
-    const predictions = stampPredictionsOnSave(predsRef.current, user.predictions)
+    const predictions = stampPredictionsOnSave(predsRef.current, lastSavedPredictionsRef.current)
     saveInFlight.current = true
     if (manual) {
       setSavingManual(true)
@@ -160,6 +162,7 @@ export function usePredictions({
     pendingRef.current = stillDirty
 
     skipUserSync.current = true
+    lastSavedPredictionsRef.current = predictions
     setCurrentUser({ ...user, predictions, updated_at: new Date().toISOString() })
 
     if (stillDirty) {
@@ -201,12 +204,7 @@ export function usePredictions({
       clearTimeout(debounceTimer.current)
       debounceTimer.current = null
     }
-    if (
-      debounceTimer.current ||
-      pendingRef.current ||
-      saveStatus === 'pending' ||
-      saveStatus === 'saving'
-    ) {
+    if (pendingRef.current || saveStatus === 'pending' || saveStatus === 'saving') {
       return runSaveRef.current(false)
     }
     return Promise.resolve(true)
