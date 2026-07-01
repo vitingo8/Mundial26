@@ -192,6 +192,9 @@ export default function MatchRow({
   /** Resultado publicado (organizador / fixture de prueba). */
   publishedResult = null,
 
+  /** Última vez que cambió el resultado de este partido (ISO), si se conoce. */
+  resultUpdatedAt = null,
+
   /** { predictedTeams, actualTeams } para puntuar eliminatorias */
   knockoutScoringTeams = null,
 
@@ -496,7 +499,7 @@ export default function MatchRow({
 
             <span className="schedule-match-tag-icons">
               {!readOnly && participantPredRows.length > 0 && (
-                <MatchPredsInfo rows={participantPredRows} />
+                <MatchPredsInfo rows={participantPredRows} resultUpdatedAt={resultUpdatedAt} />
               )}
             </span>
 

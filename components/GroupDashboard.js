@@ -933,8 +933,8 @@ function GroupPhasePreds({
   loadError, onRetry, apiMatches = [], fotmobStandings = null, onOpenMatch,
 }) {
   const publishedResults = useMemo(
-    () => buildPublishedResultsMap(group?.results, 'group', matches),
-    [group?.results, matches],
+    () => buildPublishedResultsMap(group?.results, 'group', matches, group?.results_updated_at),
+    [group?.results, group?.results_updated_at, matches],
   )
   function setScore(id, side, val) {
     if (val === '' || val === undefined) {
@@ -1192,8 +1192,8 @@ function KnockoutPreds({
     [participant, groupMatches, matches, preds, fotmobStandings, apiMatches],
   )
   const publishedResults = useMemo(
-    () => buildPublishedResultsMap(group?.results, 'knockout', matches),
-    [group?.results, matches],
+    () => buildPublishedResultsMap(group?.results, 'knockout', matches, group?.results_updated_at),
+    [group?.results, group?.results_updated_at, matches],
   )
   const koLocked = phaseLocked
 

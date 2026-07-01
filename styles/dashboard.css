@@ -2437,6 +2437,16 @@
   flex-shrink: 0;
 }
 
+.match-preds-info-tooltip-updated {
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 0.56rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.65;
+  white-space: nowrap;
+}
+
 .match-preds-info-advance-crest {
   display: inline-flex;
   line-height: 0;

@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getStoredWriteToken } from '../lib/sessionToken'
-import { buildMergedResults, resultsNeedSync } from '../lib/syncResultsFromApi'
+import { buildMergedResults, resultsNeedSync, buildResultTimestamps } from '../lib/syncResultsFromApi'
 import { isTestPorraGroup } from '../lib/testPorraGroups'
 
 /**
@@ -37,7 +37,8 @@ export function useAutoSyncResults({
       if (busy.current) return
       busy.current = true
       try {
-        const updates = { results: merged }
+        const resultsUpdatedAt = buildResultTimestamps(group.results, group.results_updated_at, merged)
+        const updates = { results: merged, results_updated_at: resultsUpdatedAt }
         const token = getStoredWriteToken(group.id, userId)
         let ok = false
         if (token) {

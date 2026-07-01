@@ -115,6 +115,7 @@ export function CreateScreen({ setScreen, notify, onCreated }) {
         phase: 'group',
         actuals: {},
         results: { group: {}, knockout: {} },
+        results_updated_at: { group: {}, knockout: {} },
         group_deadline: defaultGroupDeadline,
         knockout_deadline: defaultKnockoutDeadline,
         bonus_deadline: defaultBonusDeadline,

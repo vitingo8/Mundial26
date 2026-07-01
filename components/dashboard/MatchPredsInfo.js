@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import { createPortal } from 'react-dom'
 import { Icon } from '../icons'
 import TeamCrest from '../TeamCrest'
+import { formatMadridShortDateTime } from '../../lib/madridTime'
 
 function findListPlacement(wrapEl) {
   const listRoot =
@@ -35,7 +36,7 @@ function clamp(n, min, max) {
 /**
  * Icono «i» con tooltip minimalista: predicciones de todos los participantes en el partido.
  */
-export default function MatchPredsInfo({ rows = [], className = '' }) {
+export default function MatchPredsInfo({ rows = [], resultUpdatedAt = null, className = '' }) {
   const [open, setOpen] = useState(false)
   const [placement, setPlacement] = useState('above')
   const [tipStyle, setTipStyle] = useState(null)
@@ -157,6 +158,11 @@ export default function MatchPredsInfo({ rows = [], className = '' }) {
               </li>
             ))}
           </ul>
+          {resultUpdatedAt && (
+            <p className="match-preds-info-tooltip-updated">
+              Resultado actualizado: {formatMadridShortDateTime(resultUpdatedAt)}
+            </p>
+          )}
         </div>,
         document.body,
       )
