@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getStoredWriteToken } from '../lib/sessionToken'
-import { buildMergedResults, resultsNeedSync, buildResultTimestamps } from '../lib/syncResultsFromApi'
+import { buildMergedResults, resultsNeedSync, buildResultTimestamps, timestampsNeedSync } from '../lib/syncResultsFromApi'
 import { updateGroupWithOptionalColumns } from '../lib/groupUpdateFallback'
 import { isTestPorraGroup } from '../lib/testPorraGroups'
 
@@ -38,10 +38,12 @@ export function useAutoSyncResults({
     if (!enabled || !group?.id || isTestPorraGroup(group.id) || !wcMatches?.length) return
 
     const merged = buildMergedResults(wcMatches, group.results)
-    const key = JSON.stringify(merged)
-    if (key === lastSavedKey.current) return
-    if (!resultsNeedSync(group.results, merged)) {
-      lastSavedKey.current = key
+    const needsResults = resultsNeedSync(group.results, merged)
+    const needsTimestamps = timestampsNeedSync(group.results, group.results_updated_at, merged)
+    const syncKey = JSON.stringify({ merged, needsResults, needsTimestamps })
+    if (syncKey === lastSavedKey.current) return
+    if (!needsResults && !needsTimestamps) {
+      lastSavedKey.current = syncKey
       return
     }
 
@@ -53,11 +55,11 @@ export function useAutoSyncResults({
       try {
         const resultsUpdatedAt = buildResultTimestamps(group.results, group.results_updated_at, merged)
         const ok = await persistGroupUpdates(group.id, userId, getStoredWriteToken(group.id, userId), {
-          results: merged,
+          ...(needsResults ? { results: merged } : {}),
           results_updated_at: resultsUpdatedAt,
         })
         if (!cancelled && ok) {
-          lastSavedKey.current = key
+          lastSavedKey.current = syncKey
           const updated = await refreshGroup?.(group.id)
           if (updated) setGroup(updated)
         }
@@ -67,5 +69,5 @@ export function useAutoSyncResults({
     })()
 
     return () => { cancelled = true }
-  }, [enabled, wcMatches, group?.id, group?.results, userId, setGroup, refreshGroup])
+  }, [enabled, wcMatches, group?.id, group?.results, group?.results_updated_at, userId, setGroup, refreshGroup])
 }
