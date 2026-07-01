@@ -149,7 +149,10 @@ export default function GroupDashboard({
     return out
   }, [wcMatches])
 
+  const mountedOnceRef = useRef(false)
   useEffect(() => {
+    if (mountedOnceRef.current) return
+    mountedOnceRef.current = true
     onMounted?.()
   }, [onMounted])
 
