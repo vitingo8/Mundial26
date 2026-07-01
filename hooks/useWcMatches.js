@@ -27,6 +27,14 @@ const CACHE_TTL_IDLE = 10 * 60 * 1000
 const WcMatchesContext = createContext(null)
 
 let catalogMatchesMemo = null
+/** Una sola lectura de sessionStorage por carga de página. */
+let bootstrapCacheSnapshot = undefined
+
+function getBootstrapCache() {
+  if (bootstrapCacheSnapshot !== undefined) return bootstrapCacheSnapshot
+  bootstrapCacheSnapshot = readCache({ allowStale: true })
+  return bootstrapCacheSnapshot
+}
 
 function isLiveMatchSet(matches) {
   return (matches || []).some(m => /^\d+$/.test(String(m.id)))
@@ -87,7 +95,7 @@ function readCache({ allowStale = false } = {}) {
 
 function readInitialWcMatches() {
   const t0 = typeof performance !== 'undefined' ? performance.now() : 0
-  const cached = readCache({ allowStale: true })
+  const cached = getBootstrapCache()
   const result = cached?.matches?.length ? cached.matches : []
   perfMark(F.MATCHES, 'readInitialWcMatches (useState sync)', {
     duracion_ms: Math.round((typeof performance !== 'undefined' ? performance.now() : 0) - t0),
@@ -113,8 +121,7 @@ function deferCatalogBuild(setWcMatches) {
 }
 
 function readBootstrapStandings() {
-  const cached = readCache({ allowStale: true })
-  return cached?.standings ?? null
+  return getBootstrapCache()?.standings ?? null
 }
 
 function writeCache(data, standings = null) {
@@ -141,15 +148,12 @@ export function WcMatchesProvider({ children }) {
 
   useLayoutEffect(() => {
     perfMark(F.MATCHES, 'WcMatchesProvider — hidratación inicial')
-    const cached = readCache({ allowStale: true })
+    const cached = getBootstrapCache()
     if (cached?.matches?.length) {
       perfMark(F.MATCHES, 'Caché encontrada (useState ya hidratado)', {
         count: cached.matches.length,
         tiene_standings: Boolean(cached.standings?.ready),
       })
-      // wcMatches y wcStandings ya están poblados desde useState(readInitialWcMatches)
-      // y useState(readBootstrapStandings). No se necesita setWcMatches aquí para
-      // evitar el re-render innecesario que provocaba antes.
       return
     }
     perfMark(F.MATCHES, 'Sin caché de partidos — catálogo se construirá en idle')

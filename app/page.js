@@ -1,20 +1,10 @@
 'use client'
 import { useEffect, useLayoutEffect, useState } from 'react'
-import dynamic from 'next/dynamic'
 import HomeScreen from '../components/HomeScreen'
 import { CreateScreen, JoinScreen } from '../components/CreateScreen'
 import { supabase } from '../lib/supabase'
-
-const GroupDashboard = dynamic(
-  () => import('../components/GroupDashboard').then(m => {
-    // perf mark fires when the dynamic chunk has parsed and is ready to mount
-    import('../lib/startupPerf').then(({ F, perfMark }) =>
-      perfMark(F.DASHBOARD, 'GroupDashboard chunk cargado y listo')
-    )
-    return m
-  }),
-  { ssr: false, loading: () => <DashboardRestoring /> },
-)
+import DeferredMount from '../components/DeferredMount'
+import { useDeferredDashboard } from '../hooks/useDeferredDashboard'
 import { createWriteToken } from '../lib/sessionToken'
 import { getSavedEmail } from '../lib/savedEmail'
 import { Icon } from '../components/icons'
@@ -35,6 +25,9 @@ export default function Page() {
   const [currentUser, setCurrentUser] = useState(null)
   const [notification, setNotification] = useState(null)
   const [clientReady, setClientReady] = useState(false)
+
+  const shouldShowDashboard = screen === 'dashboard' && Boolean(currentGroup && currentUser)
+  const DashboardComponent = useDeferredDashboard(shouldShowDashboard)
 
   useLayoutEffect(() => {
     perfMark(F.PAGE, 'Leyendo URL y sessionStorage')
@@ -292,21 +285,26 @@ export default function Page() {
           }}
         />
       )}
-      {screen === 'dashboard' && currentGroup && currentUser && (
-        <GroupDashboard
-          group={currentGroup}
-          user={currentUser}
-          refreshGroup={refreshGroup}
-          setCurrentUser={setCurrentUser}
-          notify={notify}
-          onLeave={clearSession}
-          onGoHome={goToHome}
-          onSwitchGroup={switchGroup}
-          onMounted={() => perfWhenInteractive(F.DASHBOARD, 'Dashboard montado en DOM', {
-            grupo: currentGroup?.id,
-            usuario: currentUser?.id,
-          })}
-        />
+      {shouldShowDashboard && DashboardComponent && (
+        <DeferredMount fallback={<DashboardRestoring />}>
+          <DashboardComponent
+            group={currentGroup}
+            user={currentUser}
+            refreshGroup={refreshGroup}
+            setCurrentUser={setCurrentUser}
+            notify={notify}
+            onLeave={clearSession}
+            onGoHome={goToHome}
+            onSwitchGroup={switchGroup}
+            onMounted={() => perfWhenInteractive(F.DASHBOARD, 'Dashboard montado en DOM', {
+              grupo: currentGroup?.id,
+              usuario: currentUser?.id,
+            })}
+          />
+        </DeferredMount>
+      )}
+      {shouldShowDashboard && !DashboardComponent && (
+        <DashboardRestoring />
       )}
       {screen === 'dashboard' && (!currentGroup || !currentUser) && (
         <DashboardRestoring />

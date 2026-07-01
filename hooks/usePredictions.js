@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, startTransition } from 'react'
 import { supabase } from '../lib/supabase'
 import { getStoredWriteToken, clearStoredWriteToken } from '../lib/sessionToken'
 import { isPredPhaseEditable } from '../lib/phaseLock'
@@ -84,10 +84,12 @@ export function usePredictions({
     }
     if (pendingRef.current || saveInFlight.current) return
     const next = hydratePredictions(user.predictions, groupMatches, knockoutMatches)
-    setGroupPreds(next.group)
-    setKoPreds(next.knockout)
-    setInicioKoPreds(next.inicioKnockout)
-    setBonusPreds(next.bonuses)
+    startTransition(() => {
+      setGroupPreds(next.group)
+      setKoPreds(next.knockout)
+      setInicioKoPreds(next.inicioKnockout)
+      setBonusPreds(next.bonuses)
+    })
     skipAutoSave.current = true
   }, [user.id, user.updated_at, groupMatches, knockoutMatches])
 

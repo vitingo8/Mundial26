@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import dynamic from 'next/dynamic'
+import { useState, useEffect, useMemo, useRef, useCallback, startTransition } from 'react'
 import { supabase } from '../lib/supabase'
 import { getStoredWriteToken } from '../lib/sessionToken'
 import { migratePredictionMap, countOrphanPredKeys, migrateGroupResults } from '../lib/matchIdMap'
@@ -66,7 +67,7 @@ import ScheduleViewTabs from './dashboard/ScheduleViewTabs'
 import LiveMatchDaySchedule from './dashboard/LiveMatchDaySchedule'
 import LiveGroupStandingsView from './dashboard/LiveGroupStandingsView'
 import LiveSpecialsPanel from './dashboard/LiveSpecialsPanel'
-import MatchDetailSheet from './dashboard/MatchDetailSheet'
+const MatchDetailSheet = dynamic(() => import('./dashboard/MatchDetailSheet'), { ssr: false })
 import KnockoutBracketView from './dashboard/KnockoutBracketView'
 import PredictedKnockoutSection from './dashboard/PredictedKnockoutSection'
 import { buildInicioKnockoutSchedule, buildEliminatoriasKnockoutSchedule, lookupEliminatoriasKoPred, lookupInicioKoPred } from '../lib/knockoutBridge'
@@ -119,9 +120,33 @@ export default function GroupDashboard({
   const matchRefs = useRef({})
   const { groups: userPorraGroups, hasMultiple: hasMultipleGroups } = useUserPorraGroups(user?.email)
 
+  /** Tras el primer paint: transforms + panel de porra (evita bloquear 10+ s en un solo commit). */
+  const [bootReady, setBootReady] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    const go = () => {
+      if (!cancelled) {
+        perfMark(F.DASHBOARD, 'GroupDashboard — contenido pesado habilitado')
+        startTransition(() => setBootReady(true))
+      }
+    }
+    const id = typeof requestIdleCallback !== 'undefined'
+      ? requestIdleCallback(go, { timeout: 200 })
+      : setTimeout(go, 0)
+    return () => {
+      cancelled = true
+      if (typeof cancelIdleCallback !== 'undefined' && typeof requestIdleCallback !== 'undefined') {
+        cancelIdleCallback(id)
+      } else {
+        clearTimeout(id)
+      }
+    }
+  }, [])
+
   const transformPerfRef = useRef({ group: false, knockout: false })
   const { wcMatches, setWcMatches, wcStandings, apiError: wcApiError, reload: reloadWc } = useWcMatches()
   const groupMatches = useMemo(() => {
+    if (!bootReady || !wcMatches?.length) return []
     const t0 = performance.now()
     const out = transformGroupMatches(wcMatches)
     if (!transformPerfRef.current.group && wcMatches?.length) {
@@ -132,8 +157,9 @@ export default function GroupDashboard({
       })
     }
     return out
-  }, [wcMatches])
+  }, [bootReady, wcMatches])
   const knockoutMatches = useMemo(() => {
+    if (!bootReady || !wcMatches?.length) return []
     const t0 = performance.now()
     const out = transformKnockoutMatches(wcMatches)
     if (!transformPerfRef.current.knockout && wcMatches?.length) {
@@ -144,11 +170,12 @@ export default function GroupDashboard({
       })
     }
     return out
-  }, [wcMatches])
+  }, [bootReady, wcMatches])
 
   useEffect(() => {
+    if (!bootReady) return
     onMounted?.()
-  }, [onMounted])
+  }, [bootReady, onMounted])
 
   useEffect(() => {
     if (!wcMatches?.length) return
@@ -465,6 +492,16 @@ export default function GroupDashboard({
               wcMatches={wcMatches}
               userId={user.id}
               onBack={() => changeTab('profile')}
+            />
+          </div>
+        ) : !bootReady ? (
+          <div className="dash-boot-placeholder" aria-busy="true" aria-label="Cargando porra">
+            <img
+              src="/logo-wc26.png"
+              alt=""
+              className="dash-boot-placeholder-logo"
+              width={120}
+              height={120}
             />
           </div>
         ) : (

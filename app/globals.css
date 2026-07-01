@@ -270,6 +270,21 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
   object-fit: contain;
 }
 
+.dash-boot-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  padding: 48px 16px;
+}
+
+.dash-boot-placeholder-logo {
+  width: min(120px, 32vw);
+  height: auto;
+  object-fit: contain;
+  opacity: 0.85;
+}
+
 body:has(.app-splash) .site-footer,
 body:has(.app-splash) .live-floating-wrap {
   display: none !important;
