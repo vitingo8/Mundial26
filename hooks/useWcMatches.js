@@ -93,18 +93,6 @@ function readCache({ allowStale = false } = {}) {
   }
 }
 
-function readInitialWcMatches() {
-  const t0 = typeof performance !== 'undefined' ? performance.now() : 0
-  const cached = getBootstrapCache()
-  const result = cached?.matches?.length ? cached.matches : []
-  perfMark(F.MATCHES, 'readInitialWcMatches (useState sync)', {
-    duracion_ms: Math.round((typeof performance !== 'undefined' ? performance.now() : 0) - t0),
-    count: result.length,
-    tiene_standings: Boolean(cached?.standings?.ready),
-  })
-  return result
-}
-
 function deferCatalogBuild(setWcMatches) {
   const build = () => {
     perfMark(F.MATCHES, 'Idle callback — construyendo catálogo FIFA')
@@ -118,10 +106,6 @@ function deferCatalogBuild(setWcMatches) {
   } else {
     setTimeout(build, 0)
   }
-}
-
-function readBootstrapStandings() {
-  return getBootstrapCache()?.standings ?? null
 }
 
 function writeCache(data, standings = null) {
@@ -139,8 +123,9 @@ function writeCache(data, standings = null) {
  * (pausa con la pestaña oculta; reanuda al volver).
  */
 export function WcMatchesProvider({ children }) {
-  const [wcMatches, setWcMatches] = useState(readInitialWcMatches)
-  const [wcStandings, setWcStandings] = useState(readBootstrapStandings)
+  // Estado inicial vacío en servidor y cliente: sessionStorage solo tras hidratación.
+  const [wcMatches, setWcMatches] = useState([])
+  const [wcStandings, setWcStandings] = useState(null)
   const [apiError, setApiError] = useState(null)
   const wcMatchesRef = useRef([])
   const loadInFlight = useRef(null)
@@ -150,7 +135,9 @@ export function WcMatchesProvider({ children }) {
     perfMark(F.MATCHES, 'WcMatchesProvider — hidratación inicial')
     const cached = getBootstrapCache()
     if (cached?.matches?.length) {
-      perfMark(F.MATCHES, 'Caché encontrada (useState ya hidratado)', {
+      setWcMatches(cached.matches)
+      setWcStandings(cached.standings ?? null)
+      perfMark(F.MATCHES, 'Caché de partidos aplicada tras hidratación', {
         count: cached.matches.length,
         tiene_standings: Boolean(cached.standings?.ready),
       })
