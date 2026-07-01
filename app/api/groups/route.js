@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyWriteToken } from '../../../lib/sessionToken'
 import { normalizeLogoDataUrl } from '../../../lib/participantProfile'
+import { isMissingDbColumn, updateGroupWithOptionalColumns } from '../../../lib/groupUpdateFallback'
 
 function getAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -38,10 +39,10 @@ export async function PATCH(request) {
       }
     }
 
-    const { error } = await supabase.from('porra_groups').update(patch).eq('id', groupId)
+    const { error, dropped } = await updateGroupWithOptionalColumns(supabase, groupId, patch)
     if (error) {
       const missingLeagueLogo =
-        error.code === '42703' && /league_logo/i.test(error.message || '')
+        isMissingDbColumn(error, 'league_logo') && patch.league_logo !== undefined
       if (missingLeagueLogo) {
         return NextResponse.json(
           {
@@ -53,7 +54,12 @@ export async function PATCH(request) {
       }
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({
+      ok: true,
+      ...(dropped?.includes('results_updated_at')
+        ? { warning: 'results_updated_at no disponible; resultados guardados sin marca de tiempo' }
+        : {}),
+    })
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }

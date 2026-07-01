@@ -3,7 +3,21 @@ import { useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getStoredWriteToken } from '../lib/sessionToken'
 import { buildMergedResults, resultsNeedSync, buildResultTimestamps } from '../lib/syncResultsFromApi'
+import { updateGroupWithOptionalColumns } from '../lib/groupUpdateFallback'
 import { isTestPorraGroup } from '../lib/testPorraGroups'
+
+async function persistGroupUpdates(groupId, userId, token, updates) {
+  if (token) {
+    const res = await fetch('/api/groups', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ groupId, userId, token, updates }),
+    })
+    return res.ok
+  }
+  const { error } = await updateGroupWithOptionalColumns(supabase, groupId, updates)
+  return !error
+}
 
 /**
  * Cuando la API tiene partidos finalizados, los persiste en porra_groups.results
@@ -38,23 +52,10 @@ export function useAutoSyncResults({
       busy.current = true
       try {
         const resultsUpdatedAt = buildResultTimestamps(group.results, group.results_updated_at, merged)
-        const updates = { results: merged, results_updated_at: resultsUpdatedAt }
-        const token = getStoredWriteToken(group.id, userId)
-        let ok = false
-        if (token) {
-          const res = await fetch('/api/groups', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ groupId: group.id, userId, token, updates }),
-          })
-          ok = res.ok
-        } else {
-          const { error } = await supabase
-            .from('porra_groups')
-            .update(updates)
-            .eq('id', group.id)
-          ok = !error
-        }
+        const ok = await persistGroupUpdates(group.id, userId, getStoredWriteToken(group.id, userId), {
+          results: merged,
+          results_updated_at: resultsUpdatedAt,
+        })
         if (!cancelled && ok) {
           lastSavedKey.current = key
           const updated = await refreshGroup?.(group.id)

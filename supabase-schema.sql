@@ -1,6 +1,9 @@
 -- ============================================================
 -- PORRA MUNDIAL 2026 - Supabase Schema
 -- Ejecutar en: Supabase Dashboard > SQL Editor
+--
+-- Si la base YA EXISTE, no ejecutes todo el archivo: usa solo
+-- las líneas ALTER TABLE de la sección "Migración" más abajo.
 -- ============================================================
 
 -- Grupos de porra
@@ -53,10 +56,17 @@ ALTER TABLE porra_groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE porra_participants ENABLE ROW LEVEL SECURITY;
 
 -- Policies: lectura y escritura pública (la autenticación es por ID de grupo/usuario)
+-- DROP IF EXISTS permite re-ejecutar el schema sin error si ya existían.
+DROP POLICY IF EXISTS "Public read groups" ON porra_groups;
+DROP POLICY IF EXISTS "Public insert groups" ON porra_groups;
+DROP POLICY IF EXISTS "Public update groups" ON porra_groups;
 CREATE POLICY "Public read groups" ON porra_groups FOR SELECT USING (true);
 CREATE POLICY "Public insert groups" ON porra_groups FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public update groups" ON porra_groups FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Public read participants" ON porra_participants;
+DROP POLICY IF EXISTS "Public insert participants" ON porra_participants;
+DROP POLICY IF EXISTS "Public update participants" ON porra_participants;
 CREATE POLICY "Public read participants" ON porra_participants FOR SELECT USING (true);
 CREATE POLICY "Public insert participants" ON porra_participants FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public update participants" ON porra_participants FOR UPDATE USING (true);
