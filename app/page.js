@@ -15,10 +15,16 @@ import {
 } from '../lib/dashboardSessionCache'
 import { F, perfAsync, perfMark, perfWhenInteractive } from '../lib/startupPerf'
 
-const GroupDashboard = dynamic(() => import('../components/GroupDashboard'), {
+const GroupDashboard = dynamic(
+  () => import('../components/GroupDashboard').then((mod) => {
+    perfMark(F.DASHBOARD, 'Chunk GroupDashboard descargado y parseado')
+    return mod
+  }),
+  {
   ssr: false,
   loading: () => <DashboardRestoring />,
-})
+  },
+)
 
 export default function Page() {
   const [screen, setScreen] = useState('home')
