@@ -26,6 +26,15 @@ function hydratePredictions(raw, groupMatches, knockoutMatches) {
   }
 }
 
+function toSavedSnapshot(hydrated) {
+  return {
+    group: hydrated?.group || {},
+    knockout: hydrated?.knockout || {},
+    inicioKnockout: hydrated?.inicioKnockout || {},
+    bonuses: hydrated?.bonuses || { ...EMPTY_BONUSES },
+  }
+}
+
 export function usePredictions({
   user,
   group,
@@ -64,7 +73,8 @@ export function usePredictions({
   const pendingRef = useRef(false)
   const saveInFlight = useRef(false)
   const debounceTimer = useRef(null)
-  const lastSavedPredictionsRef = useRef(user.predictions || {})
+  const matchesReady = groupMatches.length > 0 || knockoutMatches.length > 0
+  const lastSavedPredictionsRef = useRef(toSavedSnapshot(_getInitPreds()))
   const predsRef = useRef({
     group: groupPreds,
     knockout: koPreds,
@@ -93,7 +103,7 @@ export function usePredictions({
       setBonusPreds(next.bonuses)
     })
     skipAutoSave.current = true
-    lastSavedPredictionsRef.current = user.predictions || {}
+    lastSavedPredictionsRef.current = toSavedSnapshot(next)
   }, [user.id, user.updated_at, user.predictions, groupMatches, knockoutMatches])
 
   const runSave = useCallback(async (manual = false) => {
@@ -216,13 +226,14 @@ export function usePredictions({
       return
     }
     if (tab !== 'predictions') return
+    if (!matchesReady) return
     pendingRef.current = true
     setSaveStatus(prev => (prev === 'saving' ? 'saving' : 'pending'))
     scheduleAutoSave()
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current)
     }
-  }, [groupPreds, koPreds, inicioKoPreds, bonusPreds, tab, scheduleAutoSave])
+  }, [groupPreds, koPreds, inicioKoPreds, bonusPreds, tab, scheduleAutoSave, matchesReady])
 
   useEffect(() => {
     function onVisibility() {
