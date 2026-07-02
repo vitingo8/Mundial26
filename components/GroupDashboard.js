@@ -782,7 +782,7 @@ function PredictionsTab({
   onScheduleNavConsumed,
 }) {
   const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
-  const [focusDayKey, setFocusDayKey] = useState(() => scheduleAnchorDateKey('knockout'))
+  const [focusDayKey, setFocusDayKey] = useState(null)
   const [detailMatch, setDetailMatch] = useState(null)
 
   useEffect(() => {
@@ -1277,7 +1277,7 @@ function KnockoutPreds({
         onAdvance={setAdvance}
         schedulePhase="knockout"
         viewMode={viewMode}
-        flatMatchesPanel
+        liveKnockoutLayout
         publishedResults={publishedResults}
         knockoutScoringCtx={knockoutScoringCtx}
         apiMatches={apiMatches}

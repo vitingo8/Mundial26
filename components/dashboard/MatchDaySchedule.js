@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   buildDayTabs,
@@ -48,8 +48,10 @@ export default function MatchDaySchedule({
   groupMatches = [],
   knockoutMatches = [],
   inicioKnockoutScoring = null,
-  /** Fuerza la pestaña de día (p. ej. «hoy» desde aviso de porra). */
+  /** Fuerza la pestaña de día (p. ej. «hoy» desde aviso de porra). Solo se aplica una vez. */
   focusDayKey = null,
+  /** Porra eliminatorias real: mismo layout que En Vivo (sin caja con scroll interno). */
+  liveKnockoutLayout = false,
 }) {
   const rawById = useMemo(() => indexApiMatches(apiMatches), [apiMatches])
   const knockoutAdvanceDefault = schedulePhase === 'knockout'
@@ -65,13 +67,19 @@ export default function MatchDaySchedule({
   const today = todayDateKey()
   const anchor = scheduleAnchorDateKey(schedulePhase)
   const [selectedDay, setSelectedDay] = useState(null)
+  const appliedFocusDayRef = useRef(null)
 
   useEffect(() => {
     if (fullView || !days.length) {
       setSelectedDay(null)
       return
     }
-    if (focusDayKey && days.some(d => d.key === focusDayKey)) {
+    if (
+      focusDayKey
+      && focusDayKey !== appliedFocusDayRef.current
+      && days.some(d => d.key === focusDayKey)
+    ) {
+      appliedFocusDayRef.current = focusDayKey
       setSelectedDay(focusDayKey)
       return
     }
@@ -123,14 +131,14 @@ export default function MatchDaySchedule({
   const panelClass = [
     'schedule-panel',
     fullView ? 'schedule-panel--full' : '',
-    schedulePhase === 'knockout' ? 'schedule-panel--knockout' : '',
+    schedulePhase === 'knockout' && !liveKnockoutLayout ? 'schedule-panel--knockout' : '',
   ]
     .filter(Boolean)
     .join(' ')
 
   const matchesPanelClass = [
     'schedule-matches-panel',
-    flatMatchesPanel ? 'schedule-matches-panel--flat' : '',
+    flatMatchesPanel && !liveKnockoutLayout ? 'schedule-matches-panel--flat' : '',
   ]
     .filter(Boolean)
     .join(' ')
