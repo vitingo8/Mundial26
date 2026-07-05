@@ -153,11 +153,18 @@ export default function SwipeTabPanels({
       const dx = e.touches[0].clientX - d.startX
       const dy = e.touches[0].clientY - d.startY
       if (!d.locked) {
-        if (Math.abs(dx) < 8) return
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
+        if (Math.abs(dy) > Math.abs(dx) * LOCK_RATIO) {
+          d.active = false
+          return
+        }
         if (Math.abs(dx) < Math.abs(dy) * LOCK_RATIO) return
         d.locked = true
         setDragging(true)
         setAnimate(false)
+      } else if (Math.abs(dy) > 16 && Math.abs(dy) > Math.abs(dx)) {
+        resetDrag()
+        return
       }
       e.preventDefault()
       const idx = Math.max(0, tabsRef.current.indexOf(activeTabRef.current))

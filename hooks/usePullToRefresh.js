@@ -56,7 +56,7 @@ export function usePullToRefresh(onRefresh, { enabled = true, getScrollElement =
         setPullDistance(0)
         return
       }
-      if (dy > 8) e.preventDefault()
+      if (dy > 20) e.preventDefault()
       setPullDistance(Math.min(dy * 0.45, MAX_PULL))
     }
 
