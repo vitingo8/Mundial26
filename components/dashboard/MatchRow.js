@@ -8,6 +8,7 @@ import { isExactScoreHit } from '../../lib/gameData'
 import {
   getInicioKnockoutUiStatus,
   summarizeInicioKnockoutMatchPoints,
+  shouldShowInicioKnockoutVoidZero,
 } from '../../lib/inicioKnockoutScoring'
 import MatchPointsBubble from './MatchPointsBubble'
 
@@ -353,6 +354,8 @@ export default function MatchRow({
 
   }
 
+  const showInicioVoidZero = shouldShowInicioKnockoutVoidZero(inicioKoUiStatus, pointsSummary)
+
   const bubbleUserPred = (readOnly || viewingParticipantPreds) ? predRow : null
   const bubbleProps = {
     userPrediction: bubbleUserPred,
@@ -363,7 +366,7 @@ export default function MatchRow({
     awayName: away,
   }
 
-  const voidZeroBubble = inicioKoVoid ? (
+  const voidZeroBubble = showInicioVoidZero ? (
     <MatchPointsBubble
       points={0}
       detail="No se enfrentaron en la realidad"
@@ -374,7 +377,6 @@ export default function MatchRow({
   ) : null
 
   const inlinePointsBubble = (() => {
-    if (inicioKoVoid) return null
     if (publishedResult && pointsSummary?.pts > 0) {
       return (
         <MatchPointsBubble
