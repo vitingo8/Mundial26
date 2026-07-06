@@ -407,8 +407,8 @@
   }
 
   .dash-swipe-tabs .swipe-tabs-panel[aria-hidden="true"] {
-    content-visibility: hidden;
     pointer-events: none;
+    visibility: hidden;
   }
 
   .dash-tab-panel {
@@ -3329,18 +3329,28 @@ button.porra-live-strip {
 }
 
 @media (max-width: 639px) {
-  .schedule-panel--knockout:not(.schedule-panel--full) .schedule-matches-panel {
-    overflow: hidden;
-  }
-
-  .schedule-panel--knockout:not(.schedule-panel--full) .schedule-matches-panel:has(.match-preds-info-wrap--open) {
+  /* Un solo scroll vertical en el panel: no recortar partidos en tablas */
+  .dash-swipe-tabs .swipe-tabs-panel--scroll .schedule-matches-panel,
+  .dash-tab-scroll .schedule-matches-panel {
     overflow: visible;
   }
 
-  .schedule-panel--knockout:not(.schedule-panel--full) .schedule-block {
-    overflow: hidden;
+  .dash-swipe-tabs .swipe-tabs-panel--scroll .schedule-panel--knockout:not(.schedule-panel--full),
+  .dash-tab-scroll .schedule-panel--knockout:not(.schedule-panel--full) {
+    overflow: visible;
   }
 
+  .dash-swipe-tabs .swipe-tabs-panel--scroll .schedule-panel--knockout:not(.schedule-panel--full) .schedule-block,
+  .dash-tab-scroll .schedule-panel--knockout:not(.schedule-panel--full) .schedule-block {
+    overflow: visible;
+  }
+
+  .dash-swipe-tabs .swipe-tabs-panel--scroll .group-standings-card,
+  .dash-tab-scroll .group-standings-card {
+    overflow: visible;
+  }
+
+  .schedule-panel--knockout:not(.schedule-panel--full) .schedule-matches-panel:has(.match-preds-info-wrap--open),
   .schedule-panel--knockout:not(.schedule-panel--full) .schedule-block:has(.match-preds-info-wrap--open) {
     overflow: visible;
   }
@@ -10158,11 +10168,11 @@ button.schedule-match-team:disabled {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  will-change: transform;
 }
 
 .swipe-tabs-track--animate {
   transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
 }
 
 .swipe-tabs-panel {
@@ -10175,6 +10185,7 @@ button.schedule-match-team:disabled {
 }
 
 .swipe-tabs-panel--scroll {
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   height: 100%;
