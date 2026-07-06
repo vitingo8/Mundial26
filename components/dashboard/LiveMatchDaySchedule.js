@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import {
   buildDayTabs,
+  formatFullDayLabel,
   matchDateKey,
   scheduleAnchorDateKey,
   todayDateKey,
@@ -147,13 +148,4 @@ export default function LiveMatchDaySchedule({
       </div>
     </div>
   )
-}
-
-function formatFullDayLabel(utcDate) {
-  return new Date(utcDate).toLocaleDateString('es-ES', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    timeZone: 'Europe/Madrid',
-  })
 }

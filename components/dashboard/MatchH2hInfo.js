@@ -35,14 +35,16 @@ function clamp(n, min, max) {
   return Math.min(max, Math.max(min, n))
 }
 
+const shortH2hDateFmt = new Intl.DateTimeFormat('es-ES', {
+  timeZone: 'Europe/Madrid',
+  day: '2-digit',
+  month: '2-digit',
+  year: '2-digit',
+})
+
 function shortH2hDate(utcDate) {
   if (!utcDate) return '—'
-  return new Date(utcDate).toLocaleDateString('es-ES', {
-    timeZone: 'Europe/Madrid',
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-  })
+  return shortH2hDateFmt.format(new Date(utcDate))
 }
 
 function winnerCrest(row) {
