@@ -171,19 +171,22 @@ export default function BracketMatchSlot({
     actualTeams: scoringTeams.actualTeams,
   }
 
+  const inicioPointsSummary = useMemo(() => {
+    if (!isInicioKo || !inicioKnockoutScoring) return null
+    return summarizeInicioKnockoutMatchPoints(
+      predRow,
+      { home: match.home, away: match.away },
+      inicioKnockoutScoring,
+      match.matchNumber,
+    )
+  }, [isInicioKo, inicioKnockoutScoring, predRow, match?.home, match?.away, match?.matchNumber])
+
   const pointsSummary = useMemo(() => {
+    if (isInicioKo && inicioKnockoutScoring) return inicioPointsSummary
     if (!readOnly && !viewingParticipantPreds) return null
-    if (isInicioKo && inicioKnockoutScoring) {
-      return summarizeInicioKnockoutMatchPoints(
-        predRow,
-        { home: match.home, away: match.away },
-        inicioKnockoutScoring,
-        match.matchNumber,
-      )
-    }
     if (!publishedResult) return null
     return summarizeMatchPoints(predRow, publishedResult, knockoutScoringOpts)
-  }, [readOnly, viewingParticipantPreds, isInicioKo, inicioKnockoutScoring, publishedResult, predRow, match?.home, match?.away, match?.matchNumber, knockoutScoringOpts])
+  }, [isInicioKo, inicioKnockoutScoring, inicioPointsSummary, readOnly, viewingParticipantPreds, publishedResult, predRow, knockoutScoringOpts])
 
   const livePointsSummary = useMemo(() => {
     if (isInicioKo && inicioKnockoutScoring) {
@@ -213,18 +216,13 @@ export default function BracketMatchSlot({
     return summarizeMatchPoints(predRow, apiScore, knockoutScoringOpts)
   }, [isInicioKo, inicioKnockoutScoring, isApiFinished, apiScore, publishedResult, predRow, match?.home, match?.away, match?.matchNumber, knockoutScoringOpts])
 
-  const showInicioVoidZero = shouldShowInicioKnockoutVoidZero(inicioKoUiStatus, pointsSummary)
+  const showInicioVoidZero = shouldShowInicioKnockoutVoidZero(inicioKoUiStatus, inicioPointsSummary)
 
   const resultForCompare = publishedResult || apiScore || null
-  const isExactHit = inicioKoVoid
+  const isExactHit = inicioKoVoid && !(inicioPointsSummary?.pts > 0)
     ? false
     : isInicioKo && inicioKnockoutScoring
-      ? (summarizeInicioKnockoutMatchPoints(
-        predRow,
-        { home: match.home, away: match.away },
-        inicioKnockoutScoring,
-        match.matchNumber,
-      )?.split?.resultado ?? 0) > 0
+      ? (inicioPointsSummary?.split?.resultado ?? 0) > 0
       : isExactScoreHit(predRow, resultForCompare, knockoutScoringOpts)
 
   const participantPredRows = useMemo(() => {
@@ -263,6 +261,22 @@ export default function BracketMatchSlot({
   ) : null
 
   const inlinePointsBubble = (() => {
+    const inicioSummary =
+      inicioPointsSummary?.pts > 0 ? inicioPointsSummary
+        : livePointsSummary?.pts > 0 ? livePointsSummary
+          : apiFinishedPointsSummary?.pts > 0 ? apiFinishedPointsSummary
+            : null
+    if (isInicioKo && inicioKnockoutScoring && inicioSummary) {
+      return (
+        <MatchPointsBubble
+          points={inicioSummary.pts}
+          detail={inicioSummary.detail}
+          publishedResult={publishedResult || apiScore}
+          {...bubbleProps}
+          provisional={inicioSummary === livePointsSummary}
+        />
+      )
+    }
     if (pointsSummary?.pts > 0) {
       return (
         <MatchPointsBubble
