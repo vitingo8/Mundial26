@@ -39,14 +39,14 @@ function BracketTeam({
             aria-label="Tercero por confirmar"
           />
         ) : (
-          <TeamCrest src={crest} alt={name} size={16} />
+          <TeamCrest src={crest} alt={name} size={12} />
         )}
       </span>
       <span className={`bracket-slot-name${voided ? ' bracket-slot-name--void' : ''}${advanceBadge ? ' bracket-slot-name--advances' : ''}`} title={pendingThirdSlot || name}>
         {name}
         {advanceBadge && crest ? (
           <span className="bracket-slot-advance-crest" title="Pasa de ronda" aria-hidden>
-            <TeamCrest src={crest} alt="" size={12} />
+            <TeamCrest src={crest} alt="" size={9} />
           </span>
         ) : null}
       </span>
@@ -361,6 +361,7 @@ export default function BracketMatchSlot({
           apiRaw={isApiFinished ? apiRaw : null}
           homeLabel={match.home}
           awayLabel={match.away}
+          scoreOnly
         />
       )}
       <div className="bracket-slot-tag-row">

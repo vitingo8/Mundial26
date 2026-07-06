@@ -22,6 +22,8 @@ export function PorraLiveHeader({
   apiRaw = null,
   homeLabel,
   awayLabel,
+  /** Bracket: solo marcador (p. ej. 0:1), sin nombres ni badges */
+  scoreOnly = false,
 }) {
   const isFinished = status === 'FINISHED'
   const isLive = LIVE_STATUSES.has(status)
@@ -39,12 +41,20 @@ export function PorraLiveHeader({
   const label = isFinished ? 'FT' : isPaused ? 'Descanso' : 'Vivo'
   const stripClass = [
     'porra-live-strip',
+    scoreOnly ? 'porra-live-strip--score-only' : '',
     onOpenDetail ? 'porra-live-strip--clickable' : '',
     isFinished ? 'porra-live-strip--finished' : '',
     isLive && !isPaused ? 'porra-live-strip--live' : '',
   ].filter(Boolean).join(' ')
 
-  const inner = (
+  const inner = scoreOnly ? (
+    <>
+      <span className="porra-live-strip__score">{score.home}:{score.away}</span>
+      {!isFinished && minute ? (
+        <span className="porra-live-strip__minute">{minute}</span>
+      ) : null}
+    </>
+  ) : (
     <>
       <span className="porra-live-strip__match">
         <span className="porra-live-strip__team">{home}</span>
