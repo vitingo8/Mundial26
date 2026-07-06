@@ -21,8 +21,13 @@ import {
 import { F, perfMark, perfSync } from '../lib/startupPerf'
 
 const CACHE_KEY = 'porra_wc_matches_v2'
+const PERSIST_CACHE_KEY = 'porra_wc_matches_persist_v1'
 const CACHE_TTL_LIVE = 10 * 1000
 const CACHE_TTL_IDLE = 10 * 60 * 1000
+// El calendario con banderas reales (crests) tarda ~6s en llegar de la red.
+// Se guarda también en localStorage para que, en visitas siguientes, aparezca
+// al instante mientras la petición fresca corre en segundo plano.
+const PERSIST_TTL_MS = 24 * 60 * 60 * 1000
 
 const WcMatchesContext = createContext(null)
 
@@ -78,29 +83,48 @@ function hydrateMatchCrests(matches) {
   })
 }
 
+function parseCacheEntry(raw, { allowStale, ttlOverrideMs } = {}) {
+  if (!raw) return null
+  const { ts, data, standings, live } = JSON.parse(raw)
+  if (!Array.isArray(data) || !data.length) return null
+  const ttl = ttlOverrideMs ?? (live ? CACHE_TTL_LIVE : CACHE_TTL_IDLE)
+  if (!allowStale && Date.now() - ts > ttl) return null
+  return { matches: hydrateMatchCrests(data), standings: standings ?? null }
+}
+
 function readCache({ allowStale = false } = {}) {
-  if (typeof sessionStorage === 'undefined') return null
-  try {
-    const raw = sessionStorage.getItem(CACHE_KEY)
-    if (!raw) return null
-    const { ts, data, standings, live } = JSON.parse(raw)
-    if (!Array.isArray(data) || !data.length) return null
-    const ttl = live ? CACHE_TTL_LIVE : CACHE_TTL_IDLE
-    if (!allowStale && Date.now() - ts > ttl) return null
-    return { matches: hydrateMatchCrests(data), standings: standings ?? null }
-  } catch {
-    return null
+  if (typeof sessionStorage !== 'undefined') {
+    try {
+      const hit = parseCacheEntry(sessionStorage.getItem(CACHE_KEY), { allowStale })
+      if (hit) return hit
+    } catch { /* ignore */ }
   }
+  // Sin caché de la pestaña (nueva sesión de navegador): usa la última
+  // instantánea persistida (con crests reales) mientras llega la red.
+  if (typeof localStorage !== 'undefined') {
+    try {
+      return parseCacheEntry(localStorage.getItem(PERSIST_CACHE_KEY), {
+        allowStale: true,
+        ttlOverrideMs: PERSIST_TTL_MS,
+      })
+    } catch { /* ignore */ }
+  }
+  return null
 }
 
 function writeCache(data, standings = null) {
-  if (typeof sessionStorage === 'undefined') return
-  sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+  const payload = JSON.stringify({
     ts: Date.now(),
     data,
     standings,
     live: hasLiveWcMatches(data),
-  }))
+  })
+  try {
+    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(CACHE_KEY, payload)
+  } catch { /* quota / private mode */ }
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(PERSIST_CACHE_KEY, payload)
+  } catch { /* quota / private mode */ }
 }
 
 /**
