@@ -32418,26 +32418,26 @@ function SwipeTabPanels({
   className = "",
   viewportClassName = ""
 }) {
-  const viewportRef = (0, import_react3.useRef)(null);
-  const dragXRef = (0, import_react3.useRef)(0);
-  const dragStateRef = (0, import_react3.useRef)({ active: false, startX: 0, startY: 0, locked: false });
-  const onChangeRef = (0, import_react3.useRef)(onChange);
-  const tabsRef = (0, import_react3.useRef)(tabs);
-  const activeTabRef = (0, import_react3.useRef)(activeTab);
-  const panelSwipeLockedRef = (0, import_react3.useRef)(panelSwipeLocked);
-  const [width, setWidth] = (0, import_react3.useState)(0);
-  const [panelGap, setPanelGap] = (0, import_react3.useState)(DEFAULT_PANEL_GAP);
-  const [dragX, setDragX] = (0, import_react3.useState)(0);
-  const [dragging, setDragging] = (0, import_react3.useState)(false);
-  const [animate, setAnimate] = (0, import_react3.useState)(true);
-  const [visited, setVisited] = (0, import_react3.useState)(() => /* @__PURE__ */ new Set([activeTab]));
+  const viewportRef = (0, import_react4.useRef)(null);
+  const dragXRef = (0, import_react4.useRef)(0);
+  const dragStateRef = (0, import_react4.useRef)({ active: false, startX: 0, startY: 0, locked: false });
+  const onChangeRef = (0, import_react4.useRef)(onChange);
+  const tabsRef = (0, import_react4.useRef)(tabs);
+  const activeTabRef = (0, import_react4.useRef)(activeTab);
+  const panelSwipeLockedRef = (0, import_react4.useRef)(panelSwipeLocked);
+  const [width, setWidth] = (0, import_react4.useState)(0);
+  const [panelGap, setPanelGap] = (0, import_react4.useState)(DEFAULT_PANEL_GAP);
+  const [dragX, setDragX] = (0, import_react4.useState)(0);
+  const [dragging, setDragging] = (0, import_react4.useState)(false);
+  const [animate, setAnimate] = (0, import_react4.useState)(true);
+  const [visited, setVisited] = (0, import_react4.useState)(() => /* @__PURE__ */ new Set([activeTab]));
   onChangeRef.current = onChange;
   tabsRef.current = tabs;
   activeTabRef.current = activeTab;
   panelSwipeLockedRef.current = panelSwipeLocked;
   dragXRef.current = dragX;
   const activeIndex = Math.max(0, tabs.indexOf(activeTab));
-  (0, import_react3.useEffect)(() => {
+  (0, import_react4.useEffect)(() => {
     setVisited((prev) => {
       if (prev.has(activeTab)) return prev;
       const next = new Set(prev);
@@ -32445,7 +32445,7 @@ function SwipeTabPanels({
       return next;
     });
   }, [activeTab]);
-  (0, import_react3.useLayoutEffect)(() => {
+  (0, import_react4.useLayoutEffect)(() => {
     const el = viewportRef.current;
     if (!el) return void 0;
     const measure = () => {
@@ -32460,13 +32460,13 @@ function SwipeTabPanels({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  (0, import_react3.useEffect)(() => {
+  (0, import_react4.useEffect)(() => {
     if (!dragging) {
       setDragX(0);
       setAnimate(true);
     }
   }, [activeTab, dragging]);
-  (0, import_react3.useEffect)(() => {
+  (0, import_react4.useEffect)(() => {
     if (typeof window === "undefined") return;
     requestAnimationFrame(() => {
       if (panelScroll) {
@@ -32477,12 +32477,12 @@ function SwipeTabPanels({
       }
     });
   }, [activeTab, panelScroll]);
-  const clampDrag = (0, import_react3.useCallback)((dx, index) => {
+  const clampDrag = (0, import_react4.useCallback)((dx, index) => {
     if (index <= 0 && dx > 0) return dx * EDGE_RUBBER;
     if (index >= tabs.length - 1 && dx < 0) return dx * EDGE_RUBBER;
     return dx;
   }, [tabs.length]);
-  (0, import_react3.useEffect)(() => {
+  (0, import_react4.useEffect)(() => {
     const el = viewportRef.current;
     if (!el || !enabled2) return void 0;
     let mobile = window.matchMedia(MOBILE_MQ).matches;
@@ -32607,12 +32607,12 @@ function SwipeTabPanels({
     }
   ) }) });
 }
-var import_react3, import_jsx_runtime, MOBILE_MQ, COMMIT_RATIO, LOCK_RATIO, EDGE_RUBBER, NO_SWIPE_SELECTOR, DEFAULT_PANEL_GAP;
+var import_react4, import_jsx_runtime, MOBILE_MQ, COMMIT_RATIO, LOCK_RATIO, EDGE_RUBBER, NO_SWIPE_SELECTOR, DEFAULT_PANEL_GAP;
 var init_SwipeTabPanels = __esm({
   "components/SwipeTabPanels.js"() {
     "use strict";
     "use client";
-    import_react3 = __toESM(require_react());
+    import_react4 = __toESM(require_react());
     import_jsx_runtime = __toESM(require_jsx_runtime());
     MOBILE_MQ = "(max-width: 639px)";
     COMMIT_RATIO = 0.22;
@@ -32902,20 +32902,6 @@ function readCache({ allowStale = false } = {}) {
     return null;
   }
 }
-function deferCatalogBuild(setWcMatches) {
-  const build = () => {
-    perfMark(F.MATCHES, "Idle callback \u2014 construyendo cat\xE1logo FIFA");
-    (0, import_react4.startTransition)(() => {
-      setWcMatches(getCatalogMatches());
-      perfMark(F.MATCHES, "Cat\xE1logo FIFA aplicado al estado");
-    });
-  };
-  if (typeof requestIdleCallback !== "undefined") {
-    requestIdleCallback(build, { timeout: 800 });
-  } else {
-    setTimeout(build, 0);
-  }
-}
 function writeCache(data2, standings = null) {
   if (typeof sessionStorage === "undefined") return;
   sessionStorage.setItem(CACHE_KEY, JSON.stringify({
@@ -32926,13 +32912,13 @@ function writeCache(data2, standings = null) {
   }));
 }
 function WcMatchesProvider({ children }) {
-  const [wcMatches, setWcMatches] = (0, import_react4.useState)([]);
-  const [wcStandings, setWcStandings] = (0, import_react4.useState)(null);
-  const [apiError, setApiError] = (0, import_react4.useState)(null);
-  const wcMatchesRef = (0, import_react4.useRef)([]);
-  const loadInFlight = (0, import_react4.useRef)(null);
+  const [wcMatches, setWcMatches] = (0, import_react5.useState)([]);
+  const [wcStandings, setWcStandings] = (0, import_react5.useState)(null);
+  const [apiError, setApiError] = (0, import_react5.useState)(null);
+  const wcMatchesRef = (0, import_react5.useRef)([]);
+  const loadInFlight = (0, import_react5.useRef)(null);
   wcMatchesRef.current = wcMatches;
-  (0, import_react4.useLayoutEffect)(() => {
+  (0, import_react5.useLayoutEffect)(() => {
     perfMark(F.MATCHES, "WcMatchesProvider \u2014 hidrataci\xF3n inicial");
     const cached = getBootstrapCache();
     if (cached?.matches?.length) {
@@ -32944,10 +32930,13 @@ function WcMatchesProvider({ children }) {
       });
       return;
     }
-    perfMark(F.MATCHES, "Sin cach\xE9 de partidos \u2014 cat\xE1logo se construir\xE1 en idle");
-    deferCatalogBuild(setWcMatches);
+    perfMark(F.MATCHES, "Sin cach\xE9 de partidos \u2014 cat\xE1logo FIFA inmediato (red en background)");
+    (0, import_react5.startTransition)(() => {
+      setWcMatches(getCatalogMatches());
+      perfMark(F.MATCHES, "Cat\xE1logo FIFA aplicado al estado");
+    });
   }, []);
-  const load = (0, import_react4.useCallback)(async (force = false) => {
+  const load = (0, import_react5.useCallback)(async (force = false) => {
     if (loadInFlight.current) {
       return loadInFlight.current;
     }
@@ -32982,7 +32971,7 @@ function WcMatchesProvider({ children }) {
           fuente: data2._source,
           partidos: raw.length
         });
-        (0, import_react4.startTransition)(() => {
+        (0, import_react5.startTransition)(() => {
           setWcMatches(hydrateMatchCrests(raw));
           setWcStandings(data2.standings ?? null);
         });
@@ -33016,12 +33005,12 @@ function WcMatchesProvider({ children }) {
       if (loadInFlight.current === run) loadInFlight.current = null;
     }
   }, []);
-  const reload = (0, import_react4.useCallback)(() => load(true), [load]);
-  (0, import_react4.useEffect)(() => {
+  const reload = (0, import_react5.useCallback)(() => load(true), [load]);
+  (0, import_react5.useEffect)(() => {
     perfMark(F.MATCHES, "Programada carga inicial de partidos");
     void load(false).then(() => perfMark(F.MATCHES, "Carga inicial de partidos terminada"));
   }, [load]);
-  (0, import_react4.useEffect)(() => {
+  (0, import_react5.useEffect)(() => {
     if (typeof document === "undefined") return void 0;
     let cancelled = false;
     let timeoutId = null;
@@ -33079,18 +33068,18 @@ function WcMatchesProvider({ children }) {
   return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(WcMatchesContext.Provider, { value, children });
 }
 function useWcMatches() {
-  const ctx = (0, import_react4.useContext)(WcMatchesContext);
+  const ctx = (0, import_react5.useContext)(WcMatchesContext);
   if (!ctx) {
     throw new Error("useWcMatches debe usarse dentro de WcMatchesProvider");
   }
   return ctx;
 }
-var import_react4, import_jsx_runtime2, CACHE_KEY, CACHE_TTL_LIVE, CACHE_TTL_IDLE, WcMatchesContext, catalogMatchesMemo, bootstrapCacheSnapshot;
+var import_react5, import_jsx_runtime2, CACHE_KEY, CACHE_TTL_LIVE, CACHE_TTL_IDLE, WcMatchesContext, catalogMatchesMemo, bootstrapCacheSnapshot;
 var init_useWcMatches = __esm({
   "hooks/useWcMatches.js"() {
     "use strict";
     "use client";
-    import_react4 = __toESM(require_react());
+    import_react5 = __toESM(require_react());
     init_footballData();
     init_fifaMatchNumbers();
     init_catalogApiMatches();
@@ -33101,7 +33090,7 @@ var init_useWcMatches = __esm({
     CACHE_KEY = "porra_wc_matches_v2";
     CACHE_TTL_LIVE = 10 * 1e3;
     CACHE_TTL_IDLE = 10 * 60 * 1e3;
-    WcMatchesContext = (0, import_react4.createContext)(null);
+    WcMatchesContext = (0, import_react5.createContext)(null);
     catalogMatchesMemo = null;
     bootstrapCacheSnapshot = void 0;
   }
@@ -34216,8 +34205,8 @@ function CrestPlaceholder({ size }) {
 }
 function TeamCrest({ src, alt = "", size = 24, loading = "lazy" }) {
   const cleanSrc = typeof src === "string" ? src.trim() : src;
-  const [failed, setFailed] = (0, import_react6.useState)(false);
-  (0, import_react6.useEffect)(() => {
+  const [failed, setFailed] = (0, import_react7.useState)(false);
+  (0, import_react7.useEffect)(() => {
     setFailed(false);
   }, [cleanSrc]);
   if (!cleanSrc || failed) {
@@ -34242,12 +34231,12 @@ function TeamCrest({ src, alt = "", size = 24, loading = "lazy" }) {
     }
   );
 }
-var import_react6, import_jsx_runtime5;
+var import_react7, import_jsx_runtime5;
 var init_TeamCrest = __esm({
   "components/TeamCrest.js"() {
     "use strict";
     "use client";
-    import_react6 = __toESM(require_react());
+    import_react7 = __toESM(require_react());
     import_jsx_runtime5 = __toESM(require_jsx_runtime());
   }
 });
@@ -60734,11 +60723,11 @@ function computeLayout(containerWidth) {
   return { mode: "native", width, height, scale: 1 };
 }
 function YoutubeHighlightsPlayer({ videoId, title, className = "" }) {
-  const wrapRef = (0, import_react9.useRef)(null);
-  const hostRef = (0, import_react9.useRef)(null);
-  const playerRef = (0, import_react9.useRef)(null);
-  const [layout, setLayout] = (0, import_react9.useState)(() => computeLayout(0));
-  (0, import_react9.useEffect)(() => {
+  const wrapRef = (0, import_react10.useRef)(null);
+  const hostRef = (0, import_react10.useRef)(null);
+  const playerRef = (0, import_react10.useRef)(null);
+  const [layout, setLayout] = (0, import_react10.useState)(() => computeLayout(0));
+  (0, import_react10.useEffect)(() => {
     const el = wrapRef.current;
     if (!el) return void 0;
     const updateLayout = () => {
@@ -60752,7 +60741,7 @@ function YoutubeHighlightsPlayer({ videoId, title, className = "" }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  (0, import_react9.useEffect)(() => {
+  (0, import_react10.useEffect)(() => {
     let cancelled = false;
     loadYoutubeIframeApi().then((YT) => {
       if (cancelled || !hostRef.current) return;
@@ -60812,12 +60801,12 @@ function YoutubeHighlightsPlayer({ videoId, title, className = "" }) {
     }
   );
 }
-var import_react9, import_jsx_runtime9, ytApiPromise, MAX_RENDER_WIDTH, MAX_RENDER_HEIGHT, SUGGESTED_QUALITY, MIN_COMFORTABLE_SCALE;
+var import_react10, import_jsx_runtime9, ytApiPromise, MAX_RENDER_WIDTH, MAX_RENDER_HEIGHT, SUGGESTED_QUALITY, MIN_COMFORTABLE_SCALE;
 var init_YoutubeHighlightsPlayer = __esm({
   "components/dashboard/YoutubeHighlightsPlayer.js"() {
     "use strict";
     "use client";
-    import_react9 = __toESM(require_react());
+    import_react10 = __toESM(require_react());
     import_jsx_runtime9 = __toESM(require_jsx_runtime());
     ytApiPromise = null;
     MAX_RENDER_WIDTH = 1920;
@@ -60869,8 +60858,8 @@ async function loadHighlights(homeTeam, awayTeam) {
 }
 function HighlightsPreviewSheet({ data: data2, homeLabel, awayLabel, onClose, startPlaying = false }) {
   const hasEmbed = Boolean(data2.youtubeId);
-  const [playing, setPlaying] = (0, import_react10.useState)(startPlaying && hasEmbed);
-  (0, import_react10.useEffect)(() => {
+  const [playing, setPlaying] = (0, import_react11.useState)(startPlaying && hasEmbed);
+  (0, import_react11.useEffect)(() => {
     function onKey(e) {
       if (e.key === "Escape") onClose();
     }
@@ -60954,11 +60943,11 @@ function FifaHighlightsButton({
   className = "",
   compact = false
 }) {
-  const [data2, setData] = (0, import_react10.useState)(null);
-  const [checked, setChecked] = (0, import_react10.useState)(false);
-  const [open, setOpen] = (0, import_react10.useState)(false);
+  const [data2, setData] = (0, import_react11.useState)(null);
+  const [checked, setChecked] = (0, import_react11.useState)(false);
+  const [open, setOpen] = (0, import_react11.useState)(false);
   const teams = apiRaw ? resolveTeamNamesFromApiRaw(apiRaw) : { home: homeTeam || "", away: awayTeam || "" };
-  (0, import_react10.useEffect)(() => {
+  (0, import_react11.useEffect)(() => {
     let cancelled = false;
     if (!teams.home || !teams.away) {
       setChecked(true);
@@ -60973,7 +60962,7 @@ function FifaHighlightsButton({
       cancelled = true;
     };
   }, [teams.home, teams.away]);
-  const handleClick = (0, import_react10.useCallback)(
+  const handleClick = (0, import_react11.useCallback)(
     (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -61012,12 +61001,12 @@ function FifaHighlightsButton({
     )
   ] });
 }
-var import_react10, import_react_dom, import_jsx_runtime10, clientCache, CLIENT_CACHE_VERSION;
+var import_react11, import_react_dom, import_jsx_runtime10, clientCache, CLIENT_CACHE_VERSION;
 var init_FifaHighlightsButton = __esm({
   "components/dashboard/FifaHighlightsButton.js"() {
     "use strict";
     "use client";
-    import_react10 = __toESM(require_react());
+    import_react11 = __toESM(require_react());
     import_react_dom = __toESM(require_react_dom());
     init_icons();
     init_YoutubeHighlightsPlayer();
@@ -61030,16 +61019,16 @@ var init_FifaHighlightsButton = __esm({
 
 // hooks/useSimulatedLiveClock.js
 function useSimulatedLiveClock({ liveTime, minute, status, enabled: enabled2 = true }) {
-  const [now, setNow] = (0, import_react11.useState)(() => Date.now());
-  const [syncedAt, setSyncedAt] = (0, import_react11.useState)(() => Date.now());
-  const [activeAnchor, setActiveAnchor] = (0, import_react11.useState)(null);
+  const [now, setNow] = (0, import_react12.useState)(() => Date.now());
+  const [syncedAt, setSyncedAt] = (0, import_react12.useState)(() => Date.now());
+  const [activeAnchor, setActiveAnchor] = (0, import_react12.useState)(null);
   const paused = isLiveClockPaused(status, liveTime);
-  const incomingAnchor = (0, import_react11.useMemo)(() => {
+  const incomingAnchor = (0, import_react12.useMemo)(() => {
     if (!enabled2 || !LIVE_STATUSES5.has(status)) return null;
     if (paused) return null;
     return buildLiveClockAnchor(liveTime, minute);
   }, [enabled2, status, paused, liveTime, minute, liveTime?.long, liveTime?.short, liveTime?.addedTime]);
-  (0, import_react11.useEffect)(() => {
+  (0, import_react12.useEffect)(() => {
     if (!incomingAnchor) {
       setActiveAnchor(null);
       return;
@@ -61055,12 +61044,12 @@ function useSimulatedLiveClock({ liveTime, minute, status, enabled: enabled2 = t
       return prev;
     });
   }, [incomingAnchor]);
-  (0, import_react11.useEffect)(() => {
+  (0, import_react12.useEffect)(() => {
     if (!activeAnchor || paused) return void 0;
     const t = setInterval(() => setNow(Date.now()), 1e3);
     return () => clearInterval(t);
   }, [activeAnchor?.key, paused]);
-  return (0, import_react11.useMemo)(() => {
+  return (0, import_react12.useMemo)(() => {
     if (!enabled2 || !LIVE_STATUSES5.has(status)) return null;
     if (paused) return formatPausedLiveClock();
     if (!activeAnchor) return null;
@@ -61068,12 +61057,12 @@ function useSimulatedLiveClock({ liveTime, minute, status, enabled: enabled2 = t
     return formatSimulatedClock(activeAnchor, elapsed);
   }, [enabled2, status, paused, activeAnchor, now, syncedAt]);
 }
-var import_react11, LIVE_STATUSES5;
+var import_react12, LIVE_STATUSES5;
 var init_useSimulatedLiveClock = __esm({
   "hooks/useSimulatedLiveClock.js"() {
     "use strict";
     "use client";
-    import_react11 = __toESM(require_react());
+    import_react12 = __toESM(require_react());
     init_liveClock();
     LIVE_STATUSES5 = /* @__PURE__ */ new Set(["IN_PLAY", "PAUSED", "LIVE"]);
   }
@@ -61455,10 +61444,10 @@ var init_LiveResultRow = __esm({
 
 // components/dashboard/LineupPitchView.js
 function useVerticalLineupPitch() {
-  const [vertical, setVertical] = (0, import_react34.useState)(
+  const [vertical, setVertical] = (0, import_react35.useState)(
     () => typeof window !== "undefined" && window.matchMedia(MOBILE_LINEUP_MQ).matches
   );
-  (0, import_react34.useEffect)(() => {
+  (0, import_react35.useEffect)(() => {
     const mq = window.matchMedia(MOBILE_LINEUP_MQ);
     const sync = () => setVertical(mq.matches);
     sync();
@@ -61618,18 +61607,18 @@ function LineupPitchView({
   availableFilters,
   onPlayerClick
 }) {
-  const allowedFilters = (0, import_react34.useMemo)(() => {
+  const allowedFilters = (0, import_react35.useMemo)(() => {
     const ids = availableFilters?.length ? availableFilters : ["match", "marketValue", "age", "team"];
     return FILTERS.filter((f) => ids.includes(f.id));
   }, [availableFilters]);
-  const [filterId, setFilterId] = (0, import_react34.useState)("match");
+  const [filterId, setFilterId] = (0, import_react35.useState)("match");
   const activeFilter = allowedFilters.some((f) => f.id === filterId) ? filterId : "match";
   const verticalPitch = useVerticalLineupPitch();
-  const homeIndicator = (0, import_react34.useMemo)(
+  const homeIndicator = (0, import_react35.useMemo)(
     () => teamIndicatorFromLineup(homeLineup, activeFilter, homeRating),
     [homeLineup, activeFilter, homeRating]
   );
-  const awayIndicator = (0, import_react34.useMemo)(
+  const awayIndicator = (0, import_react35.useMemo)(
     () => teamIndicatorFromLineup(awayLineup, activeFilter, awayRating),
     [awayLineup, activeFilter, awayRating]
   );
@@ -61678,12 +61667,12 @@ function LineupPitchView({
     ] })
   ] });
 }
-var import_react34, import_jsx_runtime41, FILTERS, MOBILE_LINEUP_MQ;
+var import_react35, import_jsx_runtime41, FILTERS, MOBILE_LINEUP_MQ;
 var init_LineupPitchView = __esm({
   "components/dashboard/LineupPitchView.js"() {
     "use strict";
     "use client";
-    import_react34 = __toESM(require_react());
+    import_react35 = __toESM(require_react());
     init_TeamCrest();
     init_icons();
     import_jsx_runtime41 = __toESM(require_jsx_runtime());
@@ -61707,16 +61696,16 @@ function MatchGroupStandingsPanel({
   onOpenMatch
 }) {
   const normalizedKey = normalizeGroupKey4(groupKey);
-  const groupOnlyMatches = (0, import_react35.useMemo)(
+  const groupOnlyMatches = (0, import_react36.useMemo)(
     () => groupMatches2.filter((m) => normalizeGroupKey4(m.group) === normalizedKey),
     [groupMatches2, normalizedKey]
   );
-  const rawById = (0, import_react35.useMemo)(() => indexApiMatches3(apiMatches), [apiMatches]);
-  const officialScores = (0, import_react35.useMemo)(
+  const rawById = (0, import_react36.useMemo)(() => indexApiMatches3(apiMatches), [apiMatches]);
+  const officialScores = (0, import_react36.useMemo)(
     () => groupScoresFromApi(apiMatches),
     [apiMatches]
   );
-  const group2 = (0, import_react35.useMemo)(() => {
+  const group2 = (0, import_react36.useMemo)(() => {
     const groups = computeGroupStandings(groupOnlyMatches, officialScores);
     return groups.find((g) => normalizeGroupKey4(g.id) === normalizedKey) || groups[0] || null;
   }, [groupOnlyMatches, officialScores, normalizedKey]);
@@ -61780,12 +61769,12 @@ function MatchGroupStandingsPanel({
     ] })
   ] });
 }
-var import_react35, import_jsx_runtime42;
+var import_react36, import_jsx_runtime42;
 var init_MatchGroupStandingsPanel = __esm({
   "components/dashboard/MatchGroupStandingsPanel.js"() {
     "use strict";
     "use client";
-    import_react35 = __toESM(require_react());
+    import_react36 = __toESM(require_react());
     init_groupStandings();
     init_apiMatchScores();
     init_teamNamesEs();
@@ -62087,17 +62076,17 @@ function MatchHeadToHeadPanel({
   emptyHint = "No hay enfrentamientos previos registrados entre estos equipos.",
   hideWhenEmpty = false
 }) {
-  const [filter, setFilter] = (0, import_react36.useState)("all");
+  const [filter, setFilter] = (0, import_react37.useState)("all");
   const displayHome = homeName || headToHead?.homeName || "Local";
   const displayAway = awayName || headToHead?.awayName || "Visitante";
-  const filteredMatches = (0, import_react36.useMemo)(() => {
+  const filteredMatches = (0, import_react37.useMemo)(() => {
     const rows = headToHead?.matches || [];
     if (filter === "tournament") {
       return rows.filter((row) => isTournamentH2hCompetition(row.competitionRaw || row.competition));
     }
     return rows;
   }, [headToHead?.matches, filter]);
-  const hasTournamentRows = (0, import_react36.useMemo)(
+  const hasTournamentRows = (0, import_react37.useMemo)(
     () => (headToHead?.matches || []).some((row) => isTournamentH2hCompetition(row.competitionRaw || row.competition)),
     [headToHead?.matches]
   );
@@ -62183,12 +62172,12 @@ function MatchHeadToHeadPanel({
     ] }, row.id)) })
   ] });
 }
-var import_react36, import_jsx_runtime44;
+var import_react37, import_jsx_runtime44;
 var init_MatchHeadToHeadPanel = __esm({
   "components/dashboard/MatchHeadToHeadPanel.js"() {
     "use strict";
     "use client";
-    import_react36 = __toESM(require_react());
+    import_react37 = __toESM(require_react());
     init_TeamCrest();
     init_icons();
     init_matchHeadToHead();
@@ -62670,8 +62659,8 @@ function HeatmapPitch() {
   ] });
 }
 function PlayerHeatmap({ circles, template, touches }) {
-  const reactId = (0, import_react37.useId)().replace(/:/g, "");
-  const markup = (0, import_react37.useMemo)(
+  const reactId = (0, import_react38.useId)().replace(/:/g, "");
+  const markup = (0, import_react38.useMemo)(
     () => buildPlayerHeatmapSvg(template, circles, `player-heat-${reactId}`),
     [template, circles, reactId]
   );
@@ -62844,8 +62833,8 @@ function ShotMiniGoal({ shot }) {
   ] });
 }
 function PlayerShotmap({ shots }) {
-  const [selectedId, setSelectedId] = (0, import_react37.useState)(null);
-  (0, import_react37.useEffect)(() => {
+  const [selectedId, setSelectedId] = (0, import_react38.useState)(null);
+  (0, import_react38.useEffect)(() => {
     if (!shots?.length) {
       setSelectedId(null);
       return;
@@ -62932,30 +62921,30 @@ function PlayerDetailSheet({
   onClose,
   onChangePlayer
 }) {
-  const [mounted, setMounted] = (0, import_react37.useState)(false);
-  const [activeTab, setActiveTab] = (0, import_react37.useState)("destacados");
-  const [heatmapCircles, setHeatmapCircles] = (0, import_react37.useState)(null);
-  const [heatmapTemplate, setHeatmapTemplate] = (0, import_react37.useState)(null);
-  const bodyRef = (0, import_react37.useRef)(null);
-  const sheetRef = (0, import_react37.useRef)(null);
-  const lineupPlayer = (0, import_react37.useMemo)(
+  const [mounted, setMounted] = (0, import_react38.useState)(false);
+  const [activeTab, setActiveTab] = (0, import_react38.useState)("destacados");
+  const [heatmapCircles, setHeatmapCircles] = (0, import_react38.useState)(null);
+  const [heatmapTemplate, setHeatmapTemplate] = (0, import_react38.useState)(null);
+  const bodyRef = (0, import_react38.useRef)(null);
+  const sheetRef = (0, import_react38.useRef)(null);
+  const lineupPlayer = (0, import_react38.useMemo)(
     () => roster.find((p) => String(p.id) === String(playerId)) || null,
     [roster, playerId]
   );
-  const player = (0, import_react37.useMemo)(
+  const player = (0, import_react38.useMemo)(
     () => buildPlayerDetailView(match, playerId, lineupPlayer),
     [match, playerId, lineupPlayer]
   );
-  const rosterIndex = (0, import_react37.useMemo)(
+  const rosterIndex = (0, import_react38.useMemo)(
     () => roster.findIndex((p) => String(p.id) === String(playerId)),
     [roster, playerId]
   );
   const hasPrev = rosterIndex > 0;
   const hasNext = rosterIndex >= 0 && rosterIndex < roster.length - 1;
-  (0, import_react37.useEffect)(() => {
+  (0, import_react38.useEffect)(() => {
     setMounted(true);
   }, []);
-  (0, import_react37.useEffect)(() => {
+  (0, import_react38.useEffect)(() => {
     setActiveTab("destacados");
     setHeatmapCircles(null);
     setHeatmapTemplate(null);
@@ -62963,12 +62952,12 @@ function PlayerDetailSheet({
   function activateTab(tabId) {
     setActiveTab(tabId);
   }
-  (0, import_react37.useEffect)(() => {
+  (0, import_react38.useEffect)(() => {
     const el = bodyRef.current?.querySelector('.swipe-tabs-panel[aria-hidden="false"]');
     if (el) el.scrollTop = 0;
   }, [activeTab, playerId]);
   const loadDestacados = activeTab === "destacados";
-  (0, import_react37.useEffect)(() => {
+  (0, import_react38.useEffect)(() => {
     if (!playerId || !matchId || !loadDestacados) return;
     let cancelled = false;
     setHeatmapCircles(null);
@@ -62994,7 +62983,7 @@ function PlayerDetailSheet({
       cancelled = true;
     };
   }, [matchId, playerId, match?.heatmapPubUrl, player?.optaId, loadDestacados]);
-  (0, import_react37.useEffect)(() => {
+  (0, import_react38.useEffect)(() => {
     if (!playerId) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -63118,12 +63107,12 @@ function PlayerDetailSheet({
     document.body
   );
 }
-var import_react37, import_react_dom5, import_jsx_runtime45, PLAYER_TABS, PLAYER_TAB_IDS;
+var import_react38, import_react_dom5, import_jsx_runtime45, PLAYER_TABS, PLAYER_TAB_IDS;
 var init_PlayerDetailSheet = __esm({
   "components/dashboard/PlayerDetailSheet.js"() {
     "use strict";
     "use client";
-    import_react37 = __toESM(require_react());
+    import_react38 = __toESM(require_react());
     init_SwipeTabPanels();
     import_react_dom5 = __toESM(require_react_dom());
     init_icons();
@@ -63152,11 +63141,11 @@ function useMatchDetailHeaderCollapse({
   enabled: enabled2 = true,
   contentKey = ""
 }) {
-  const collapseRef = (0, import_react38.useRef)(0);
-  const targetRef = (0, import_react38.useRef)(0);
-  const lockedRef = (0, import_react38.useRef)(true);
-  const [headerScrollLocked, setHeaderScrollLocked] = (0, import_react38.useState)(false);
-  (0, import_react38.useEffect)(() => {
+  const collapseRef = (0, import_react39.useRef)(0);
+  const targetRef = (0, import_react39.useRef)(0);
+  const lockedRef = (0, import_react39.useRef)(true);
+  const [headerScrollLocked, setHeaderScrollLocked] = (0, import_react39.useState)(false);
+  (0, import_react39.useEffect)(() => {
     collapseRef.current = 0;
     targetRef.current = 0;
     lockedRef.current = true;
@@ -63168,7 +63157,7 @@ function useMatchDetailHeaderCollapse({
       header.classList.remove("match-detail-header--scroll-locked");
     }
   }, [activeTab, matchId, headerRef]);
-  (0, import_react38.useEffect)(() => {
+  (0, import_react39.useEffect)(() => {
     const header = headerRef.current;
     const expand = expandRef.current;
     if (!header || !expand) return void 0;
@@ -63386,12 +63375,12 @@ function useMatchDetailHeaderCollapse({
   }, [enabled2, activeTab, matchId, contentKey, bodyRef, headerRef, expandRef]);
   return headerScrollLocked;
 }
-var import_react38, MOBILE_MQ2, COLLAPSE_SCROLL_PX, GESTURE_COMMIT_PX, COLLAPSED_THRESHOLD, COLLAPSE_LERP;
+var import_react39, MOBILE_MQ2, COLLAPSE_SCROLL_PX, GESTURE_COMMIT_PX, COLLAPSED_THRESHOLD, COLLAPSE_LERP;
 var init_useMatchDetailHeaderCollapse = __esm({
   "hooks/useMatchDetailHeaderCollapse.js"() {
     "use strict";
     "use client";
-    import_react38 = __toESM(require_react());
+    import_react39 = __toESM(require_react());
     MOBILE_MQ2 = "(max-width: 639px)";
     COLLAPSE_SCROLL_PX = 240;
     GESTURE_COMMIT_PX = 14;
@@ -63458,40 +63447,40 @@ function MatchDetailSheet({
   userPreds = {},
   onClose
 }) {
-  const [stack, setStack] = (0, import_react39.useState)(() => [makeSheetEntry(matchId, summary, userPred)]);
+  const [stack, setStack] = (0, import_react40.useState)(() => [makeSheetEntry(matchId, summary, userPred)]);
   const currentEntry = stack[stack.length - 1];
   const currentMatchId = currentEntry?.matchId;
   const currentSummary = currentEntry?.summary;
   const currentUserPred = currentEntry?.userPred;
   const canGoBack = stack.length > 1;
-  const currentLiveSnapshot = (0, import_react39.useMemo)(
+  const currentLiveSnapshot = (0, import_react40.useMemo)(
     () => apiMatches.find((x) => String(x.id) === String(currentMatchId)) || liveSnapshot,
     [apiMatches, currentMatchId, liveSnapshot]
   );
-  const [match, setMatch] = (0, import_react39.useState)(
+  const [match, setMatch] = (0, import_react40.useState)(
     () => liveSnapshotFromSummary(summary) || liveSnapshot || null
   );
-  const [loading, setLoading] = (0, import_react39.useState)(true);
-  const [error, setError] = (0, import_react39.useState)(null);
-  const [mounted, setMounted] = (0, import_react39.useState)(false);
-  const [activeTab, setActiveTab] = (0, import_react39.useState)("directo");
-  const [selectedPlayerId, setSelectedPlayerId] = (0, import_react39.useState)(null);
-  const [highlights, setHighlights] = (0, import_react39.useState)(null);
-  const bodyRef = (0, import_react39.useRef)(null);
-  const sheetRef = (0, import_react39.useRef)(null);
-  const headerRef = (0, import_react39.useRef)(null);
-  const headerExpandRef = (0, import_react39.useRef)(null);
-  const onCloseRef = (0, import_react39.useRef)(onClose);
+  const [loading, setLoading] = (0, import_react40.useState)(true);
+  const [error, setError] = (0, import_react40.useState)(null);
+  const [mounted, setMounted] = (0, import_react40.useState)(false);
+  const [activeTab, setActiveTab] = (0, import_react40.useState)("directo");
+  const [selectedPlayerId, setSelectedPlayerId] = (0, import_react40.useState)(null);
+  const [highlights, setHighlights] = (0, import_react40.useState)(null);
+  const bodyRef = (0, import_react40.useRef)(null);
+  const sheetRef = (0, import_react40.useRef)(null);
+  const headerRef = (0, import_react40.useRef)(null);
+  const headerExpandRef = (0, import_react40.useRef)(null);
+  const onCloseRef = (0, import_react40.useRef)(onClose);
   onCloseRef.current = onClose;
-  (0, import_react39.useEffect)(() => {
+  (0, import_react40.useEffect)(() => {
     setMounted(true);
   }, []);
-  (0, import_react39.useEffect)(() => {
+  (0, import_react40.useEffect)(() => {
     setStack([makeSheetEntry(matchId, summary, userPred)]);
     setActiveTab("directo");
     setSelectedPlayerId(null);
   }, [matchId]);
-  const load = (0, import_react39.useCallback)(async (force = false) => {
+  const load = (0, import_react40.useCallback)(async (force = false) => {
     if (!currentMatchId) return;
     setError(null);
     try {
@@ -63506,7 +63495,7 @@ function MatchDetailSheet({
   const isGroupStage = match?.stage === "GROUP_STAGE" || currentSummary?.stage === "GROUP_STAGE" || Boolean(match?.group || currentSummary?.group);
   const showGroupStandings = isGroupStage && groupMatches2.length > 0;
   const matchNotStarted = match ? isMatchNotStarted(match.status) : true;
-  const detailTabs = (0, import_react39.useMemo)(
+  const detailTabs = (0, import_react40.useMemo)(
     () => DETAIL_TABS.filter((tab) => !tab.groupOnly || showGroupStandings).map((tab) => {
       if (tab.id === "eventos" && matchNotStarted) {
         return { id: "h2h", label: "Cara a Cara" };
@@ -63515,22 +63504,22 @@ function MatchDetailSheet({
     }),
     [showGroupStandings, matchNotStarted]
   );
-  const detailTabIds = (0, import_react39.useMemo)(() => detailTabs.map((t) => t.id), [detailTabs]);
-  (0, import_react39.useEffect)(() => {
+  const detailTabIds = (0, import_react40.useMemo)(() => detailTabs.map((t) => t.id), [detailTabs]);
+  (0, import_react40.useEffect)(() => {
     setMatch(liveSnapshotFromSummary(currentSummary) || currentLiveSnapshot || null);
     setLoading(true);
     setError(null);
     load(true);
   }, [load, currentMatchId]);
-  (0, import_react39.useEffect)(() => {
+  (0, import_react40.useEffect)(() => {
     if (detailTabs.some((t) => t.id === activeTab)) return;
     setActiveTab("directo");
   }, [detailTabs, activeTab]);
-  (0, import_react39.useEffect)(() => {
+  (0, import_react40.useEffect)(() => {
     const el = bodyRef.current?.querySelector('.swipe-tabs-panel[aria-hidden="false"]');
     if (el) el.scrollTop = 0;
   }, [activeTab, currentMatchId]);
-  (0, import_react39.useEffect)(() => {
+  (0, import_react40.useEffect)(() => {
     if (!currentLiveSnapshot) return;
     setMatch((prev) => mergeLiveIntoMatch(prev, currentLiveSnapshot));
   }, [
@@ -63541,7 +63530,7 @@ function MatchDetailSheet({
     currentLiveSnapshot?.minute,
     currentLiveSnapshot?.liveTime?.short
   ]);
-  const handleClose = (0, import_react39.useCallback)(() => {
+  const handleClose = (0, import_react40.useCallback)(() => {
     setStack((prev) => {
       if (prev.length > 1) {
         const previous = prev[prev.length - 2];
@@ -63552,7 +63541,7 @@ function MatchDetailSheet({
       return prev;
     });
   }, []);
-  const handleCloseRef = (0, import_react39.useRef)(handleClose);
+  const handleCloseRef = (0, import_react40.useRef)(handleClose);
   handleCloseRef.current = handleClose;
   function openGroupMatch(m) {
     if (String(m.id) === String(currentMatchId)) return;
@@ -63572,7 +63561,7 @@ function MatchDetailSheet({
       return next;
     });
   }
-  (0, import_react39.useEffect)(() => {
+  (0, import_react40.useEffect)(() => {
     if (!currentMatchId) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -63585,7 +63574,7 @@ function MatchDetailSheet({
       document.removeEventListener("keydown", onKey);
     };
   }, [currentMatchId]);
-  (0, import_react39.useEffect)(() => {
+  (0, import_react40.useEffect)(() => {
     if (!match || !isLiveMatchStatus(match.status)) return;
     const t = setInterval(() => load(false), LIVE_POLL_MS);
     return () => clearInterval(t);
@@ -63598,13 +63587,13 @@ function MatchDetailSheet({
   const awayDisplayName = formatStatsTeamName(awayName);
   const homeCrest = home.crest || currentSummary?.homeCrest;
   const awayCrest = away.crest || currentSummary?.awayCrest;
-  const score = (0, import_react39.useMemo)(() => match ? getMatchDetailScore(match) : null, [match]);
+  const score = (0, import_react40.useMemo)(() => match ? getMatchDetailScore(match) : null, [match]);
   const liveCommentary = match?.liveCommentary || [];
-  const highlightTeams = (0, import_react39.useMemo)(
+  const highlightTeams = (0, import_react40.useMemo)(
     () => match ? resolveTeamNamesFromApiRaw(match) : { home: "", away: "" },
     [match]
   );
-  (0, import_react39.useEffect)(() => {
+  (0, import_react40.useEffect)(() => {
     let cancelled = false;
     if (match?.status !== "FINISHED" || !highlightTeams.home || !highlightTeams.away) {
       setHighlights(null);
@@ -63626,28 +63615,28 @@ function MatchDetailSheet({
   }, [match?.status, highlightTeams.home, highlightTeams.away]);
   const homeStats = pickTeamStatistics(home.statistics);
   const awayStats = pickTeamStatistics(away.statistics);
-  const statsComparison = (0, import_react39.useMemo)(
+  const statsComparison = (0, import_react40.useMemo)(
     () => pickStatsComparison(match?.statsComparison),
     [match?.statsComparison]
   );
   const hasLineups = (home.lineup?.length || 0) + (away.lineup?.length || 0) > 0;
-  const substitutions = (0, import_react39.useMemo)(
+  const substitutions = (0, import_react40.useMemo)(
     () => getUnifiedSubstitutions(match, homeName, awayName),
     [match, homeName, awayName]
   );
-  const homeLineup = (0, import_react39.useMemo)(
+  const homeLineup = (0, import_react40.useMemo)(
     () => (home.lineup || []).map((p) => enrichPlayerMatchEvents(p, match, homeName)),
     [home.lineup, match, homeName]
   );
-  const awayLineup = (0, import_react39.useMemo)(
+  const awayLineup = (0, import_react40.useMemo)(
     () => (away.lineup || []).map((p) => enrichPlayerMatchEvents(p, match, awayName)),
     [away.lineup, match, awayName]
   );
-  const homeBench = (0, import_react39.useMemo)(
+  const homeBench = (0, import_react40.useMemo)(
     () => annotateBenchPlayers(home.bench, substitutions, homeName, match),
     [home.bench, substitutions, homeName, match]
   );
-  const awayBench = (0, import_react39.useMemo)(
+  const awayBench = (0, import_react40.useMemo)(
     () => annotateBenchPlayers(away.bench, substitutions, awayName, match),
     [away.bench, substitutions, awayName, match]
   );
@@ -63658,15 +63647,15 @@ function MatchDetailSheet({
     status: match?.status,
     enabled: isLiveMatchStatus(match?.status)
   });
-  const goalScorers = (0, import_react39.useMemo)(
+  const goalScorers = (0, import_react40.useMemo)(
     () => getHeaderGoalScorers(match, homeName, awayName),
     [match, homeName, awayName]
   );
-  const eventsTimeline = (0, import_react39.useMemo)(
+  const eventsTimeline = (0, import_react40.useMemo)(
     () => buildMatchEventsTabItems(match, homeName, awayName),
     [match, homeName, awayName]
   );
-  const playerRoster = (0, import_react39.useMemo)(() => collectMatchPlayerRoster(match), [match]);
+  const playerRoster = (0, import_react40.useMemo)(() => collectMatchPlayerRoster(match), [match]);
   const isLive = isLiveMatchStatus(match?.status);
   const headerScrollLocked = useMatchDetailHeaderCollapse({
     headerRef,
@@ -64298,12 +64287,12 @@ function StatsColumn({ teamName, stats }) {
     ] }, s2.key)) })
   ] });
 }
-var import_react39, import_react_dom6, import_jsx_runtime46, LIVE_POLL_MS, DETAIL_TABS;
+var import_react40, import_react_dom6, import_jsx_runtime46, LIVE_POLL_MS, DETAIL_TABS;
 var init_MatchDetailSheet = __esm({
   "components/dashboard/MatchDetailSheet.js"() {
     "use strict";
     "use client";
-    import_react39 = __toESM(require_react());
+    import_react40 = __toESM(require_react());
     init_SwipeTabPanels();
     import_react_dom6 = __toESM(require_react_dom());
     init_TeamCrest();
@@ -64335,13 +64324,13 @@ var init_MatchDetailSheet = __esm({
 });
 
 // scripts/render-bench-entry.jsx
-var import_react41 = __toESM(require_react());
+var import_react42 = __toESM(require_react());
 var import_client = __toESM(require_client());
 
 // components/GroupDashboard.js
 var import_link = __toESM(require_link2());
 var import_dynamic = __toESM(require_dynamic2());
-var import_react40 = __toESM(require_react());
+var import_react41 = __toESM(require_react());
 
 // node_modules/@supabase/supabase-js/dist/index.mjs
 var dist_exports = {};
@@ -74445,21 +74434,51 @@ function usePredictions({
   };
 }
 
-// hooks/usePullToRefresh.js
+// lib/deferredMount.js
 var import_react2 = __toESM(require_react());
+function useDeferredMount({ timeout = 150 } = {}) {
+  const [ready, setReady] = (0, import_react2.useState)(false);
+  (0, import_react2.useEffect)(() => {
+    let cancelled = false;
+    const complete = () => {
+      if (cancelled) return;
+      (0, import_react2.startTransition)(() => setReady(true));
+    };
+    if (typeof requestAnimationFrame !== "undefined") {
+      const id2 = requestAnimationFrame(() => requestAnimationFrame(complete));
+      return () => {
+        cancelled = true;
+        cancelAnimationFrame(id2);
+      };
+    }
+    const id = typeof requestIdleCallback !== "undefined" ? requestIdleCallback(complete, { timeout }) : setTimeout(complete, 0);
+    return () => {
+      cancelled = true;
+      if (typeof cancelIdleCallback !== "undefined" && typeof id === "number") {
+        cancelIdleCallback(id);
+      } else {
+        clearTimeout(id);
+      }
+    };
+  }, [timeout]);
+  return ready;
+}
+
+// hooks/usePullToRefresh.js
+var import_react3 = __toESM(require_react());
 var PULL_THRESHOLD = 72;
 var MAX_PULL = 96;
 function usePullToRefresh(onRefresh, { enabled: enabled2 = true, getScrollElement = null } = {}) {
-  const [pull, setPull] = (0, import_react2.useState)(0);
-  const [refreshing, setRefreshing] = (0, import_react2.useState)(false);
-  const pullRef = (0, import_react2.useRef)(0);
-  const startY = (0, import_react2.useRef)(0);
-  const pulling = (0, import_react2.useRef)(false);
-  const onRefreshRef = (0, import_react2.useRef)(onRefresh);
-  const getScrollElementRef = (0, import_react2.useRef)(getScrollElement);
+  const [pull, setPull] = (0, import_react3.useState)(0);
+  const [refreshing, setRefreshing] = (0, import_react3.useState)(false);
+  const pullRef = (0, import_react3.useRef)(0);
+  const startY = (0, import_react3.useRef)(0);
+  const pulling = (0, import_react3.useRef)(false);
+  const onRefreshRef = (0, import_react3.useRef)(onRefresh);
+  const getScrollElementRef = (0, import_react3.useRef)(getScrollElement);
   onRefreshRef.current = onRefresh;
   getScrollElementRef.current = getScrollElement;
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (!enabled2) {
       setPull(0);
       pullRef.current = 0;
@@ -74532,7 +74551,7 @@ init_SwipeTabPanels();
 init_useWcMatches();
 
 // hooks/useAutoSyncResults.js
-var import_react5 = __toESM(require_react());
+var import_react6 = __toESM(require_react());
 
 // lib/syncResultsFromApi.js
 init_adminCsv();
@@ -74646,9 +74665,9 @@ function useAutoSyncResults({
   userId,
   refreshGroup
 }) {
-  const busy = (0, import_react5.useRef)(false);
-  const lastSavedKey = (0, import_react5.useRef)("");
-  (0, import_react5.useEffect)(() => {
+  const busy = (0, import_react6.useRef)(false);
+  const lastSavedKey = (0, import_react6.useRef)("");
+  (0, import_react6.useEffect)(() => {
     if (!enabled2 || !group2?.id || isTestPorraGroup(group2.id) || !wcMatches?.length) return;
     const merged = buildMergedResults(wcMatches, group2.results);
     const needsResults = resultsNeedSync(group2.results, merged);
@@ -75239,7 +75258,7 @@ function GroupStatsTable({ rows, currentUserId, onViewParticipant, disputedLimit
 }
 
 // components/dashboard/ParticipantPredictionsSheet.js
-var import_react20 = __toESM(require_react());
+var import_react21 = __toESM(require_react());
 var import_react_dom4 = __toESM(require_react_dom());
 init_matchIdMap();
 init_knockoutBridge();
@@ -75278,7 +75297,7 @@ function defaultParticipantSheetView({
 }
 
 // components/dashboard/GroupStandingsView.js
-var import_react15 = __toESM(require_react());
+var import_react16 = __toESM(require_react());
 init_groupStandings();
 
 // lib/bestThirdPlaces.js
@@ -75322,11 +75341,11 @@ init_teamNamesEs();
 init_TeamCrest();
 
 // components/dashboard/MatchRow.js
-var import_react14 = __toESM(require_react());
+var import_react15 = __toESM(require_react());
 init_TeamCrest();
 
 // components/dashboard/MatchPointsBubble.js
-var import_react7 = __toESM(require_react());
+var import_react8 = __toESM(require_react());
 init_TeamCrest();
 var import_jsx_runtime6 = __toESM(require_jsx_runtime());
 function MatchPointsBubble({
@@ -75344,10 +75363,10 @@ function MatchPointsBubble({
   /** En ranking/porra ajena: destacar la predicción del usuario, no el resultado real */
   highlightPrediction = false
 }) {
-  const [open, setOpen] = (0, import_react7.useState)(false);
-  const wrapRef = (0, import_react7.useRef)(null);
-  const tipId = (0, import_react7.useId)();
-  (0, import_react7.useEffect)(() => {
+  const [open, setOpen] = (0, import_react8.useState)(false);
+  const wrapRef = (0, import_react8.useRef)(null);
+  const tipId = (0, import_react8.useId)();
+  (0, import_react8.useEffect)(() => {
     if (!open) return;
     function onPointerDown(e) {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
@@ -75492,9 +75511,9 @@ function focusNextMatchHomeScore(currentRow) {
 }
 
 // components/dashboard/ScoreInput.js
-var import_react8 = __toESM(require_react());
+var import_react9 = __toESM(require_react());
 var import_jsx_runtime7 = __toESM(require_jsx_runtime());
-var ScoreInput = (0, import_react8.forwardRef)(function ScoreInput2({ value, onChange, disabled, ariaLabel, onFilled, scoreSide }, ref) {
+var ScoreInput = (0, import_react9.forwardRef)(function ScoreInput2({ value, onChange, disabled, ariaLabel, onFilled, scoreSide }, ref) {
   const hasValue = value !== "" && value !== void 0 && value !== null;
   const display = hasValue ? String(value) : "";
   function commit(raw) {
@@ -75570,7 +75589,7 @@ init_matchHeadToHead();
 init_LiveResultRow();
 
 // components/dashboard/MatchPredsInfo.js
-var import_react12 = __toESM(require_react());
+var import_react13 = __toESM(require_react());
 var import_react_dom2 = __toESM(require_react_dom());
 init_icons();
 init_TeamCrest();
@@ -75595,15 +75614,15 @@ function clamp(n, min, max) {
   return Math.min(max, Math.max(min, n));
 }
 function MatchPredsInfo({ rows = [], className = "" }) {
-  const [open, setOpen] = (0, import_react12.useState)(false);
-  const [placement, setPlacement] = (0, import_react12.useState)("above");
-  const [tipStyle, setTipStyle] = (0, import_react12.useState)(null);
-  const [mounted, setMounted] = (0, import_react12.useState)(false);
-  const wrapRef = (0, import_react12.useRef)(null);
-  const tipRef = (0, import_react12.useRef)(null);
-  const tipId = (0, import_react12.useId)();
-  (0, import_react12.useEffect)(() => setMounted(true), []);
-  const reposition = (0, import_react12.useCallback)(() => {
+  const [open, setOpen] = (0, import_react13.useState)(false);
+  const [placement, setPlacement] = (0, import_react13.useState)("above");
+  const [tipStyle, setTipStyle] = (0, import_react13.useState)(null);
+  const [mounted, setMounted] = (0, import_react13.useState)(false);
+  const wrapRef = (0, import_react13.useRef)(null);
+  const tipRef = (0, import_react13.useRef)(null);
+  const tipId = (0, import_react13.useId)();
+  (0, import_react13.useEffect)(() => setMounted(true), []);
+  const reposition = (0, import_react13.useCallback)(() => {
     const wrap = wrapRef.current;
     const tip = tipRef.current;
     if (!wrap || !tip) return;
@@ -75631,14 +75650,14 @@ function MatchPredsInfo({ rows = [], className = "" }) {
     setPlacement(place);
     setTipStyle({ top, left });
   }, []);
-  (0, import_react12.useLayoutEffect)(() => {
+  (0, import_react13.useLayoutEffect)(() => {
     if (!open) {
       setTipStyle(null);
       return;
     }
     reposition();
   }, [open, reposition, rows.length]);
-  (0, import_react12.useEffect)(() => {
+  (0, import_react13.useEffect)(() => {
     if (!open) return;
     function onReposition() {
       reposition();
@@ -75650,7 +75669,7 @@ function MatchPredsInfo({ rows = [], className = "" }) {
       window.removeEventListener("resize", onReposition);
     };
   }, [open, reposition]);
-  (0, import_react12.useEffect)(() => {
+  (0, import_react13.useEffect)(() => {
     if (!open) return;
     function onPointerDown(e) {
       const target = e.target;
@@ -75734,7 +75753,7 @@ function MatchPredsInfo({ rows = [], className = "" }) {
 }
 
 // components/dashboard/MatchH2hInfo.js
-var import_react13 = __toESM(require_react());
+var import_react14 = __toESM(require_react());
 var import_react_dom3 = __toESM(require_react_dom());
 init_TeamCrest();
 init_footballData();
@@ -75817,17 +75836,17 @@ function MatchH2hInfo({
   className = ""
 }) {
   const cached = peekMatchH2h(matchId);
-  const [headToHead, setHeadToHead] = (0, import_react13.useState)(cached ?? null);
-  const [ready, setReady] = (0, import_react13.useState)(cached !== void 0);
-  const [open, setOpen] = (0, import_react13.useState)(false);
-  const [placement, setPlacement] = (0, import_react13.useState)("above");
-  const [tipStyle, setTipStyle] = (0, import_react13.useState)(null);
-  const [mounted, setMounted] = (0, import_react13.useState)(false);
-  const wrapRef = (0, import_react13.useRef)(null);
-  const tipRef = (0, import_react13.useRef)(null);
-  const tipId = (0, import_react13.useId)();
-  (0, import_react13.useEffect)(() => setMounted(true), []);
-  (0, import_react13.useEffect)(() => {
+  const [headToHead, setHeadToHead] = (0, import_react14.useState)(cached ?? null);
+  const [ready, setReady] = (0, import_react14.useState)(cached !== void 0);
+  const [open, setOpen] = (0, import_react14.useState)(false);
+  const [placement, setPlacement] = (0, import_react14.useState)("above");
+  const [tipStyle, setTipStyle] = (0, import_react14.useState)(null);
+  const [mounted, setMounted] = (0, import_react14.useState)(false);
+  const wrapRef = (0, import_react14.useRef)(null);
+  const tipRef = (0, import_react14.useRef)(null);
+  const tipId = (0, import_react14.useId)();
+  (0, import_react14.useEffect)(() => setMounted(true), []);
+  (0, import_react14.useEffect)(() => {
     if (!matchId) {
       setReady(true);
       return;
@@ -75842,7 +75861,7 @@ function MatchH2hInfo({
       cancelled = true;
     };
   }, [matchId]);
-  const reposition = (0, import_react13.useCallback)(() => {
+  const reposition = (0, import_react14.useCallback)(() => {
     const wrap = wrapRef.current;
     const tip = tipRef.current;
     if (!wrap || !tip) return;
@@ -75874,14 +75893,14 @@ function MatchH2hInfo({
     setPlacement(place);
     setTipStyle({ top, left });
   }, []);
-  (0, import_react13.useLayoutEffect)(() => {
+  (0, import_react14.useLayoutEffect)(() => {
     if (!open) {
       setTipStyle(null);
       return;
     }
     reposition();
   }, [open, reposition, headToHead]);
-  (0, import_react13.useEffect)(() => {
+  (0, import_react14.useEffect)(() => {
     if (!open) return;
     function onReposition() {
       reposition();
@@ -75893,7 +75912,7 @@ function MatchH2hInfo({
       window.removeEventListener("resize", onReposition);
     };
   }, [open, reposition]);
-  (0, import_react13.useEffect)(() => {
+  (0, import_react14.useEffect)(() => {
     if (!open) return;
     function onPointerDown(e) {
       const target = e.target;
@@ -76131,7 +76150,7 @@ function MatchRow({
   /** Estado de puntuación KO previsto (Inicio ×0,6) */
   inicioKnockoutScoring = null
 }) {
-  const rowRef = (0, import_react14.useRef)(null);
+  const rowRef = (0, import_react15.useRef)(null);
   const kickoff = formatMatchKickoff(utcDate);
   const matchDate = formatMatchShortDate(utcDate);
   const crestSize = denseTable ? 14 : compact ? 22 : 28;
@@ -76144,23 +76163,23 @@ function MatchRow({
     advances: advancesVal
   };
   const pickAdvance = knockoutAdvance && !readOnly && needsKnockoutAdvancePick(predRow) && onAdvance;
-  const advanceSide = (0, import_react14.useMemo)(() => {
+  const advanceSide = (0, import_react15.useMemo)(() => {
     if (!knockoutAdvance) return null;
     return resolveKnockoutAdvanceSide(predRow);
   }, [knockoutAdvance, predRow]);
   const isInicioKo = isInicioKoId(matchId);
-  const inicioKoUiStatus = (0, import_react14.useMemo)(() => {
+  const inicioKoUiStatus = (0, import_react15.useMemo)(() => {
     if (!isInicioKo || !inicioKnockoutScoring) return null;
     return getInicioKnockoutUiStatus(home, away, matchNumber, inicioKnockoutScoring);
   }, [isInicioKo, inicioKnockoutScoring, home, away, matchNumber]);
   const inicioKoVoid = inicioKoUiStatus?.void === true;
-  const resultForScoring = (0, import_react14.useMemo)(() => {
+  const resultForScoring = (0, import_react15.useMemo)(() => {
     if (isInicioKo) return publishedResult;
     const base = publishedResult || (apiRaw ? getApiMatchDisplayScore(apiRaw) : null);
     if (!base || !knockoutAdvance || !apiRaw) return base;
     return enrichKnockoutResultWithAdvances(base, apiRaw);
   }, [isInicioKo, publishedResult, apiRaw, knockoutAdvance]);
-  const scoringOpts = (0, import_react14.useMemo)(
+  const scoringOpts = (0, import_react15.useMemo)(
     () => ({
       knockout: knockoutAdvance,
       predictedTeams: knockoutScoringTeams?.predictedTeams,
@@ -76168,7 +76187,7 @@ function MatchRow({
     }),
     [knockoutAdvance, knockoutScoringTeams]
   );
-  const pointsSummary = (0, import_react14.useMemo)(() => {
+  const pointsSummary = (0, import_react15.useMemo)(() => {
     if (isInicioKo && inicioKnockoutScoring) {
       return summarizeInicioKnockoutMatchPoints(
         predRow,
@@ -76184,7 +76203,7 @@ function MatchRow({
   const isApiLive = apiRaw && isLiveMatchStatus(apiRaw.status);
   const isApiFinished = apiRaw?.status === "FINISHED";
   const showPorraHeader = !readOnly && apiRaw && apiScore && isPorraApiResultStatus(apiRaw.status);
-  const livePointsSummary = (0, import_react14.useMemo)(() => {
+  const livePointsSummary = (0, import_react15.useMemo)(() => {
     if (isInicioKo && inicioKnockoutScoring) {
       if (!isApiLive || !apiScore || publishedResult) return null;
       return summarizeInicioKnockoutMatchPoints(predRow, { home, away }, inicioKnockoutScoring, matchNumber);
@@ -76193,7 +76212,7 @@ function MatchRow({
     const liveResult = knockoutAdvance && apiRaw ? enrichKnockoutResultWithAdvances(apiScore, apiRaw) : apiScore;
     return summarizeMatchPoints(predRow, liveResult, scoringOpts);
   }, [isInicioKo, inicioKnockoutScoring, isApiLive, apiScore, publishedResult, apiRaw, knockoutAdvance, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow]);
-  const apiFinishedPointsSummary = (0, import_react14.useMemo)(() => {
+  const apiFinishedPointsSummary = (0, import_react15.useMemo)(() => {
     if (isInicioKo && inicioKnockoutScoring) {
       if (!isApiFinished || !apiScore || publishedResult) return null;
       return summarizeInicioKnockoutMatchPoints(predRow, { home, away }, inicioKnockoutScoring, matchNumber);
@@ -76202,7 +76221,7 @@ function MatchRow({
     return summarizeMatchPoints(predRow, resultForScoring, scoringOpts);
   }, [isInicioKo, inicioKnockoutScoring, isApiFinished, apiScore, publishedResult, resultForScoring, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow]);
   const resultForCompare = resultForScoring || publishedResult || apiScore || null;
-  const isExactHit = (0, import_react14.useMemo)(() => {
+  const isExactHit = (0, import_react15.useMemo)(() => {
     if (inicioKoVoid) return false;
     if (isInicioKo && inicioKnockoutScoring) {
       const s2 = summarizeInicioKnockoutMatchPoints(
@@ -76215,7 +76234,7 @@ function MatchRow({
     }
     return isExactScoreHit(predRow, resultForCompare, scoringOpts);
   }, [inicioKoVoid, isInicioKo, inicioKnockoutScoring, predRow, home, away, resultForCompare, scoringOpts]);
-  const participantPredRows = (0, import_react14.useMemo)(() => {
+  const participantPredRows = (0, import_react15.useMemo)(() => {
     if (readOnly || !participants2 || !matchId) return [];
     return getParticipantPredsForMatch(participants2, matchId, {
       groupMatches: groupMatches2,
@@ -76524,16 +76543,16 @@ function GroupStandingsView({
   participants: participants2 = null,
   viewingParticipantPreds = false
 }) {
-  const rawById = (0, import_react15.useMemo)(() => indexApiMatches3(apiMatches), [apiMatches]);
-  const groups = (0, import_react15.useMemo)(
+  const rawById = (0, import_react16.useMemo)(() => indexApiMatches3(apiMatches), [apiMatches]);
+  const groups = (0, import_react16.useMemo)(
     () => computeGroupStandings(matches, preds),
     [matches, preds]
   );
-  const bestThirds = (0, import_react15.useMemo)(
+  const bestThirds = (0, import_react16.useMemo)(
     () => computeBestThirdPlacesRanking(matches, preds),
     [matches, preds]
   );
-  const qualificationPts = (0, import_react15.useMemo)(
+  const qualificationPts = (0, import_react16.useMemo)(
     () => buildQualificationPointsByTeam(
       { predictions: { group: preds } },
       { groupMatches: matches, knockoutMatches: knockoutMatches2, fotmobStandings, apiMatches }
@@ -76632,7 +76651,7 @@ function GroupStandingsView({
 }
 
 // components/dashboard/KnockoutBracketView.js
-var import_react19 = __toESM(require_react());
+var import_react20 = __toESM(require_react());
 init_knockoutBracketDisplay();
 
 // lib/knockoutBracketTreeLayout.js
@@ -76806,13 +76825,13 @@ init_knockoutMatchScoring();
 init_apiMatchScores();
 
 // hooks/useIsMobileBracket.js
-var import_react16 = __toESM(require_react());
+var import_react17 = __toESM(require_react());
 var MQ = "(max-width: 899px)";
 function useIsMobileBracket() {
-  const [mobile, setMobile] = (0, import_react16.useState)(
+  const [mobile, setMobile] = (0, import_react17.useState)(
     () => typeof window !== "undefined" && window.matchMedia(MQ).matches
   );
-  (0, import_react16.useEffect)(() => {
+  (0, import_react17.useEffect)(() => {
     const mq = window.matchMedia(MQ);
     const sync = () => setMobile(mq.matches);
     sync();
@@ -76823,7 +76842,7 @@ function useIsMobileBracket() {
 }
 
 // components/dashboard/BracketMatchSlot.js
-var import_react17 = __toESM(require_react());
+var import_react18 = __toESM(require_react());
 init_TeamCrest();
 init_knockoutAdvances();
 init_apiMatchScores();
@@ -76916,7 +76935,7 @@ function BracketMatchSlot({
   inicioKnockoutScoring = null,
   knockoutAdvance = false
 }) {
-  const slotRowRef = (0, import_react17.useRef)(null);
+  const slotRowRef = (0, import_react18.useRef)(null);
   if (!match) return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "bracket-slot bracket-slot--empty" });
   const publishedResult = publishedResults[match?.id];
   const scoringTeams = knockoutScoringCtx ? resolveKnockoutTeamsForScoring(match.id, publishedResult, knockoutScoringCtx) : {};
@@ -76938,7 +76957,7 @@ function BracketMatchSlot({
   const pickAdvance = !readOnly && !matchLocked && needsKnockoutAdvancePick(predRow) && onAdvance;
   const advanceSide = knockoutAdvance ? resolveKnockoutAdvanceSide(predRow) : null;
   const isInicioKo = isInicioKoId(match?.id);
-  const inicioKoUiStatus = (0, import_react17.useMemo)(() => {
+  const inicioKoUiStatus = (0, import_react18.useMemo)(() => {
     if (!isInicioKo || !inicioKnockoutScoring || !match) return null;
     return getInicioKnockoutUiStatus(
       match.home,
@@ -76948,7 +76967,7 @@ function BracketMatchSlot({
     );
   }, [isInicioKo, inicioKnockoutScoring, match]);
   const inicioKoVoid = inicioKoUiStatus?.void === true;
-  const knockoutScoringOpts = (0, import_react17.useMemo)(
+  const knockoutScoringOpts = (0, import_react18.useMemo)(
     () => ({
       knockout: knockoutAdvance,
       predictedTeams: scoringTeams.predictedTeams,
@@ -76956,13 +76975,13 @@ function BracketMatchSlot({
     }),
     [knockoutAdvance, scoringTeams]
   );
-  const resultForScoring = (0, import_react17.useMemo)(() => {
+  const resultForScoring = (0, import_react18.useMemo)(() => {
     if (isInicioKo) return publishedResult;
     const base = publishedResult || apiScore;
     if (!base || !knockoutAdvance || !apiRaw) return base;
     return enrichKnockoutResultWithAdvances(base, apiRaw);
   }, [isInicioKo, publishedResult, apiScore, knockoutAdvance, apiRaw]);
-  const inicioPointsSummary = (0, import_react17.useMemo)(() => {
+  const inicioPointsSummary = (0, import_react18.useMemo)(() => {
     if (!isInicioKo || !inicioKnockoutScoring) return null;
     return summarizeInicioKnockoutMatchPoints(
       predRow,
@@ -76971,12 +76990,12 @@ function BracketMatchSlot({
       match.matchNumber
     );
   }, [isInicioKo, inicioKnockoutScoring, predRow, match?.home, match?.away, match?.matchNumber]);
-  const pointsSummary = (0, import_react17.useMemo)(() => {
+  const pointsSummary = (0, import_react18.useMemo)(() => {
     if (isInicioKo && inicioKnockoutScoring) return inicioPointsSummary;
     if (!resultForScoring) return null;
     return summarizeMatchPoints(predRow, resultForScoring, knockoutScoringOpts);
   }, [isInicioKo, inicioKnockoutScoring, inicioPointsSummary, resultForScoring, predRow, knockoutScoringOpts]);
-  const livePointsSummary = (0, import_react17.useMemo)(() => {
+  const livePointsSummary = (0, import_react18.useMemo)(() => {
     if (isInicioKo && inicioKnockoutScoring) {
       if (!isApiLive || !apiScore || publishedResult) return null;
       return summarizeInicioKnockoutMatchPoints(
@@ -76990,7 +77009,7 @@ function BracketMatchSlot({
     const liveResult = knockoutAdvance && apiRaw ? enrichKnockoutResultWithAdvances(apiScore, apiRaw) : apiScore;
     return summarizeMatchPoints(predRow, liveResult, knockoutScoringOpts);
   }, [isInicioKo, inicioKnockoutScoring, isApiLive, apiScore, publishedResult, apiRaw, knockoutAdvance, predRow, match?.home, match?.away, match?.matchNumber, knockoutScoringOpts]);
-  const apiFinishedPointsSummary = (0, import_react17.useMemo)(() => {
+  const apiFinishedPointsSummary = (0, import_react18.useMemo)(() => {
     if (isInicioKo && inicioKnockoutScoring) {
       if (!isApiFinished || !apiScore || publishedResult) return null;
       return summarizeInicioKnockoutMatchPoints(
@@ -77006,7 +77025,7 @@ function BracketMatchSlot({
   const showInicioVoidZero = shouldShowInicioKnockoutVoidZero(inicioKoUiStatus, inicioPointsSummary);
   const resultForCompare = resultForScoring || publishedResult || apiScore || null;
   const isExactHit = inicioKoVoid && !(inicioPointsSummary?.pts > 0) ? false : isInicioKo && inicioKnockoutScoring ? (inicioPointsSummary?.split?.resultado ?? 0) > 0 : isExactScoreHit(predRow, resultForCompare, knockoutScoringOpts);
-  const participantPredRows = (0, import_react17.useMemo)(() => {
+  const participantPredRows = (0, import_react18.useMemo)(() => {
     if (readOnly || !participants2 || !match?.id) return [];
     return getParticipantPredsForMatch(participants2, match.id, {
       groupMatches: groupMatches2,
@@ -77438,7 +77457,7 @@ function BracketCenterOut({
 }
 
 // components/dashboard/BracketMobileScroll.js
-var import_react18 = __toESM(require_react());
+var import_react19 = __toESM(require_react());
 init_icons();
 
 // lib/bracketMobileColumns.js
@@ -77594,15 +77613,15 @@ function BracketMobileScroll({
   error = null,
   ...slotProps
 }) {
-  const [activeIndex, setActiveIndex] = (0, import_react18.useState)(0);
-  const viewportRef = (0, import_react18.useRef)(null);
-  const updateIndexFromScroll = (0, import_react18.useCallback)(() => {
+  const [activeIndex, setActiveIndex] = (0, import_react19.useState)(0);
+  const viewportRef = (0, import_react19.useRef)(null);
+  const updateIndexFromScroll = (0, import_react19.useCallback)(() => {
     const el = viewportRef.current;
     if (!el || el.clientWidth <= 0) return;
     const idx = Math.round(el.scrollLeft / el.clientWidth);
     setActiveIndex((prev) => prev !== idx ? idx : prev);
   }, []);
-  const goToPhase = (0, import_react18.useCallback)((index) => {
+  const goToPhase = (0, import_react19.useCallback)((index) => {
     const el = viewportRef.current;
     const next = Math.max(0, Math.min(BRACKET_MOBILE_COLUMNS.length - 1, index));
     if (el && el.clientWidth > 0) {
@@ -77692,7 +77711,7 @@ function KnockoutBracketView({
   knockoutAdvance = false
 }) {
   const isMobile = useIsMobileBracket();
-  const matchByNum = (0, import_react19.useMemo)(() => {
+  const matchByNum = (0, import_react20.useMemo)(() => {
     const rounds = buildBracketRounds(matches);
     const map = {};
     for (const round of rounds) {
@@ -77702,8 +77721,8 @@ function KnockoutBracketView({
     }
     return map;
   }, [matches]);
-  const rawById = (0, import_react19.useMemo)(() => indexApiMatches3(apiMatches), [apiMatches]);
-  const getMatch = (0, import_react19.useCallback)((n) => matchByNum[n] ?? null, [matchByNum]);
+  const rawById = (0, import_react20.useMemo)(() => indexApiMatches3(apiMatches), [apiMatches]);
+  const getMatch = (0, import_react20.useCallback)((n) => matchByNum[n] ?? null, [matchByNum]);
   const slotProps = {
     preds,
     onScore,
@@ -77848,7 +77867,7 @@ function ParticipantPredictionsSheet({
   onClose,
   currentUserId
 }) {
-  const viewContext = (0, import_react20.useMemo)(
+  const viewContext = (0, import_react21.useMemo)(
     () => ({
       groupPhase: group2?.phase,
       group: group2,
@@ -77858,12 +77877,12 @@ function ParticipantPredictionsSheet({
     }),
     [group2, apiMatches, groupMatches2, results?.group]
   );
-  const [view, setView] = (0, import_react20.useState)(() => resolveDefaultView(viewContext));
-  const [mounted, setMounted] = (0, import_react20.useState)(false);
-  (0, import_react20.useEffect)(() => {
+  const [view, setView] = (0, import_react21.useState)(() => resolveDefaultView(viewContext));
+  const [mounted, setMounted] = (0, import_react21.useState)(false);
+  (0, import_react21.useEffect)(() => {
     setMounted(true);
   }, []);
-  (0, import_react20.useEffect)(() => {
+  (0, import_react21.useEffect)(() => {
     if (!participant) return;
     setView(resolveDefaultView(viewContext));
     const prev = document.body.style.overflow;
@@ -77877,7 +77896,7 @@ function ParticipantPredictionsSheet({
       document.removeEventListener("keydown", onKey);
     };
   }, [participant?.id, viewContext, onClose]);
-  const { groupPreds: groupPreds2, inicioKoPreds: inicioKoPreds2, bonusPreds } = (0, import_react20.useMemo)(() => {
+  const { groupPreds: groupPreds2, inicioKoPreds: inicioKoPreds2, bonusPreds } = (0, import_react21.useMemo)(() => {
     const raw = participant?.predictions || {};
     const { migrated: g } = migratePredictionMap(raw.group || {}, groupMatches2);
     const inicio = normalizeInicioKoPreds(raw.inicioKnockout || {});
@@ -77887,11 +77906,11 @@ function ParticipantPredictionsSheet({
       bonusPreds: raw.bonuses || {}
     };
   }, [participant, groupMatches2]);
-  const inicioKo = (0, import_react20.useMemo)(
+  const inicioKo = (0, import_react21.useMemo)(
     () => buildInicioKnockoutSchedule(groupMatches2, groupPreds2, inicioKoPreds2),
     [groupMatches2, groupPreds2, inicioKoPreds2]
   );
-  const inicioKnockoutScoring = (0, import_react20.useMemo)(
+  const inicioKnockoutScoring = (0, import_react21.useMemo)(
     () => buildInicioKnockoutScoringState(
       { predictions: { group: groupPreds2, inicioKnockout: inicioKoPreds2 } },
       {
@@ -78015,7 +78034,7 @@ function ParticipantPredictionsSheet({
 }
 
 // components/ProfileTab.js
-var import_react21 = __toESM(require_react());
+var import_react22 = __toESM(require_react());
 
 // lib/participantProfile.js
 var TEAM_LOGO_FILE_MAX_BYTES = 2 * 1024 * 1024;
@@ -78106,9 +78125,9 @@ function ProfileTab({
   onOpenAdmin,
   adminHasAlerts = false
 }) {
-  const [teamName, setTeamName] = (0, import_react21.useState)(user2.team_name || "");
-  const [logo, setLogo] = (0, import_react21.useState)(user2.team_logo || "");
-  const [saving, setSaving] = (0, import_react21.useState)(false);
+  const [teamName, setTeamName] = (0, import_react22.useState)(user2.team_name || "");
+  const [logo, setLogo] = (0, import_react22.useState)(user2.team_logo || "");
+  const [saving, setSaving] = (0, import_react22.useState)(false);
   async function handleLogoChange(e) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -78230,7 +78249,7 @@ function ProfileTab({
 }
 
 // components/ProfileMenuSheet.js
-var import_react22 = __toESM(require_react());
+var import_react23 = __toESM(require_react());
 
 // components/LeagueLogo.js
 var import_jsx_runtime27 = __toESM(require_jsx_runtime());
@@ -78272,7 +78291,7 @@ function ProfileMenuSheet({
   onOpenAdmin,
   onSwitchGroup
 }) {
-  (0, import_react22.useEffect)(() => {
+  (0, import_react23.useEffect)(() => {
     if (!open) return;
     function onKey(e) {
       if (e.key === "Escape") onClose();
@@ -78393,7 +78412,7 @@ function ProfileMenuSheet({
 }
 
 // components/PredictionExportSheet.js
-var import_react23 = __toESM(require_react());
+var import_react24 = __toESM(require_react());
 
 // lib/emailUtils.js
 function normalizeEmail(email) {
@@ -78443,13 +78462,13 @@ function PredictionExportSheet({
   onBeforeExport,
   notify
 }) {
-  const [open, setOpen] = (0, import_react23.useState)(false);
-  const [targets, setTargets] = (0, import_react23.useState)(null);
-  const [loading, setLoading] = (0, import_react23.useState)(false);
-  const [busyId, setBusyId] = (0, import_react23.useState)(null);
+  const [open, setOpen] = (0, import_react24.useState)(false);
+  const [targets, setTargets] = (0, import_react24.useState)(null);
+  const [loading, setLoading] = (0, import_react24.useState)(false);
+  const [busyId, setBusyId] = (0, import_react24.useState)(null);
   const sourceSummary = summarizePredictions(sourcePredictions);
   const canExport = sourceSummary.total > 0;
-  (0, import_react23.useEffect)(() => {
+  (0, import_react24.useEffect)(() => {
     if (!open || !user2?.email) return;
     let cancelled = false;
     setLoading(true);
@@ -78481,7 +78500,7 @@ function PredictionExportSheet({
       cancelled = true;
     };
   }, [open, user2?.email, user2?.id, currentGroupId, sourcePredictions]);
-  (0, import_react23.useEffect)(() => {
+  (0, import_react24.useEffect)(() => {
     if (!open) return;
     function onKey(e) {
       if (e.key === "Escape") setOpen(false);
@@ -78617,7 +78636,7 @@ function PredictionExportSheet({
 }
 
 // hooks/useUserPorraGroups.js
-var import_react24 = __toESM(require_react());
+var import_react25 = __toESM(require_react());
 init_startupPerf();
 function defer(fn) {
   if (typeof requestIdleCallback !== "undefined") {
@@ -78633,10 +78652,10 @@ function cancelDefer(id) {
   }
 }
 function useUserPorraGroups(email) {
-  const [groups, setGroups] = (0, import_react24.useState)([]);
-  const [hasMultiple, setHasMultiple] = (0, import_react24.useState)(false);
-  const [loading, setLoading] = (0, import_react24.useState)(Boolean(email));
-  (0, import_react24.useEffect)(() => {
+  const [groups, setGroups] = (0, import_react25.useState)([]);
+  const [hasMultiple, setHasMultiple] = (0, import_react25.useState)(false);
+  const [loading, setLoading] = (0, import_react25.useState)(Boolean(email));
+  (0, import_react25.useEffect)(() => {
     let cancelled = false;
     if (!email) {
       setGroups([]);
@@ -78694,7 +78713,7 @@ function useUserPorraGroups(email) {
 init_startupPerf();
 
 // components/InstallAppButton.js
-var import_react25 = __toESM(require_react());
+var import_react26 = __toESM(require_react());
 init_icons();
 var import_jsx_runtime30 = __toESM(require_jsx_runtime());
 function isIos() {
@@ -78706,10 +78725,10 @@ function isInstalledPwa() {
   return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 }
 function InstallAppButton({ className = "", variant = "default", notify }) {
-  const [installed, setInstalled] = (0, import_react25.useState)(false);
-  const [deferred, setDeferred] = (0, import_react25.useState)(null);
-  const [installing, setInstalling] = (0, import_react25.useState)(false);
-  (0, import_react25.useEffect)(() => {
+  const [installed, setInstalled] = (0, import_react26.useState)(false);
+  const [deferred, setDeferred] = (0, import_react26.useState)(null);
+  const [installing, setInstalling] = (0, import_react26.useState)(false);
+  (0, import_react26.useEffect)(() => {
     setInstalled(isInstalledPwa());
     const onInstallable = (e) => {
       e.preventDefault();
@@ -78769,7 +78788,7 @@ function InstallAppButton({ className = "", variant = "default", notify }) {
 }
 
 // components/InviteButton.js
-var import_react26 = __toESM(require_react());
+var import_react27 = __toESM(require_react());
 init_icons();
 
 // components/InviteQr.js
@@ -78793,10 +78812,10 @@ function InviteQr({ url, size = 160 }) {
 // components/InviteButton.js
 var import_jsx_runtime32 = __toESM(require_jsx_runtime());
 function InviteButton({ group: group2, notify }) {
-  const [open, setOpen] = (0, import_react26.useState)(false);
+  const [open, setOpen] = (0, import_react27.useState)(false);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const shareUrl = `${origin}?join=${group2.id}`;
-  (0, import_react26.useEffect)(() => {
+  (0, import_react27.useEffect)(() => {
     if (!open) return;
     function onKey(e) {
       if (e.key === "Escape") setOpen(false);
@@ -78932,13 +78951,13 @@ var keeperSet = new Set(GOALKEEPER_SUGGESTIONS.map((n) => n.trim().toLowerCase()
 init_footballData();
 
 // components/dashboard/MatchDaySchedule.js
-var import_react28 = __toESM(require_react());
+var import_react29 = __toESM(require_react());
 init_matchSchedule();
 init_knockoutBracketDisplay();
 init_knockoutBridge();
 
 // components/dashboard/DayTabs.js
-var import_react27 = __toESM(require_react());
+var import_react28 = __toESM(require_react());
 var import_jsx_runtime33 = __toESM(require_jsx_runtime());
 function scrollDayToCenter(container2, dayKey, behavior = "auto") {
   if (!container2 || !dayKey) return;
@@ -78948,12 +78967,12 @@ function scrollDayToCenter(container2, dayKey, behavior = "auto") {
   container2.scrollTo({ left: Math.max(0, left), behavior });
 }
 function DayTabs({ days, selectedKey, onSelect, centerKey }) {
-  const scrollRef = (0, import_react27.useRef)(null);
-  const didCenterToday = (0, import_react27.useRef)(false);
-  (0, import_react27.useEffect)(() => {
+  const scrollRef = (0, import_react28.useRef)(null);
+  const didCenterToday = (0, import_react28.useRef)(false);
+  (0, import_react28.useEffect)(() => {
     didCenterToday.current = false;
   }, [centerKey]);
-  (0, import_react27.useEffect)(() => {
+  (0, import_react28.useEffect)(() => {
     if (didCenterToday.current) return;
     const container2 = scrollRef.current;
     if (!container2 || !centerKey || !days.some((d) => d.key === centerKey)) return;
@@ -78962,7 +78981,7 @@ function DayTabs({ days, selectedKey, onSelect, centerKey }) {
       didCenterToday.current = true;
     });
   }, [days, centerKey]);
-  (0, import_react27.useEffect)(() => {
+  (0, import_react28.useEffect)(() => {
     if (!selectedKey || selectedKey === centerKey) return;
     const container2 = scrollRef.current;
     if (!container2) return;
@@ -79035,22 +79054,22 @@ function MatchDaySchedule({
   /** Porra eliminatorias real: mismo layout que En Vivo (sin caja con scroll interno). */
   liveKnockoutLayout = false
 }) {
-  const rawById = (0, import_react28.useMemo)(() => indexApiMatches3(apiMatches), [apiMatches]);
+  const rawById = (0, import_react29.useMemo)(() => indexApiMatches3(apiMatches), [apiMatches]);
   const knockoutAdvanceDefault = schedulePhase === "knockout";
   function showAdvancePicker(m) {
     if (advancePickerForMatch) return advancePickerForMatch(m);
     return knockoutAdvanceDefault;
   }
   const fullView = viewMode === "full";
-  const days = (0, import_react28.useMemo)(
+  const days = (0, import_react29.useMemo)(
     () => buildDayTabs(matches, { phase: schedulePhase }),
     [matches, schedulePhase]
   );
   const today = todayDateKey();
   const anchor = scheduleAnchorDateKey(schedulePhase);
-  const [selectedDay, setSelectedDay] = (0, import_react28.useState)(null);
-  const appliedFocusDayRef = (0, import_react28.useRef)(null);
-  (0, import_react28.useEffect)(() => {
+  const [selectedDay, setSelectedDay] = (0, import_react29.useState)(null);
+  const appliedFocusDayRef = (0, import_react29.useRef)(null);
+  (0, import_react29.useEffect)(() => {
     if (fullView || !days.length) {
       setSelectedDay(null);
       return;
@@ -79067,15 +79086,15 @@ function MatchDaySchedule({
       return todayTab?.key ?? anchorTab?.key ?? days[0].key;
     });
   }, [days, today, anchor, fullView, focusDayKey]);
-  const filteredMatches = (0, import_react28.useMemo)(() => {
+  const filteredMatches = (0, import_react29.useMemo)(() => {
     return matches.filter((m) => filterMatch ? filterMatch(m) : true).sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
   }, [matches, filterMatch]);
-  const dayMatches = (0, import_react28.useMemo)(() => {
+  const dayMatches = (0, import_react29.useMemo)(() => {
     if (fullView) return filteredMatches;
     if (!selectedDay) return [];
     return filteredMatches.filter((m) => matchDateKey(m.utcDate) === selectedDay);
   }, [filteredMatches, selectedDay, fullView]);
-  const sections = (0, import_react28.useMemo)(() => {
+  const sections = (0, import_react29.useMemo)(() => {
     if (schedulePhase === "knockout") {
       const source = fullView ? filteredMatches : dayMatches;
       return groupMatchesByKnockoutRound(source);
@@ -79213,7 +79232,7 @@ function ScheduleViewTabs({ value, onChange, showGroups = true, showBracket = fa
 }
 
 // components/dashboard/LiveMatchDaySchedule.js
-var import_react29 = __toESM(require_react());
+var import_react30 = __toESM(require_react());
 init_matchSchedule();
 init_apiMatchScores();
 init_LiveResultRow();
@@ -79230,16 +79249,16 @@ function LiveMatchDaySchedule({
   viewMode = "daily"
 }) {
   const fullView = viewMode === "full";
-  const rawById = (0, import_react29.useMemo)(() => indexApiMatches3(apiMatches), [apiMatches]);
-  const days = (0, import_react29.useMemo)(
+  const rawById = (0, import_react30.useMemo)(() => indexApiMatches3(apiMatches), [apiMatches]);
+  const days = (0, import_react30.useMemo)(
     () => buildDayTabs(matches, { phase: schedulePhase }),
     [matches, schedulePhase]
   );
   const today = todayDateKey();
   const anchor = scheduleAnchorDateKey(schedulePhase);
   const dayScrollCenter = days.some((d) => d.key === today) ? today : anchor;
-  const [selectedDay, setSelectedDay] = (0, import_react29.useState)(null);
-  (0, import_react29.useEffect)(() => {
+  const [selectedDay, setSelectedDay] = (0, import_react30.useState)(null);
+  (0, import_react30.useEffect)(() => {
     if (fullView || !days.length) {
       setSelectedDay(null);
       return;
@@ -79251,15 +79270,15 @@ function LiveMatchDaySchedule({
       return todayTab?.key ?? anchorTab?.key ?? days[0].key;
     });
   }, [days, today, anchor, fullView]);
-  const filteredMatches = (0, import_react29.useMemo)(() => {
+  const filteredMatches = (0, import_react30.useMemo)(() => {
     return [...matches].sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
   }, [matches]);
-  const dayMatches = (0, import_react29.useMemo)(() => {
+  const dayMatches = (0, import_react30.useMemo)(() => {
     if (fullView) return filteredMatches;
     if (!selectedDay) return [];
     return filteredMatches.filter((m) => matchDateKey(m.utcDate) === selectedDay);
   }, [filteredMatches, selectedDay, fullView]);
-  const sections = (0, import_react29.useMemo)(() => {
+  const sections = (0, import_react30.useMemo)(() => {
     if (fullView) {
       return [{ label: null, items: dayMatches }];
     }
@@ -79324,7 +79343,7 @@ function LiveMatchDaySchedule({
 }
 
 // components/dashboard/LiveGroupStandingsView.js
-var import_react30 = __toESM(require_react());
+var import_react31 = __toESM(require_react());
 init_groupStandings();
 init_apiMatchScores();
 init_teamNamesEs();
@@ -79338,16 +79357,16 @@ function LiveGroupStandingsView({
   onGoToPrediction,
   onOpenMatch
 }) {
-  const rawById = (0, import_react30.useMemo)(() => indexApiMatches3(apiMatches), [apiMatches]);
-  const officialScores = (0, import_react30.useMemo)(
+  const rawById = (0, import_react31.useMemo)(() => indexApiMatches3(apiMatches), [apiMatches]);
+  const officialScores = (0, import_react31.useMemo)(
     () => groupScoresFromApi(apiMatches),
     [apiMatches]
   );
-  const groups = (0, import_react30.useMemo)(
+  const groups = (0, import_react31.useMemo)(
     () => computeGroupStandings(matches, officialScores),
     [matches, officialScores]
   );
-  const bestThirds = (0, import_react30.useMemo)(
+  const bestThirds = (0, import_react31.useMemo)(
     () => computeBestThirdPlacesRanking(matches, officialScores),
     [matches, officialScores]
   );
@@ -79410,7 +79429,7 @@ function LiveGroupStandingsView({
 }
 
 // components/dashboard/LiveSpecialsPanel.js
-var import_react31 = __toESM(require_react());
+var import_react32 = __toESM(require_react());
 init_teamNamesEs();
 var import_jsx_runtime38 = __toESM(require_jsx_runtime());
 var TABS = [
@@ -79420,9 +79439,9 @@ var TABS = [
   { id: "keepers", label: "Mejor Portero", statLabel: "Nota" }
 ];
 function LiveSpecialsPanel({ isActive = false }) {
-  const [tab, setTab] = (0, import_react31.useState)("scorers");
-  const [payload, setPayload] = (0, import_react31.useState)(null);
-  (0, import_react31.useEffect)(() => {
+  const [tab, setTab] = (0, import_react32.useState)("scorers");
+  const [payload, setPayload] = (0, import_react32.useState)(null);
+  (0, import_react32.useEffect)(() => {
     if (!isActive) return;
     let cancelled = false;
     fetch("/api/fotmob/specials").then((res) => res.json()).then((data2) => {
@@ -79481,7 +79500,7 @@ function LiveSpecialsPanel({ isActive = false }) {
 }
 
 // components/dashboard/PredictedKnockoutSection.js
-var import_react32 = __toESM(require_react());
+var import_react33 = __toESM(require_react());
 init_knockoutBridge();
 init_knockoutAdvances();
 var import_jsx_runtime39 = __toESM(require_jsx_runtime());
@@ -79499,7 +79518,7 @@ function PredictedKnockoutSection({
   knockoutMatches: knockoutMatches2 = [],
   inicioKnockoutScoring = null
 }) {
-  const { schedule, error } = (0, import_react32.useMemo)(
+  const { schedule, error } = (0, import_react33.useMemo)(
     () => buildInicioKnockoutSchedule(groupMatches2, groupPreds2, inicioKoPreds2),
     [groupMatches2, groupPreds2, inicioKoPreds2]
   );
@@ -79580,7 +79599,7 @@ function resetDashboardScroll(root2) {
 }
 
 // components/dashboard/EliminatoriasReminderDialog.js
-var import_react33 = __toESM(require_react());
+var import_react34 = __toESM(require_react());
 init_matchSchedule();
 
 // lib/eliminatoriasReminder.js
@@ -79674,11 +79693,11 @@ function EliminatoriasReminderDialog({
   groupPhase = "knockout",
   onGoToPorra
 }) {
-  const [dismissed, setDismissed] = (0, import_react33.useState)([]);
-  const [suppressed, setSuppressed] = (0, import_react33.useState)(false);
-  const [tick, setTick] = (0, import_react33.useState)(0);
-  const [checksEnabled, setChecksEnabled] = (0, import_react33.useState)(false);
-  (0, import_react33.useEffect)(() => {
+  const [dismissed, setDismissed] = (0, import_react34.useState)([]);
+  const [suppressed, setSuppressed] = (0, import_react34.useState)(false);
+  const [tick, setTick] = (0, import_react34.useState)(0);
+  const [checksEnabled, setChecksEnabled] = (0, import_react34.useState)(false);
+  (0, import_react34.useEffect)(() => {
     let cancelled = false;
     const id = typeof requestIdleCallback !== "undefined" ? requestIdleCallback(() => {
       if (!cancelled) {
@@ -79700,15 +79719,15 @@ function EliminatoriasReminderDialog({
       }
     };
   }, []);
-  (0, import_react33.useEffect)(() => {
+  (0, import_react34.useEffect)(() => {
     setDismissed(readElimReminderDismissed(groupId));
     setSuppressed(false);
   }, [groupId]);
-  (0, import_react33.useEffect)(() => {
+  (0, import_react34.useEffect)(() => {
     const t = setInterval(() => setTick((n) => n + 1), 6e4);
     return () => clearInterval(t);
   }, []);
-  const matches = (0, import_react33.useMemo)(
+  const matches = (0, import_react34.useMemo)(
     () => {
       if (!checksEnabled) return [];
       const t02 = performance.now();
@@ -79730,7 +79749,7 @@ function EliminatoriasReminderDialog({
     [checksEnabled, knockoutMatches2, koPreds2, fotmobStandings, groupMatches2, apiMatches, dismissed, groupPhase, tick]
   );
   const open = matches.length > 0 && !suppressed;
-  (0, import_react33.useEffect)(() => {
+  (0, import_react34.useEffect)(() => {
     if (!open) return void 0;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -79815,24 +79834,24 @@ function GroupDashboard({
   onSwitchGroup,
   onMounted
 }) {
-  const [tab, setTab] = (0, import_react40.useState)("predictions");
-  const [predPhase, setPredPhase] = (0, import_react40.useState)("knockout");
-  const [scrollToMatchId, setScrollToMatchId] = (0, import_react40.useState)(null);
-  const [scheduleNav, setScheduleNav] = (0, import_react40.useState)(() => ({
+  const [tab, setTab] = (0, import_react41.useState)("predictions");
+  const [predPhase, setPredPhase] = (0, import_react41.useState)("knockout");
+  const [scrollToMatchId, setScrollToMatchId] = (0, import_react41.useState)(null);
+  const [scheduleNav, setScheduleNav] = (0, import_react41.useState)(() => ({
     viewMode: "daily",
     dayKey: scheduleAnchorDateKey("knockout")
   }));
-  const [currentGroup, setCurrentGroup] = (0, import_react40.useState)(group2);
-  const landedGroupIdRef = (0, import_react40.useRef)(null);
-  const [profileMenuOpen, setProfileMenuOpen] = (0, import_react40.useState)(false);
-  const contentRef = (0, import_react40.useRef)(null);
-  const changeTabRef = (0, import_react40.useRef)(() => {
+  const [currentGroup, setCurrentGroup] = (0, import_react41.useState)(group2);
+  const landedGroupIdRef = (0, import_react41.useRef)(null);
+  const [profileMenuOpen, setProfileMenuOpen] = (0, import_react41.useState)(false);
+  const contentRef = (0, import_react41.useRef)(null);
+  const changeTabRef = (0, import_react41.useRef)(() => {
   });
-  const matchRefs = (0, import_react40.useRef)({});
+  const matchRefs = (0, import_react41.useRef)({});
   const { groups: userPorraGroups, hasMultiple: hasMultipleGroups } = useUserPorraGroups(user2?.email);
-  const transformPerfRef = (0, import_react40.useRef)({ group: false, knockout: false });
+  const transformPerfRef = (0, import_react41.useRef)({ group: false, knockout: false });
   const { wcMatches, setWcMatches, wcStandings, apiError: wcApiError, reload: reloadWc } = useWcMatches();
-  const groupMatches2 = (0, import_react40.useMemo)(() => {
+  const groupMatches2 = (0, import_react41.useMemo)(() => {
     if (!wcMatches?.length) return [];
     const t02 = performance.now();
     const out = transformGroupMatches(wcMatches);
@@ -79845,7 +79864,7 @@ function GroupDashboard({
     }
     return out;
   }, [wcMatches]);
-  const knockoutMatches2 = (0, import_react40.useMemo)(() => {
+  const knockoutMatches2 = (0, import_react41.useMemo)(() => {
     if (!wcMatches?.length) return [];
     const t02 = performance.now();
     const out = transformKnockoutMatches(wcMatches);
@@ -79858,13 +79877,13 @@ function GroupDashboard({
     }
     return out;
   }, [wcMatches]);
-  const mountedOnceRef = (0, import_react40.useRef)(false);
-  (0, import_react40.useEffect)(() => {
+  const mountedOnceRef = (0, import_react41.useRef)(false);
+  (0, import_react41.useEffect)(() => {
     if (mountedOnceRef.current) return;
     mountedOnceRef.current = true;
     onMounted?.();
   }, [onMounted]);
-  (0, import_react40.useEffect)(() => {
+  (0, import_react41.useEffect)(() => {
     if (!wcMatches?.length) return;
     perfMark(F.DASHBOARD, "Calendario disponible en dashboard", {
       partidos: wcMatches.length,
@@ -79873,7 +79892,7 @@ function GroupDashboard({
     });
   }, [wcMatches?.length, groupMatches2.length, knockoutMatches2.length]);
   const isAdmin = user2.is_admin;
-  const syncCurrentUser = (0, import_react40.useCallback)((updatedUser) => {
+  const syncCurrentUser = (0, import_react41.useCallback)((updatedUser) => {
     setCurrentUser(updatedUser);
     setCurrentGroup((g) => ({
       ...g,
@@ -79908,19 +79927,19 @@ function GroupDashboard({
     groupMatches: groupMatches2,
     knockoutMatches: knockoutMatches2
   });
-  const orphanGroupKeys = (0, import_react40.useMemo)(
+  const orphanGroupKeys = (0, import_react41.useMemo)(
     () => tab === "predictions" ? countOrphanPredKeys(user2.predictions?.group, groupMatches2) : 0,
     [tab, user2.predictions?.group, groupMatches2]
   );
-  const scoringOpts = (0, import_react40.useMemo)(
+  const scoringOpts = (0, import_react41.useMemo)(
     () => ({ groupMatches: groupMatches2, knockoutMatches: knockoutMatches2, fotmobStandings: wcStandings, apiMatches: wcMatches }),
     [groupMatches2, knockoutMatches2, wcStandings, wcMatches]
   );
-  const provisionalResults = (0, import_react40.useMemo)(
+  const provisionalResults = (0, import_react41.useMemo)(
     () => tab === "group" ? buildProvisionalResults(currentGroup?.results, wcMatches) : currentGroup?.results ?? {},
     [tab, currentGroup?.results, wcMatches]
   );
-  const leaderboard = (0, import_react40.useMemo)(
+  const leaderboard = (0, import_react41.useMemo)(
     () => tab === "group" ? calcLeaderboard(
       { ...currentGroup, results: provisionalResults },
       scoringOpts
@@ -79931,7 +79950,7 @@ function GroupDashboard({
   const bonusDeadlinePassed = isBonusDeadlinePassed(currentGroup);
   const effectiveGroupDeadline = getEffectiveGroupDeadline(currentGroup);
   const effectiveBonusDeadline = getEffectiveBonusDeadline(currentGroup);
-  const teamOptions = (0, import_react40.useMemo)(
+  const teamOptions = (0, import_react41.useMemo)(
     () => getUniqueTeamsFromMatches(groupMatches2, knockoutMatches2),
     [groupMatches2, knockoutMatches2]
   );
@@ -79944,7 +79963,7 @@ function GroupDashboard({
     userId: user2.id,
     refreshGroup
   });
-  (0, import_react40.useEffect)(() => {
+  (0, import_react41.useEffect)(() => {
     if (!isAdmin || tab !== "admin") return;
     reloadWc();
     const t = setInterval(reloadWc, 5 * 60 * 1e3);
@@ -79958,14 +79977,14 @@ function GroupDashboard({
       if (u) setCurrentUser(u);
     }
   }
-  (0, import_react40.useEffect)(() => {
+  (0, import_react41.useEffect)(() => {
     const t = setInterval(handleRefresh, 6e4);
     return () => clearInterval(t);
   }, [currentGroup.id]);
-  (0, import_react40.useEffect)(() => {
+  (0, import_react41.useEffect)(() => {
     setPredPhase(getDefaultPredPhase(currentGroup.phase));
   }, [currentGroup.phase]);
-  (0, import_react40.useEffect)(() => {
+  (0, import_react41.useEffect)(() => {
     if (landedGroupIdRef.current === currentGroup.id) return;
     landedGroupIdRef.current = currentGroup.id;
     perfMark(F.DASHBOARD, "Aterrizaje Porra \u2192 Eliminatorias \u2192 D\xEDa hoy", { groupId: currentGroup.id });
@@ -79984,7 +80003,7 @@ function GroupDashboard({
     setTab(next);
   }
   changeTabRef.current = changeTab;
-  (0, import_react40.useEffect)(() => {
+  (0, import_react41.useEffect)(() => {
     function openLiveTab() {
       changeTabRef.current("live");
     }
@@ -79995,7 +80014,7 @@ function GroupDashboard({
     }
     return () => window.removeEventListener("porra:open-live", openLiveTab);
   }, []);
-  (0, import_react40.useEffect)(() => {
+  (0, import_react41.useEffect)(() => {
     if (!scrollToMatchId || tab !== "predictions") return;
     const el = matchRefs.current[scrollToMatchId];
     if (el) {
@@ -80031,7 +80050,7 @@ function GroupDashboard({
     { id: "predictions", label: "Porra" },
     { id: "live", label: "En Vivo", navLabel: "Vivo" }
   ];
-  const swipeTabIds = (0, import_react40.useMemo)(() => ["group", "predictions", "live"], []);
+  const swipeTabIds = (0, import_react41.useMemo)(() => ["group", "predictions", "live"], []);
   function tabNavLabel(t, compact = false) {
     return compact && t.navLabel ? t.navLabel : t.label;
   }
@@ -80338,25 +80357,25 @@ function RankingScoreChips({ participant, disputedLimits }) {
   }) });
 }
 function GroupTab({ leaderboard, group: group2, groupResults, groupMatches: groupMatches2, knockoutMatches: knockoutMatches2, wcMatches = [], wcStandings = null, onLeave, currentUserId }) {
-  const [view, setView] = (0, import_react40.useState)("ranking");
-  const [viewingParticipant, setViewingParticipant] = (0, import_react40.useState)(null);
-  const scoringOpts = (0, import_react40.useMemo)(
+  const [view, setView] = (0, import_react41.useState)("ranking");
+  const [viewingParticipant, setViewingParticipant] = (0, import_react41.useState)(null);
+  const scoringOpts = (0, import_react41.useMemo)(
     () => ({ groupMatches: groupMatches2, knockoutMatches: knockoutMatches2, fotmobStandings: wcStandings, apiMatches: wcMatches }),
     [groupMatches2, knockoutMatches2, wcStandings, wcMatches]
   );
-  const scoringGroup = (0, import_react40.useMemo)(
+  const scoringGroup = (0, import_react41.useMemo)(
     () => ({ ...group2, results: groupResults }),
     [group2, groupResults]
   );
-  const disputedLimits = (0, import_react40.useMemo)(
+  const disputedLimits = (0, import_react41.useMemo)(
     () => getScoringDisputedLimits(scoringGroup, scoringOpts),
     [scoringGroup, scoringOpts]
   );
-  const participantPublishedResults = (0, import_react40.useMemo)(
+  const participantPublishedResults = (0, import_react41.useMemo)(
     () => buildPublishedResultsMap(groupResults, "group", groupMatches2),
     [groupResults, groupMatches2]
   );
-  const tableRows = (0, import_react40.useMemo)(
+  const tableRows = (0, import_react41.useMemo)(
     () => enrichLeaderboardWithStats(leaderboard, scoringGroup, scoringOpts),
     [leaderboard, scoringGroup, scoringOpts]
   );
@@ -80517,10 +80536,16 @@ function PredictionsTab({
   scheduleNav = null,
   onScheduleNavConsumed
 }) {
-  const [scheduleViewMode, setScheduleViewMode] = (0, import_react40.useState)(readScheduleViewMode);
-  const [focusDayKey, setFocusDayKey] = (0, import_react40.useState)(null);
-  const [detailMatch, setDetailMatch] = (0, import_react40.useState)(null);
-  (0, import_react40.useEffect)(() => {
+  const calendarReady = useDeferredMount({ timeout: 120 });
+  const [scheduleViewMode, setScheduleViewMode] = (0, import_react41.useState)("daily");
+  const [focusDayKey, setFocusDayKey] = (0, import_react41.useState)(null);
+  const [detailMatch, setDetailMatch] = (0, import_react41.useState)(null);
+  (0, import_react41.useEffect)(() => {
+    if (!calendarReady) return;
+    const stored = readScheduleViewMode();
+    if (stored !== "daily") setScheduleViewMode(stored);
+  }, [calendarReady]);
+  (0, import_react41.useEffect)(() => {
     if (!scheduleNav) return;
     if (scheduleNav.viewMode) {
       setScheduleViewMode(scheduleNav.viewMode);
@@ -80635,6 +80660,7 @@ function PredictionsTab({
     predPhase === "knockout" && /* @__PURE__ */ (0, import_jsx_runtime47.jsx)(
       KnockoutPreds,
       {
+        calendarReady,
         preds: koPreds2,
         setPreds: setKoPreds,
         phaseLocked,
@@ -80692,7 +80718,7 @@ function GroupPhasePreds({
   fotmobStandings = null,
   onOpenMatch
 }) {
-  const publishedResults = (0, import_react40.useMemo)(
+  const publishedResults = (0, import_react41.useMemo)(
     () => buildPublishedResultsMap(group2?.results, "group", matches, group2?.results_updated_at),
     [group2?.results, group2?.results_updated_at, matches]
   );
@@ -80716,11 +80742,11 @@ function GroupPhasePreds({
   }
   const filled = countFilledMatches(preds, matches);
   const total = matches.length || 1;
-  const inicioKo = (0, import_react40.useMemo)(
+  const inicioKo = (0, import_react41.useMemo)(
     () => buildInicioKnockoutSchedule(matches, preds, inicioKoPreds2),
     [matches, preds, inicioKoPreds2]
   );
-  const inicioKnockoutScoring = (0, import_react40.useMemo)(
+  const inicioKnockoutScoring = (0, import_react41.useMemo)(
     () => buildInicioKnockoutScoringState(
       { predictions: { group: preds, inicioKnockout: inicioKoPreds2 } },
       {
@@ -80734,11 +80760,11 @@ function GroupPhasePreds({
     ),
     [matches, preds, inicioKoPreds2, knockoutMatches2, group2?.results?.knockout, group2?.results?.group, fotmobStandings, apiMatches]
   );
-  const dailyAllMatches = (0, import_react40.useMemo)(() => {
+  const dailyAllMatches = (0, import_react41.useMemo)(() => {
     if (viewMode !== "daily") return matches;
     return [...matches, ...inicioKo.schedule];
   }, [viewMode, matches, inicioKo.schedule]);
-  const combinedPreds = (0, import_react40.useMemo)(
+  const combinedPreds = (0, import_react41.useMemo)(
     () => ({ ...preds, ...inicioKoPreds2 }),
     [preds, inicioKoPreds2]
   );
@@ -80910,7 +80936,32 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
     }
   );
 }
+function ScheduleCalendarSkeleton({ rows = 2 } = {}) {
+  return /* @__PURE__ */ (0, import_jsx_runtime47.jsx)(
+    "div",
+    {
+      className: "schedule-matches-panel schedule-matches-panel--loading",
+      "aria-busy": "true",
+      "aria-label": "Cargando calendario",
+      children: Array.from({ length: rows }, (_, i) => /* @__PURE__ */ (0, import_jsx_runtime47.jsx)(
+        "div",
+        {
+          className: "schedule-match-wrap schedule-match-wrap--skeleton",
+          style: {
+            minHeight: 72,
+            marginBottom: 8,
+            borderRadius: 12,
+            background: "var(--dash-surface-2, rgba(255,255,255,0.06))",
+            opacity: 0.65
+          }
+        },
+        i
+      ))
+    }
+  );
+}
 function KnockoutPreds({
+  calendarReady = true,
   preds,
   setPreds,
   phaseLocked,
@@ -80926,25 +80977,26 @@ function KnockoutPreds({
   onOpenMatch,
   focusDayKey = null
 }) {
-  const scheduleMatches = (0, import_react40.useMemo)(
-    () => buildEliminatoriasKnockoutSchedule(matches, preds, {
+  const scoringReady = useDeferredMount({ timeout: 500 });
+  const scheduleMatches = (0, import_react41.useMemo)(() => {
+    if (!calendarReady) return [];
+    return buildEliminatoriasKnockoutSchedule(matches, preds, {
       fotmobStandings,
       groupMatches: groupMatches2,
       apiMatches
-    }),
-    [matches, preds, fotmobStandings, groupMatches2, apiMatches]
-  );
-  const knockoutScoringCtx = (0, import_react40.useMemo)(
-    () => buildKnockoutScoringContext(participant || { predictions: {} }, {
+    });
+  }, [calendarReady, matches, preds, fotmobStandings, groupMatches2, apiMatches]);
+  const knockoutScoringCtx = (0, import_react41.useMemo)(() => {
+    if (!scoringReady) return null;
+    return buildKnockoutScoringContext(participant || { predictions: {} }, {
       groupMatches: groupMatches2,
       knockoutMatches: matches,
       koPreds: preds,
       fotmobStandings,
       apiMatches
-    }),
-    [participant, groupMatches2, matches, preds, fotmobStandings, apiMatches]
-  );
-  const publishedResults = (0, import_react40.useMemo)(
+    });
+  }, [scoringReady, participant, groupMatches2, matches, preds, fotmobStandings, apiMatches]);
+  const publishedResults = (0, import_react41.useMemo)(
     () => buildPublishedResultsMap(group2?.results, "knockout", matches, group2?.results_updated_at),
     [group2?.results, group2?.results_updated_at, matches]
   );
@@ -80962,6 +81014,9 @@ function KnockoutPreds({
   }
   function setAdvance(id, side) {
     setPreds((p) => patchKnockoutAdvance(p, id, side));
+  }
+  if (!calendarReady) {
+    return /* @__PURE__ */ (0, import_jsx_runtime47.jsx)(ScheduleCalendarSkeleton, { rows: 2 });
   }
   if (viewMode === "bracket") {
     return /* @__PURE__ */ (0, import_jsx_runtime47.jsx)(
@@ -81108,10 +81163,10 @@ function LiveTab({
   userPreds,
   onGoToPrediction
 }) {
-  const [livePhase, setLivePhase] = (0, import_react40.useState)("knockout");
-  const [scheduleViewMode, setScheduleViewMode] = (0, import_react40.useState)("daily");
-  const [detailMatch, setDetailMatch] = (0, import_react40.useState)(null);
-  const liveKnockoutMatches = (0, import_react40.useMemo)(
+  const [livePhase, setLivePhase] = (0, import_react41.useState)("knockout");
+  const [scheduleViewMode, setScheduleViewMode] = (0, import_react41.useState)("daily");
+  const [detailMatch, setDetailMatch] = (0, import_react41.useState)(null);
+  const liveKnockoutMatches = (0, import_react41.useMemo)(
     () => buildLiveKnockoutMatches(knockoutMatches2, fotmobStandings, groupMatches2, apiMatches),
     [knockoutMatches2, fotmobStandings, groupMatches2, apiMatches]
   );
@@ -81142,7 +81197,7 @@ function LiveTab({
     enabled: isActive && !detailMatch && !isSpecialsPhase,
     getScrollElement: () => document.querySelector('.dash-swipe-tabs .swipe-tabs-panel[aria-hidden="false"]')
   });
-  (0, import_react40.useEffect)(() => {
+  (0, import_react41.useEffect)(() => {
     if (!isActive) return;
     fetch("/api/fotmob/specials").catch(() => {
     });
@@ -81268,22 +81323,22 @@ function AdminTab({ group: group2, setGroup, refreshGroup, notify, wcMatches = [
     }
     return !error;
   }
-  const [adminTab, setAdminTab] = (0, import_react40.useState)("settings");
-  const [leagueLogo, setLeagueLogo] = (0, import_react40.useState)(group2.league_logo || "");
-  const [groupDeadline, setGroupDeadline] = (0, import_react40.useState)(
+  const [adminTab, setAdminTab] = (0, import_react41.useState)("settings");
+  const [leagueLogo, setLeagueLogo] = (0, import_react41.useState)(group2.league_logo || "");
+  const [groupDeadline, setGroupDeadline] = (0, import_react41.useState)(
     () => toMadridDatetimeLocalValue(group2.group_deadline || getDefaultGroupDeadline())
   );
-  const [knockoutDeadline, setKnockoutDeadline] = (0, import_react40.useState)(
+  const [knockoutDeadline, setKnockoutDeadline] = (0, import_react41.useState)(
     () => toMadridDatetimeLocalValue(group2.knockout_deadline || getDefaultKnockoutDeadline())
   );
-  (0, import_react40.useEffect)(() => {
+  (0, import_react41.useEffect)(() => {
     setLeagueLogo(group2.league_logo || "");
     setGroupDeadline(toMadridDatetimeLocalValue(group2.group_deadline || getDefaultGroupDeadline()));
     setKnockoutDeadline(toMadridDatetimeLocalValue(group2.knockout_deadline || getDefaultKnockoutDeadline()));
   }, [group2.league_logo, group2.group_deadline, group2.knockout_deadline]);
-  const [tournamentPhase, setTournamentPhase] = (0, import_react40.useState)(group2.phase || "group");
-  const [actuals, setActuals] = (0, import_react40.useState)(group2.actuals || {});
-  const [saving, setSaving] = (0, import_react40.useState)(false);
+  const [tournamentPhase, setTournamentPhase] = (0, import_react41.useState)(group2.phase || "group");
+  const [actuals, setActuals] = (0, import_react41.useState)(group2.actuals || {});
+  const [saving, setSaving] = (0, import_react41.useState)(false);
   async function saveDeadlines() {
     setSaving(true);
     const groupDeadlineValue = fromMadridDatetimeLocal(groupDeadline);

@@ -65,6 +65,7 @@ export default function Page() {
 
     const session = readStoredSession()
     if (session) {
+      void import('../components/GroupDashboard')
       const cached = readInitialDashboardState()
       if (cached.group && cached.user) {
         perfMark(F.SESSION, 'Caché local del dashboard — HIT', {
@@ -74,7 +75,7 @@ export default function Page() {
         setCurrentGroup(cached.group)
         setCurrentUser(cached.user)
       } else {
-        perfMark(F.SESSION, 'Sesión guardada pero sin caché de dashboard', { groupId: session.groupId })
+        perfMark(F.SESSION, 'Sesión guardada pero sin caché de dashboard (local ni sesión)', { groupId: session.groupId })
       }
       setScreen('dashboard')
     }

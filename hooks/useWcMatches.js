@@ -93,21 +93,6 @@ function readCache({ allowStale = false } = {}) {
   }
 }
 
-function deferCatalogBuild(setWcMatches) {
-  const build = () => {
-    perfMark(F.MATCHES, 'Idle callback — construyendo catálogo FIFA')
-    startTransition(() => {
-      setWcMatches(getCatalogMatches())
-      perfMark(F.MATCHES, 'Catálogo FIFA aplicado al estado')
-    })
-  }
-  if (typeof requestIdleCallback !== 'undefined') {
-    requestIdleCallback(build, { timeout: 800 })
-  } else {
-    setTimeout(build, 0)
-  }
-}
-
 function writeCache(data, standings = null) {
   if (typeof sessionStorage === 'undefined') return
   sessionStorage.setItem(CACHE_KEY, JSON.stringify({
@@ -143,8 +128,11 @@ export function WcMatchesProvider({ children }) {
       })
       return
     }
-    perfMark(F.MATCHES, 'Sin caché de partidos — catálogo se construirá en idle')
-    deferCatalogBuild(setWcMatches)
+    perfMark(F.MATCHES, 'Sin caché de partidos — catálogo FIFA inmediato (red en background)')
+    startTransition(() => {
+      setWcMatches(getCatalogMatches())
+      perfMark(F.MATCHES, 'Catálogo FIFA aplicado al estado')
+    })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

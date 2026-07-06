@@ -7,6 +7,7 @@ import { getStoredWriteToken } from '../lib/sessionToken'
 import { migratePredictionMap, countOrphanPredKeys, migrateGroupResults } from '../lib/matchIdMap'
 import { isPhaseLocked, msUntilDeadline, formatCountdown } from '../lib/phaseLock'
 import { usePredictions } from '../hooks/usePredictions'
+import { useDeferredMount } from '../lib/deferredMount'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import SwipeTabPanels from './SwipeTabPanels'
 import { useWcMatches } from '../hooks/useWcMatches'
@@ -781,9 +782,16 @@ function PredictionsTab({
   scheduleNav = null,
   onScheduleNavConsumed,
 }) {
-  const [scheduleViewMode, setScheduleViewMode] = useState(readScheduleViewMode)
+  const calendarReady = useDeferredMount({ timeout: 120 })
+  const [scheduleViewMode, setScheduleViewMode] = useState('daily')
   const [focusDayKey, setFocusDayKey] = useState(null)
   const [detailMatch, setDetailMatch] = useState(null)
+
+  useEffect(() => {
+    if (!calendarReady) return
+    const stored = readScheduleViewMode()
+    if (stored !== 'daily') setScheduleViewMode(stored)
+  }, [calendarReady])
 
   useEffect(() => {
     if (!scheduleNav) return
@@ -916,6 +924,7 @@ function PredictionsTab({
       )}
       {predPhase === 'knockout' && (
         <KnockoutPreds
+          calendarReady={calendarReady}
           preds={koPreds}
           setPreds={setKoPreds}
           phaseLocked={phaseLocked}
@@ -1197,30 +1206,58 @@ function TeamSelect({ value, onChange, options, disabled, placeholder }) {
   )
 }
 
+function ScheduleCalendarSkeleton({ rows = 2 } = {}) {
+  return (
+    <div
+      className="schedule-matches-panel schedule-matches-panel--loading"
+      aria-busy="true"
+      aria-label="Cargando calendario"
+    >
+      {Array.from({ length: rows }, (_, i) => (
+        <div
+          key={i}
+          className="schedule-match-wrap schedule-match-wrap--skeleton"
+          style={{
+            minHeight: 72,
+            marginBottom: 8,
+            borderRadius: 12,
+            background: 'var(--dash-surface-2, rgba(255,255,255,0.06))',
+            opacity: 0.65,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
 function KnockoutPreds({
+  calendarReady = true,
   preds, setPreds, phaseLocked,
   matches = [], teamOptions = [], matchRefs, viewMode = 'daily', group,
   participant, groupMatches = [], apiMatches = [], fotmobStandings = null, onOpenMatch,
   focusDayKey = null,
 }) {
-  const scheduleMatches = useMemo(
-    () => buildEliminatoriasKnockoutSchedule(matches, preds, {
+  const scoringReady = useDeferredMount({ timeout: 500 })
+
+  const scheduleMatches = useMemo(() => {
+    if (!calendarReady) return []
+    return buildEliminatoriasKnockoutSchedule(matches, preds, {
       fotmobStandings,
       groupMatches,
       apiMatches,
-    }),
-    [matches, preds, fotmobStandings, groupMatches, apiMatches],
-  )
-  const knockoutScoringCtx = useMemo(
-    () => buildKnockoutScoringContext(participant || { predictions: {} }, {
+    })
+  }, [calendarReady, matches, preds, fotmobStandings, groupMatches, apiMatches])
+
+  const knockoutScoringCtx = useMemo(() => {
+    if (!scoringReady) return null
+    return buildKnockoutScoringContext(participant || { predictions: {} }, {
       groupMatches,
       knockoutMatches: matches,
       koPreds: preds,
       fotmobStandings,
       apiMatches,
-    }),
-    [participant, groupMatches, matches, preds, fotmobStandings, apiMatches],
-  )
+    })
+  }, [scoringReady, participant, groupMatches, matches, preds, fotmobStandings, apiMatches])
   const publishedResults = useMemo(
     () => buildPublishedResultsMap(group?.results, 'knockout', matches, group?.results_updated_at),
     [group?.results, group?.results_updated_at, matches],
@@ -1243,6 +1280,10 @@ function KnockoutPreds({
 
   function setAdvance(id, side) {
     setPreds(p => patchKnockoutAdvance(p, id, side))
+  }
+
+  if (!calendarReady) {
+    return <ScheduleCalendarSkeleton rows={2} />
   }
 
   if (viewMode === 'bracket') {
