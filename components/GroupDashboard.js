@@ -71,7 +71,6 @@ const MatchDetailSheet = dynamic(() => import('./dashboard/MatchDetailSheet'), {
 import KnockoutBracketView from './dashboard/KnockoutBracketView'
 import PredictedKnockoutSection from './dashboard/PredictedKnockoutSection'
 import { buildInicioKnockoutSchedule, buildEliminatoriasKnockoutSchedule, lookupEliminatoriasKoPred, lookupInicioKoPred } from '../lib/knockoutBridge'
-import { buildLiveKnockoutMatches } from '../lib/hydrateKnockoutR32'
 import { isEliminatoriasMatchLocked } from '../lib/eliminatoriasMatchLock'
 import { patchKnockoutScore, patchKnockoutAdvance } from '../lib/knockoutAdvances'
 import { buildKnockoutScoringContext } from '../lib/knockoutMatchScoring'
@@ -1431,8 +1430,12 @@ function LiveTab({
   const [detailMatch, setDetailMatch] = useState(null)
 
   const liveKnockoutMatches = useMemo(
-    () => buildLiveKnockoutMatches(knockoutMatches, fotmobStandings, groupMatches, apiMatches),
-    [knockoutMatches, fotmobStandings, groupMatches, apiMatches],
+    () => buildEliminatoriasKnockoutSchedule(knockoutMatches, userPreds?.knockout || {}, {
+      fotmobStandings,
+      groupMatches,
+      apiMatches,
+    }),
+    [knockoutMatches, userPreds?.knockout, fotmobStandings, groupMatches, apiMatches],
   )
 
   function openMatchDetail(m) {

@@ -20,8 +20,8 @@ import {
 } from '../lib/wcMatchesRefresh'
 import { F, perfMark, perfSync } from '../lib/startupPerf'
 
-const CACHE_KEY = 'porra_wc_matches_v2'
-const PERSIST_CACHE_KEY = 'porra_wc_matches_persist_v1'
+const CACHE_KEY = 'porra_wc_matches_v3'
+const PERSIST_CACHE_KEY = 'porra_wc_matches_persist_v2'
 const CACHE_TTL_LIVE = 10 * 1000
 const CACHE_TTL_IDLE = 10 * 60 * 1000
 // El calendario con banderas reales (crests) tarda ~6s en llegar de la red.

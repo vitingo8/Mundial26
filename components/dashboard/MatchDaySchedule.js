@@ -14,7 +14,8 @@ import { groupMatchesByKnockoutRound } from '../../lib/knockoutBracketDisplay'
 import { lookupEliminatoriasKoPred } from '../../lib/knockoutBridge'
 
 import DayTabs from './DayTabs'
-import { indexApiMatches } from '../../lib/apiMatchScores'
+import { indexApiMatches, resolveApiRawForMatch } from '../../lib/apiMatchScores'
+import { resolvePublishedResultForMatch } from '../../lib/matchPointsDisplay'
 import { isPorraApiResultStatus } from '../../lib/matchDetail'
 import MatchRow from './MatchRow'
 import { resolveKnockoutTeamsForScoring } from '../../lib/knockoutMatchScoring'
@@ -145,7 +146,8 @@ export default function MatchDaySchedule({
     .join(' ')
 
   function renderMatchRow(m, compact = false) {
-    const publishedResult = publishedResults[m.id]
+    const publishedResult = resolvePublishedResultForMatch(m, publishedResults, knockoutScoringCtx)
+    const apiRaw = resolveApiRawForMatch(m, rawById)
     const scoringTeams = knockoutScoringCtx
       ? resolveKnockoutTeamsForScoring(m.id, publishedResult, knockoutScoringCtx)
       : {}
@@ -178,9 +180,9 @@ export default function MatchDaySchedule({
         showMatchDate={schedulePhase === 'knockout'}
         publishedResult={publishedResult}
         knockoutScoringTeams={scoringTeams}
-        apiRaw={rawById[m.id]}
+        apiRaw={apiRaw}
         onOpenLiveDetail={
-          onOpenMatch && rawById[m.id] && isPorraApiResultStatus(rawById[m.id].status)
+          onOpenMatch && apiRaw && isPorraApiResultStatus(apiRaw.status)
             ? () => onOpenMatch(m)
             : undefined
         }

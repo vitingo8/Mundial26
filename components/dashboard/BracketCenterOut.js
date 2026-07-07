@@ -3,6 +3,7 @@
 import BracketMatchSlot from './BracketMatchSlot'
 import BracketConnectorLane from './BracketConnectorLane'
 import { lookupBracketPred } from '../../lib/knockoutBridge'
+import { resolveApiRawForMatch } from '../../lib/apiMatchScores'
 
 function SlotCell({ rowStart, rowSpan = 1, children }) {
   return (
@@ -23,7 +24,7 @@ function PairBlock({ rowStart, matches, getMatch, ...slotProps }) {
         <BracketMatchSlot
           match={m}
           pred={lookupBracketPred(slotProps.preds, m)}
-          apiRaw={m ? slotProps.rawById?.[m.id] : null}
+          apiRaw={m ? resolveApiRawForMatch(m, slotProps.rawById) : null}
           userPred={slotProps.userPreds?.[m?.id]}
           matchRef={el => {
             if (slotProps.matchRefs && m) slotProps.matchRefs.current[m.id] = el
@@ -54,7 +55,7 @@ function BracketColumnGrid({ column, getMatch, ...slotProps }) {
             <BracketMatchSlot
               match={m}
               pred={lookupBracketPred(slotProps.preds, m)}
-              apiRaw={m ? slotProps.rawById?.[m.id] : null}
+              apiRaw={m ? resolveApiRawForMatch(m, slotProps.rawById) : null}
               userPred={slotProps.userPreds?.[m?.id]}
               matchRef={el => {
                 if (slotProps.matchRefs && m) slotProps.matchRefs.current[m.id] = el

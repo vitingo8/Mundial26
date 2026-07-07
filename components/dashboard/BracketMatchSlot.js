@@ -10,7 +10,7 @@ import { getApiMatchDisplayScore } from '../../lib/apiMatchScores'
 import { isLiveMatchStatus, isPorraApiResultStatus } from '../../lib/matchDetail'
 import { isFotmobCatalogMatchId, isMatchNotStarted } from '../../lib/matchHeadToHead'
 import { PorraLiveHeader } from './LiveResultRow'
-import { summarizeMatchPoints, isInicioKoId } from '../../lib/matchPointsDisplay'
+import { summarizeMatchPoints, isInicioKoId, resolvePublishedResultForMatch } from '../../lib/matchPointsDisplay'
 import { isExactScoreHit } from '../../lib/gameData'
 import {
   getInicioKnockoutUiStatus,
@@ -112,7 +112,7 @@ export default function BracketMatchSlot({
 
   if (!match) return <div className="bracket-slot bracket-slot--empty" />
 
-  const publishedResult = publishedResults[match?.id]
+  const publishedResult = resolvePublishedResultForMatch(match, publishedResults, knockoutScoringCtx)
   const scoringTeams = knockoutScoringCtx
     ? resolveKnockoutTeamsForScoring(match.id, publishedResult, knockoutScoringCtx)
     : {}
@@ -287,6 +287,16 @@ export default function BracketMatchSlot({
           publishedResult={publishedResult || apiScore}
           {...bubbleProps}
           provisional={inicioSummary === livePointsSummary}
+        />
+      )
+    }
+    if (publishedResult && pointsSummary?.pts > 0) {
+      return (
+        <MatchPointsBubble
+          points={pointsSummary.pts}
+          detail={pointsSummary.detail}
+          publishedResult={publishedResult}
+          {...bubbleProps}
         />
       )
     }

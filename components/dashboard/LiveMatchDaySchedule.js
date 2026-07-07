@@ -9,7 +9,8 @@ import {
   scheduleAnchorDateKey,
   todayDateKey,
 } from '../../lib/matchSchedule'
-import { getApiMatchDisplayScore, indexApiMatches } from '../../lib/apiMatchScores'
+import { getApiMatchDisplayScore, indexApiMatches, resolveApiRawForMatch } from '../../lib/apiMatchScores'
+import { lookupEliminatoriasKoPred } from '../../lib/knockoutBridge'
 
 import DayTabs from './DayTabs'
 import LiveResultRow from './LiveResultRow'
@@ -78,10 +79,12 @@ export default function LiveMatchDaySchedule({
   if (!matches.length) return null
 
   function renderRow(m, compact) {
-    const raw = rawById[m.id]
+    const raw = resolveApiRawForMatch(m, rawById)
     const score = getApiMatchDisplayScore(raw)
     const status = raw?.status || m.status
-    const pred = userPreds[m.id]
+    const pred = schedulePhase === 'knockout'
+      ? lookupEliminatoriasKoPred(userPreds, m)
+      : userPreds[m.id]
     return (
       <LiveResultRow
         key={m.id}
