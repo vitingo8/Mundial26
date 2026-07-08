@@ -86,7 +86,14 @@ function BracketTeam({
   )
 }
 
-export default function BracketMatchSlot({
+export default function BracketMatchSlot(props) {
+  if (!props.match) {
+    return <div className="bracket-slot bracket-slot--empty" />
+  }
+  return <BracketMatchSlotInner {...props} />
+}
+
+function BracketMatchSlotInner({
   match,
   pred = {},
   onScore,
@@ -109,8 +116,6 @@ export default function BracketMatchSlot({
   knockoutAdvance = false,
 }) {
   const slotRowRef = useRef(null)
-
-  if (!match) return <div className="bracket-slot bracket-slot--empty" />
 
   const publishedResult = resolvePublishedResultForMatch(match, publishedResults, knockoutScoringCtx)
   const scoringTeams = knockoutScoringCtx

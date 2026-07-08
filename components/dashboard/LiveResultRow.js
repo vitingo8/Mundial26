@@ -27,15 +27,19 @@ export function PorraLiveHeader({
 }) {
   const isFinished = status === 'FINISHED'
   const isLive = LIVE_STATUSES.has(status)
-  if (!isLive && !isFinished && status !== 'PAUSED') return null
-  if (score?.home == null || score?.away == null) return null
+  const isPaused = status === 'PAUSED'
+  const hasScore = score?.home != null && score?.away != null
+  const showStrip = (isLive || isFinished || isPaused) && hasScore
 
   const liveClock = useSimulatedLiveClock({
     liveTime,
     minute: matchMinute,
     status,
-    enabled: isLive || status === 'PAUSED',
+    enabled: showStrip && (isLive || isPaused),
   })
+
+  if (!showStrip) return null
+
   const minute = liveClock?.compact || null
   const isPaused = status === 'PAUSED' || minute === 'HT'
   const label = isFinished ? 'FT' : isPaused ? 'Descanso' : 'Vivo'
