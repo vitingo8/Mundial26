@@ -27,21 +27,21 @@ export function PorraLiveHeader({
 }) {
   const isFinished = status === 'FINISHED'
   const isLive = LIVE_STATUSES.has(status)
-  const isPaused = status === 'PAUSED'
+  const isStatusPaused = status === 'PAUSED'
   const hasScore = score?.home != null && score?.away != null
-  const showStrip = (isLive || isFinished || isPaused) && hasScore
+  const showStrip = (isLive || isFinished || isStatusPaused) && hasScore
 
   const liveClock = useSimulatedLiveClock({
     liveTime,
     minute: matchMinute,
     status,
-    enabled: showStrip && (isLive || isPaused),
+    enabled: showStrip && (isLive || isStatusPaused),
   })
 
   if (!showStrip) return null
 
   const minute = liveClock?.compact || null
-  const isPaused = status === 'PAUSED' || minute === 'HT'
+  const isPaused = isStatusPaused || minute === 'HT'
   const label = isFinished ? 'FT' : isPaused ? 'Descanso' : 'Vivo'
   const stripClass = [
     'porra-live-strip',
