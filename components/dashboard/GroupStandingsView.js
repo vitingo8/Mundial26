@@ -7,8 +7,9 @@ import {
   buildQualificationPointsByTeam,
   lookupQualificationPoints,
 } from '../../lib/groupQualificationScoring.js'
-import { indexApiMatches } from '../../lib/apiMatchScores'
+import { indexApiMatches, resolveApiRawForMatch } from '../../lib/apiMatchScores'
 import { isPorraApiResultStatus } from '../../lib/matchDetail'
+import { resolvePublishedResultForMatch } from '../../lib/matchPointsDisplay'
 import { formatStandingsTeamName } from '../../lib/teamNamesEs'
 import TeamCrest from '../TeamCrest'
 import MatchRow from './MatchRow'
@@ -107,7 +108,10 @@ export default function GroupStandingsView({
               denseMatches ? ' group-standings-matches--table' : ' group-standings-matches--porra'
             }`}
           >
-            {group.matches.map(m => (
+            {group.matches.map(m => {
+              const apiRaw = resolveApiRawForMatch(m, rawById)
+              const publishedResult = resolvePublishedResultForMatch(m, publishedResults)
+              return (
               <MatchRow
                 key={m.id}
                 matchId={m.id}
@@ -125,13 +129,14 @@ export default function GroupStandingsView({
                 onHome={v => onScore(m.id, 'home', v)}
                 onAway={v => onScore(m.id, 'away', v)}
                 locked={locked}
+                readOnly={viewingParticipantPreds}
                 compact
                 denseTable={denseMatches}
                 showMatchDate={!denseMatches}
-                publishedResult={publishedResults[m.id]}
-                apiRaw={rawById[m.id]}
+                publishedResult={publishedResult}
+                apiRaw={apiRaw}
                 onOpenLiveDetail={
-                  onOpenMatch && rawById[m.id] && isPorraApiResultStatus(rawById[m.id].status)
+                  onOpenMatch && apiRaw && isPorraApiResultStatus(apiRaw.status)
                     ? () => onOpenMatch(m)
                     : undefined
                 }
@@ -140,7 +145,8 @@ export default function GroupStandingsView({
                 knockoutMatches={knockoutMatches}
                 viewingParticipantPreds={viewingParticipantPreds}
               />
-            ))}
+              )
+            })}
           </div>
         </section>
       ))}

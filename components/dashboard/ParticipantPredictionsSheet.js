@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { buildPublishedResultsMap } from '../../lib/matchPointsDisplay'
 import { migratePredictionMap } from '../../lib/matchIdMap'
 import { normalizeInicioKoPreds, buildInicioKnockoutSchedule } from '../../lib/knockoutBridge'
 import { buildInicioKnockoutScoringState } from '../../lib/inicioKnockoutScoring'
@@ -108,6 +109,17 @@ export default function ParticipantPredictionsSheet({
     ],
   )
 
+  const sheetPublishedResults = useMemo(() => {
+    const groupMap = buildPublishedResultsMap(results, 'group', groupMatches, group?.results_updated_at)
+    const knockoutMap = buildPublishedResultsMap(
+      results,
+      'knockout',
+      knockoutMatches,
+      group?.results_updated_at,
+    )
+    return { ...groupMap, ...knockoutMap }
+  }, [results, groupMatches, knockoutMatches, group?.results_updated_at])
+
   const filledGroup = countFilledMatches(groupPreds, groupMatches)
   const filledKo = Object.keys(inicioKoPreds).filter(
     id => inicioKoPreds[id]?.home != null || inicioKoPreds[id]?.away != null,
@@ -125,8 +137,12 @@ export default function ParticipantPredictionsSheet({
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
+      onClick={onClose}
     >
-      <div className="participant-preds-sheet">
+      <div
+        className="participant-preds-sheet"
+        onClick={e => e.stopPropagation()}
+      >
         <header className="participant-preds-header">
           <ParticipantAvatar participant={participant} size={48} />
           <div className="participant-preds-header-text">
@@ -177,7 +193,7 @@ export default function ParticipantPredictionsSheet({
                 onScore={() => {}}
                 gridClassName="group-standings-grid--participant"
                 knockoutMatches={knockoutMatches}
-                publishedResults={publishedResults}
+                publishedResults={sheetPublishedResults}
                 apiMatches={apiMatches}
                 fotmobStandings={fotmobStandings}
                 viewingParticipantPreds
@@ -200,7 +216,7 @@ export default function ParticipantPredictionsSheet({
               onScore={() => {}}
               onAdvance={() => {}}
               error={inicioKo.error}
-              publishedResults={publishedResults}
+              publishedResults={sheetPublishedResults}
               apiMatches={apiMatches}
               groupMatches={groupMatches}
               knockoutMatches={knockoutMatches}
