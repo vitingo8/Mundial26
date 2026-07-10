@@ -6,6 +6,11 @@ import { Icon } from '../icons'
 import { BRACKET_MOBILE_COLUMNS } from '../../lib/bracketMobileColumns'
 import { BRACKET_CENTER } from '../../lib/knockoutBracketTreeLayout'
 import { resolveApiRawForMatch } from '../../lib/apiMatchScores'
+import {
+  formatKnockoutErrorForUi,
+  getKnockoutErrorHint,
+  lookupBracketPred,
+} from '../../lib/knockoutBridge'
 
 function BracketMobileColumn({ column, getMatch, ...slotProps }) {
   const { layout } = column

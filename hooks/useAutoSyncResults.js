@@ -1,27 +1,22 @@
 'use client'
 import { useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
-import { getStoredWriteToken } from '../lib/sessionToken'
-import { buildMergedResults, resultsNeedSync, buildResultTimestamps, timestampsNeedSync } from '../lib/syncResultsFromApi'
-import { updateGroupWithOptionalColumns } from '../lib/groupUpdateFallback'
 import { isTestPorraGroup } from '../lib/testPorraGroups'
+import { getStoredWriteToken } from '../lib/sessionToken'
+import { buildMergedResults, resultsNeedSync, timestampsNeedSync } from '../lib/syncResultsFromApi'
 
-async function persistGroupUpdates(groupId, userId, token, updates) {
-  if (token) {
-    const res = await fetch('/api/groups', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ groupId, userId, token, updates }),
-    })
-    return res.ok
-  }
-  const { error } = await updateGroupWithOptionalColumns(supabase, groupId, updates)
-  return !error
+async function syncResultsViaApi(groupId, userId, token) {
+  const res = await fetch('/api/groups/sync-results', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ groupId, userId, token }),
+  })
+  return res.ok
 }
 
 /**
  * Cuando la API tiene partidos finalizados, los persiste en porra_groups.results
- * sin intervención del organizador.
+ * sin intervención del organizador. Cualquier participante con token de escritura
+ * puede disparar la sincronización.
  */
 export function useAutoSyncResults({
   enabled,
@@ -47,17 +42,16 @@ export function useAutoSyncResults({
       return
     }
 
+    const token = getStoredWriteToken(group.id, userId)
+    if (!token) return
+
     let cancelled = false
 
     ;(async () => {
       if (busy.current) return
       busy.current = true
       try {
-        const resultsUpdatedAt = buildResultTimestamps(group.results, group.results_updated_at, merged)
-        const ok = await persistGroupUpdates(group.id, userId, getStoredWriteToken(group.id, userId), {
-          ...(needsResults ? { results: merged } : {}),
-          results_updated_at: resultsUpdatedAt,
-        })
+        const ok = await syncResultsViaApi(group.id, userId, token)
         if (!cancelled && ok) {
           lastSavedKey.current = syncKey
           const updated = await refreshGroup?.(group.id)

@@ -221,13 +221,23 @@ export default function GroupDashboard({
   const adminBadges = isAdmin ? getAdminTaskBadges(currentGroup) : []
 
   useAutoSyncResults({
-    enabled: isAdmin,
+    enabled: Boolean(currentGroup?.id),
     group: currentGroup,
     setGroup: setCurrentGroup,
     wcMatches,
     userId: user.id,
     refreshGroup,
   })
+
+  const handleRefresh = useCallback(async () => {
+    await reloadWc()
+    const updated = await refreshGroup(currentGroup.id)
+    if (updated) {
+      setCurrentGroup(updated)
+      const u = updated.participants?.[user.id]
+      if (u) setCurrentUser(u)
+    }
+  }, [currentGroup.id, reloadWc, refreshGroup, user.id, setCurrentUser])
 
   useEffect(() => {
     if (!isAdmin || tab !== 'admin') return
@@ -236,16 +246,11 @@ export default function GroupDashboard({
     return () => clearInterval(t)
   }, [isAdmin, tab, reloadWc])
 
-  async function handleRefresh() {
-    const updated = await refreshGroup(currentGroup.id)
-    if (updated) {
-      setCurrentGroup(updated)
-      const u = updated.participants?.[user.id]
-      if (u) setCurrentUser(u)
-    }
-  }
-
-  useEffect(() => { const t = setInterval(handleRefresh, 60000); return () => clearInterval(t) }, [currentGroup.id])
+  useEffect(() => {
+    const ms = tab === 'group' ? 30_000 : 60_000
+    const t = setInterval(() => { void handleRefresh() }, ms)
+    return () => clearInterval(t)
+  }, [tab, handleRefresh])
   useEffect(() => { setPredPhase(getDefaultPredPhase(currentGroup.phase)) }, [currentGroup.phase])
 
   /** Cada entrada / cambio de grupo → Porra · Eliminatorias · Día de hoy */
@@ -493,6 +498,7 @@ export default function GroupDashboard({
                   wcStandings={wcStandings}
                   onLeave={onLeave}
                   currentUserId={user.id}
+                  onRefresh={handleRefresh}
                 />
               ),
               predictions: (
@@ -602,9 +608,16 @@ function RankingScoreChips({ participant, disputedLimits }) {
   )
 }
 
-function GroupTab({ leaderboard, group, groupResults, groupMatches, knockoutMatches, wcMatches = [], wcStandings = null, onLeave, currentUserId }) {
+function GroupTab({ leaderboard, group, groupResults, groupMatches, knockoutMatches, wcMatches = [], wcStandings = null, onLeave, currentUserId, onRefresh }) {
   const [view, setView] = useState('ranking')
   const [viewingParticipant, setViewingParticipant] = useState(null)
+  const { pull, refreshing: pullRefreshing, hint: pullHint } = usePullToRefresh(
+    () => onRefresh?.(),
+    {
+      enabled: typeof onRefresh === 'function',
+      getScrollElement: () => document.querySelector('.dash-swipe-tabs .swipe-tabs-panel[aria-hidden="false"]'),
+    },
+  )
   const scoringOpts = useMemo(
     () => ({ groupMatches, knockoutMatches, fotmobStandings: wcStandings, apiMatches: wcMatches }),
     [groupMatches, knockoutMatches, wcStandings, wcMatches],
@@ -631,6 +644,16 @@ function GroupTab({ leaderboard, group, groupResults, groupMatches, knockoutMatc
 
   return (
     <div className="dash-tab-panel dash-tab-panel--ranking">
+      {(pull > 0 || pullRefreshing) && (
+        <div
+          className={`live-ptr${pullRefreshing ? ' live-ptr--refreshing' : ''}`}
+          style={{ height: pullRefreshing ? 40 : Math.max(pull, 0) }}
+          aria-live="polite"
+        >
+          {pullHint && <span className="live-ptr-label">{pullHint}</span>}
+        </div>
+      )}
+
       <div className="group-view-toggle" role="tablist" aria-label="Vista de participantes">
         <button
           type="button"
