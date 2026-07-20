@@ -197,20 +197,26 @@ export default function GroupDashboard({
     () => ({ groupMatches, knockoutMatches, fotmobStandings: wcStandings, apiMatches: wcMatches }),
     [groupMatches, knockoutMatches, wcStandings, wcMatches],
   )
+  const mergedScoringResults = useMemo(
+    () => migrateGroupResults(
+      buildProvisionalResults(currentGroup?.results, wcMatches),
+      groupMatches,
+      knockoutMatches,
+    ),
+    [currentGroup?.results, wcMatches, groupMatches, knockoutMatches],
+  )
   const provisionalResults = useMemo(
-    () => (tab === 'group'
-      ? buildProvisionalResults(currentGroup?.results, wcMatches)
-      : (currentGroup?.results ?? {})),
-    [tab, currentGroup?.results, wcMatches],
+    () => (tab === 'group' ? mergedScoringResults : (currentGroup?.results ?? {})),
+    [tab, mergedScoringResults, currentGroup?.results],
   )
   const leaderboard = useMemo(
-    () => (tab === 'group'
+    () => (tab === 'group' && groupMatches.length > 0
       ? calcLeaderboard(
         { ...currentGroup, results: provisionalResults },
         scoringOpts,
       )
       : []),
-    [tab, currentGroup, provisionalResults, scoringOpts],
+    [tab, currentGroup, provisionalResults, scoringOpts, groupMatches.length],
   )
   const groupDeadlinePassed = isGroupDeadlinePassed(currentGroup)
   const bonusDeadlinePassed = isBonusDeadlinePassed(currentGroup)
@@ -534,6 +540,7 @@ export default function GroupDashboard({
                     bonus: effectiveBonusDeadline,
                   }}
                   group={currentGroup}
+                  scoringResults={mergedScoringResults}
                   user={user}
                   groupId={currentGroup.id}
                   onApplyMirror={importPredictions}
@@ -604,11 +611,14 @@ function RankingScoreChips({ participant, disputedLimits }) {
         const disputed = disputedLimits[chip.disputedKey] ?? 0
         const totalMax = SCORING_COLUMN_LIMITS[chip.limitKey] ?? 0
         const progress = formatDisputedProgress(disputed, totalMax)
+        const progressTitle = chip.key === 'inicioPts'
+          ? `${chip.title}: ${value} de ${disputed} pts disputados (${progress}). Incluye grupos, cuadro KO previsto y clasificación.`
+          : `${chip.title}: ${value} de ${disputed} pts disputados (${progress})`
         return (
           <div key={chip.key} className="ranking-chip-col">
             <span
               className={`ranking-chip ranking-chip--${chip.css}`}
-              title={`${chip.title}: ${value} de ${disputed} pts disputados (${progress})`}
+              title={progressTitle}
             >
               {formatPtsOfMax(value, disputed)}
             </span>
@@ -810,7 +820,7 @@ function PredictionsTab({
   groupMatches, knockoutMatches, teamOptions, wcApiError, onReloadWc,
   groupPhase, deadlines,
   orphanGroupKeys, matchRefs,
-  user, groupId, group, onApplyMirror, onSwitchGroup, notify,
+  user, groupId, group, scoringResults, onApplyMirror, onSwitchGroup, notify,
   apiMatches = [], fotmobStandings = null,
   scheduleNav = null,
   onScheduleNavConsumed,
@@ -941,6 +951,7 @@ function PredictionsTab({
           matchRefs={matchRefs}
           viewMode={effectiveViewMode}
           group={group}
+          scoringResults={scoringResults}
           loadError={wcApiError}
           onRetry={onReloadWc}
           apiMatches={apiMatches}
@@ -994,11 +1005,13 @@ function PredictionsTab({
 function GroupPhasePreds({
   preds, setPreds, inicioKoPreds, setInicioKoPreds,
   locked, matches = [], knockoutMatches = [], matchRefs, viewMode = 'daily', group,
+  scoringResults = null,
   loadError, onRetry, apiMatches = [], fotmobStandings = null, onOpenMatch,
 }) {
+  const resultsForScoring = scoringResults ?? group?.results ?? {}
   const publishedResults = useMemo(
-    () => buildPublishedResultsMap(group?.results, 'group', matches, group?.results_updated_at),
-    [group?.results, group?.results_updated_at, matches],
+    () => buildPublishedResultsMap(resultsForScoring, 'group', matches, group?.results_updated_at),
+    [resultsForScoring, group?.results_updated_at, matches],
   )
   function setScore(id, side, val) {
     if (val === '' || val === undefined) {
@@ -1033,13 +1046,13 @@ function GroupPhasePreds({
       {
         groupMatches: matches,
         knockoutMatches,
-        knockoutResults: group?.results?.knockout,
-        groupResults: group?.results?.group,
+        knockoutResults: resultsForScoring?.knockout,
+        groupResults: resultsForScoring?.group,
         fotmobStandings,
         apiMatches,
       },
     ),
-    [matches, preds, inicioKoPreds, knockoutMatches, group?.results?.knockout, group?.results?.group, fotmobStandings, apiMatches],
+    [matches, preds, inicioKoPreds, knockoutMatches, resultsForScoring?.knockout, resultsForScoring?.group, fotmobStandings, apiMatches],
   )
 
   const dailyAllMatches = useMemo(() => {

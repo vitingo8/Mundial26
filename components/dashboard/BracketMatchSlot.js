@@ -198,14 +198,14 @@ function BracketMatchSlotInner({
   }, [isInicioKo, inicioKnockoutScoring, predRow, match?.home, match?.away, match?.matchNumber])
 
   const pointsSummary = useMemo(() => {
-    if (isInicioKo && inicioKnockoutScoring) return inicioPointsSummary
+    if (isInicioKo) return inicioKnockoutScoring ? inicioPointsSummary : null
     if (!resultForScoring) return null
     return summarizeMatchPoints(predRow, resultForScoring, knockoutScoringOpts)
   }, [isInicioKo, inicioKnockoutScoring, inicioPointsSummary, resultForScoring, predRow, knockoutScoringOpts])
 
   const livePointsSummary = useMemo(() => {
-    if (isInicioKo && inicioKnockoutScoring) {
-      if (!isApiLive || !apiScore || publishedResult) return null
+    if (isInicioKo) {
+      if (!inicioKnockoutScoring || !isApiLive || !apiScore || publishedResult) return null
       return summarizeInicioKnockoutMatchPoints(
         predRow,
         { home: match.home, away: match.away },
@@ -221,8 +221,8 @@ function BracketMatchSlotInner({
   }, [isInicioKo, inicioKnockoutScoring, isApiLive, apiScore, publishedResult, apiRaw, knockoutAdvance, predRow, match?.home, match?.away, match?.matchNumber, knockoutScoringOpts])
 
   const apiFinishedPointsSummary = useMemo(() => {
-    if (isInicioKo && inicioKnockoutScoring) {
-      if (!isApiFinished || !apiScore || publishedResult) return null
+    if (isInicioKo) {
+      if (!inicioKnockoutScoring || !isApiFinished || !apiScore || publishedResult) return null
       return summarizeInicioKnockoutMatchPoints(
         predRow,
         { home: match.home, away: match.away },

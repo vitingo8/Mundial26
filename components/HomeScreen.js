@@ -1,16 +1,20 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '../lib/supabase'
 import { isValidEmail, normalizeEmail } from '../lib/emailUtils'
-import { findParticipantsByEmail } from '../lib/participantLookup'
+import { lookupParticipantsByEmail } from '../lib/participantLookupClient'
 import { getSavedEmail, saveEmail } from '../lib/savedEmail'
+
+function initialEmail() {
+  const saved = normalizeEmail(getSavedEmail())
+  return saved && isValidEmail(saved) ? saved : ''
+}
 import { InputActionRow } from './InputRow'
 import { Icon } from './icons'
 import LeagueLogo from './LeagueLogo'
 
 export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJoinNewUser, notify, onRecovered }) {
-  const [email, setEmail] = useState(() => getSavedEmail())
+  const [email, setEmail] = useState(initialEmail)
   const [loading, setLoading] = useState(false)
   const [pickList, setPickList] = useState(null)
 
@@ -28,7 +32,7 @@ export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJo
     setLoading(true)
     setPickList(null)
     try {
-      const matches = await findParticipantsByEmail(supabase, norm)
+      const matches = await lookupParticipantsByEmail(norm)
       if (matches.length === 1) {
         await onRecovered(matches[0].group_id, matches[0].id)
         setLoading(false)
@@ -43,8 +47,13 @@ export default function HomeScreen({ setScreen, setJoinCode, setJoinEmail, setJo
       setJoinNewUser(true)
       setJoinCode('')
       setScreen('join')
-    } catch {
-      notify('No se pudo comprobar el email. Inténtalo de nuevo.', 'error')
+    } catch (err) {
+      const msg = String(err?.message || '')
+      if (msg.includes('Supabase no configurado')) {
+        notify('Falta configurar Supabase. Revisa .env.local y reinicia npm run dev.', 'error')
+      } else {
+        notify(msg || 'No se pudo comprobar el email. Inténtalo de nuevo.', 'error')
+      }
     }
     setLoading(false)
   }

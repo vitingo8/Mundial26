@@ -284,7 +284,8 @@ export default function MatchRow({
   )
 
   const pointsSummary = useMemo(() => {
-    if (isInicioKo && inicioKnockoutScoring) {
+    if (isInicioKo) {
+      if (!inicioKnockoutScoring) return null
       return summarizeInicioKnockoutMatchPoints(
         predRow,
         { home, away },
@@ -294,7 +295,7 @@ export default function MatchRow({
     }
     if (!resultForScoring) return null
     return summarizeMatchPoints(predRow, resultForScoring, scoringOpts)
-  }, [isInicioKo, inicioKnockoutScoring, resultForScoring, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow])
+  }, [isInicioKo, inicioKnockoutScoring, resultForScoring, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow, matchNumber])
 
   const apiScore = apiRaw ? getApiMatchDisplayScore(apiRaw) : null
   const isApiLive = apiRaw && isLiveMatchStatus(apiRaw.status)
@@ -302,8 +303,8 @@ export default function MatchRow({
   const showPorraHeader = !readOnly && apiRaw && apiScore && isPorraApiResultStatus(apiRaw.status)
 
   const livePointsSummary = useMemo(() => {
-    if (isInicioKo && inicioKnockoutScoring) {
-      if (!isApiLive || !apiScore || publishedResult) return null
+    if (isInicioKo) {
+      if (!inicioKnockoutScoring || !isApiLive || !apiScore || publishedResult) return null
       return summarizeInicioKnockoutMatchPoints(predRow, { home, away }, inicioKnockoutScoring, matchNumber)
     }
     if (!isApiLive || !apiScore || publishedResult) return null
@@ -314,8 +315,8 @@ export default function MatchRow({
   }, [isInicioKo, inicioKnockoutScoring, isApiLive, apiScore, publishedResult, apiRaw, knockoutAdvance, homeVal, awayVal, advancesVal, home, away, scoringOpts, predRow])
 
   const apiFinishedPointsSummary = useMemo(() => {
-    if (isInicioKo && inicioKnockoutScoring) {
-      if (!isApiFinished || !apiScore || publishedResult) return null
+    if (isInicioKo) {
+      if (!inicioKnockoutScoring || !isApiFinished || !apiScore || publishedResult) return null
       return summarizeInicioKnockoutMatchPoints(predRow, { home, away }, inicioKnockoutScoring, matchNumber)
     }
     if (!isApiFinished || !resultForScoring) return null

@@ -1,0 +1,138 @@
+﻿Partido;Resultado real (90');Quién pasa (real);Inicio (predicción);Eliminatorias (predicción);G/E/P (pts);Resultado (pts);Suma (pts)
+P1 [A] México vs Sudáfrica;2-0;México;2-0;;1.8;3;4.8
+P2 [A] Corea del Sur vs República Checa;2-1;Corea del Sur;1-1;;;;
+P3 [B] Canadá vs Bosnia y Herzegovina;1-1;;1-0;;;;
+P4 [D] Estados Unidos vs Paraguay;4-1;Estados Unidos;0-2;;;;
+P5 [C] Haití vs Escocia;0-1;Escocia;0-3;;1.8;;1.8
+P6 [D] Australia vs Turquía;2-0;Australia;0-2;;;;
+P7 [C] Brasil vs Marruecos;1-1;;2-1;;;;
+P8 [B] Catar vs Suiza;1-1;;0-3;;;;
+P9 [E] Costa de Marfil vs Ecuador;1-0;Costa de Marfil;2-1;;1.8;;1.8
+P10 [E] Alemania vs Curazao;7-1;Alemania;5-0;;1.8;;1.8
+P11 [F] Países Bajos vs Japón;2-2;;1-0;;;;
+P12 [F] Suecia vs Túnez;5-1;Suecia;0-0;;;;
+P13 [H] Arabia Saudí vs Uruguay;1-1;;1-1;;1.8;3;4.8
+P14 [H] España vs Cabo Verde;0-0;;3-1;;;;
+P15 [G] Irán vs Nueva Zelanda;2-2;;1-0;;;;
+P16 [G] Bélgica vs Egipto;1-1;;2-0;;;;
+P17 [I] Francia vs Senegal;3-1;Francia;3-1;;1.8;3;4.8
+P18 [I] Irak vs Noruega;1-4;Noruega;0-1;;1.8;;1.8
+P19 [J] Argentina vs Argelia;3-0;Argentina;3-1;;1.8;;1.8
+P20 [J] Austria vs Jordania;3-1;Austria;3-0;;1.8;;1.8
+P21 [L] Ghana vs Panamá;1-0;Ghana;2-0;;1.8;;1.8
+P22 [L] Inglaterra vs Croacia;4-2;Inglaterra;2-1;;1.8;;1.8
+P23 [K] Portugal vs República Democrática del Congo;1-1;;4-0;;;;
+P24 [K] Uzbekistán vs Colombia;1-3;Colombia;1-3;;1.8;3;4.8
+P25 [A] República Checa vs Sudáfrica;1-1;;1-3;;;;
+P26 [B] Suiza vs Bosnia y Herzegovina;4-1;Suiza;3-0;;1.8;;1.8
+P27 [B] Canadá vs Catar;6-0;Canadá;2-0;;1.8;;1.8
+P28 [A] México vs Corea del Sur;1-0;México;2-1;;1.8;;1.8
+P29 [C] Brasil vs Haití;3-0;Brasil;6-0;;1.8;;1.8
+P30 [C] Escocia vs Marruecos;0-1;Marruecos;0-3;;1.8;;1.8
+P31 [D] Turquía vs Paraguay;0-1;Paraguay;3-1;;;;
+P32 [D] Estados Unidos vs Australia;2-0;Estados Unidos;1-0;;1.8;;1.8
+P33 [E] Alemania vs Costa de Marfil;2-1;Alemania;2-1;;1.8;3;4.8
+P34 [E] Ecuador vs Curazao;0-0;;2-0;;;;
+P35 [F] Países Bajos vs Suecia;5-1;Países Bajos;1-0;;1.8;;1.8
+P36 [F] Túnez vs Japón;0-4;Japón;0-2;;1.8;;1.8
+P37 [H] Uruguay vs Cabo Verde;2-2;;3-0;;;;
+P38 [H] España vs Arabia Saudí;4-0;España;3-1;;1.8;;1.8
+P39 [G] Bélgica vs Irán;0-0;;1-0;;;;
+P40 [G] Nueva Zelanda vs Egipto;1-3;Egipto;1-2;;1.8;;1.8
+P41 [I] Noruega vs Senegal;3-2;Noruega;1-3;;;;
+P42 [I] Francia vs Irak;3-0;Francia;2-0;;1.8;;1.8
+P43 [J] Argentina vs Austria;2-0;Argentina;2-0;;1.8;3;4.8
+P44 [J] Jordania vs Argelia;1-2;Argelia;0-2;;1.8;;1.8
+P45 [L] Inglaterra vs Ghana;0-0;;2-0;;;;
+P46 [L] Panamá vs Croacia;0-1;Croacia;0-3;;1.8;;1.8
+P47 [K] Portugal vs Uzbekistán;5-0;Portugal;3-0;;1.8;;1.8
+P48 [K] Colombia vs República Democrática del Congo;1-0;Colombia;3-0;;1.8;;1.8
+P49 [C] Escocia vs Brasil;0-3;Brasil;0-2;;1.8;;1.8
+P50 [C] Marruecos vs Haití;4-2;Marruecos;5-0;;1.8;;1.8
+P51 [B] Suiza vs Canadá;2-1;Suiza;2-0;;1.8;;1.8
+P52 [B] Bosnia y Herzegovina vs Catar;3-1;Bosnia y Herzegovina;0-0;;;;
+P53 [A] República Checa vs México;0-3;México;1-2;;1.8;;1.8
+P54 [A] Sudáfrica vs Corea del Sur;1-0;Sudáfrica;2-1;;1.8;;1.8
+P55 [E] Curazao vs Costa de Marfil;0-2;Costa de Marfil;0-3;;1.8;;1.8
+P56 [E] Ecuador vs Alemania;2-1;Ecuador;1-2;;;;
+P57 [F] Japón vs Suecia;1-1;;1-0;;;;
+P58 [F] Túnez vs Países Bajos;1-3;Países Bajos;0-1;;1.8;;1.8
+P59 [D] Turquía vs Estados Unidos;3-2;Turquía;2-1;;1.8;;1.8
+P60 [D] Paraguay vs Australia;0-0;;1-1;;1.8;;1.8
+P61 [I] Noruega vs Francia;1-4;Francia;0-2;;1.8;;1.8
+P62 [I] Senegal vs Irak;5-0;Senegal;2-0;;1.8;;1.8
+P63 [G] Egipto vs Irán;1-1;;1-0;;;;
+P64 [G] Nueva Zelanda vs Bélgica;1-5;Bélgica;0-1;;1.8;;1.8
+P65 [H] Cabo Verde vs Arabia Saudí;0-0;;0-1;;;;
+P66 [H] Uruguay vs España;0-1;España;1-3;;1.8;;1.8
+P67 [L] Panamá vs Inglaterra;0-2;Inglaterra;0-2;;1.8;3;4.8
+P68 [L] Croacia vs Ghana;2-1;Croacia;2-1;;1.8;3;4.8
+P69 [J] Argelia vs Austria;3-3;;0-1;;;;
+P70 [J] Jordania vs Argentina;1-3;Argentina;0-4;;1.8;;1.8
+P71 [K] Colombia vs Portugal;0-0;;1-2;;;;
+P72 [K] República Democrática del Congo vs Uzbekistán;3-1;República Democrática del Congo;1-1;;;;
+P73 Sudáfrica vs Canadá;0-1;Canadá;2-1;1-3;1.2;0.4;1.6
+P74 Alemania vs Paraguay;1-1;Paraguay;3-0;3-0;;;
+P75 Países Bajos vs Marruecos;1-1;Marruecos;0-2;1-2;;1;1
+P76 Brasil vs Japón;2-1;Brasil;2-1;3-1;3;4;7
+P77 Francia vs Suecia;3-0;Francia;3-0;4-1;1.2;1;2.2
+P78 Costa de Marfil vs Noruega;1-2;Noruega;1-3;2-3;1.2;0.4;1.6
+P79 México vs Ecuador;2-0;México;1-0;2-1;3;1;4
+P80 Inglaterra vs República Democrática del Congo;2-1;Inglaterra;2-0;2-0;1.2;1;2.2
+P81 Estados Unidos vs Bosnia y Herzegovina;2-0;Estados Unidos;2-1;1-1 (Estados Unidos);;0.4;0.4
+P82 Bélgica vs Senegal;2-2;Bélgica;3-1;1-0;;0.4;0.4
+P83 Portugal vs Croacia;2-1;Portugal;1-2;1-0;1.2;0.4;1.6
+P84 España vs Austria;3-0;España;3-1;2-0;3;1;4
+P85 Suiza vs Argelia;2-0;Suiza;1-0;1-1 (Suiza);;0.4;0.4
+P86 Argentina vs Cabo Verde;1-1;Argentina;3-2;5-0;;0.4;0.4
+P87 Colombia vs Ghana;1-0;Colombia;1-0;1-0;1.2;3;4.2
+P88 Australia vs Egipto;1-1;Egipto;1-0;0-0 (Egipto);1.2;1;2.2
+P89 Paraguay vs Francia;0-1;Francia;1-2;0-2;1.2;1;2.2
+P90 Canadá vs Marruecos;0-3;Marruecos;0-3;1-2;1.2;1;2.2
+P91 Brasil vs Noruega;1-2;Noruega;3-1;3-2;;;
+P92 México vs Inglaterra;2-3;Inglaterra;1-2;1-2;3;1;4
+P93 Portugal vs España;0-1;España;2-4;1-3;1.2;1;2.2
+P94 Estados Unidos vs Bélgica;1-4;Bélgica;1-1 (Bélgica);1-1 (Bélgica);;0.4;0.4
+P95 Argentina vs Egipto;3-2;Argentina;2-0;2-0;1.2;1;2.2
+P96 Suiza vs Colombia;0-0;Suiza;0-2;0-1;;;
+P97 Francia vs Marruecos;2-0;Francia;2-2 (Marruecos);3-1;1.2;0.4;1.6
+P98 España vs Bélgica;2-1;España;2-1;2-1;3;6;9
+P99 Noruega vs Inglaterra;1-1;Inglaterra;2-2 (Noruega);2-1;;;
+P100 Argentina vs Suiza;1-1;Argentina;2-1;2-0;;1;1
+P101 Francia vs España;0-2;España;2-3;2-2 (España);;1;1
+P102 Inglaterra vs Argentina;;;2-0;1-2;;;
+P103 Francia vs England/Argentina;;;2-3;;;;
+P104 España vs England/Argentina;;;2-1;;;;
+Clasif. Grupo A — México;1º real;;1º previsto;;0.6;0.6;1.2
+Clasif. Grupo A — Sudáfrica;2º real;;2º previsto;;0.6;0.6;1.2
+Clasif. Grupo B — Suiza;1º real;;1º previsto;;0.6;0.6;1.2
+Clasif. Grupo B — Canadá;2º real;;2º previsto;;0.6;0.6;1.2
+Clasif. Grupo C — Brasil;1º real;;1º previsto;;0.6;0.6;1.2
+Clasif. Grupo C — Marruecos;2º real;;2º previsto;;0.6;0.6;1.2
+Clasif. Grupo C — Escocia;3º real;;3º previsto;;0.6;0.6;1.2
+Clasif. Grupo D — Paraguay;3º real;;2º previsto;;0.6;;0.6
+Clasif. Grupo D — Estados Unidos;1º real;;3º previsto;;0.6;;0.6
+Clasif. Grupo E — Alemania;1º real;;1º previsto;;0.6;0.6;1.2
+Clasif. Grupo E — Costa de Marfil;2º real;;2º previsto;;0.6;0.6;1.2
+Clasif. Grupo E — Ecuador;3º real;;3º previsto;;0.6;0.6;1.2
+Clasif. Grupo F — Países Bajos;1º real;;1º previsto;;0.6;0.6;1.2
+Clasif. Grupo F — Japón;2º real;;2º previsto;;0.6;0.6;1.2
+Clasif. Grupo G — Bélgica;1º real;;1º previsto;;0.6;0.6;1.2
+Clasif. Grupo G — Egipto;2º real;;2º previsto;;0.6;0.6;1.2
+Clasif. Grupo G — Irán;3º real;;3º previsto;;0.6;0.6;1.2
+Clasif. Grupo H — España;1º real;;1º previsto;;0.6;0.6;1.2
+Clasif. Grupo H — Uruguay;3º real;;2º previsto;;0.6;;0.6
+Clasif. Grupo I — Francia;1º real;;1º previsto;;0.6;0.6;1.2
+Clasif. Grupo I — Senegal;3º real;;2º previsto;;0.6;;0.6
+Clasif. Grupo I — Noruega;2º real;;3º previsto;;0.6;;0.6
+Clasif. Grupo J — Argentina;1º real;;1º previsto;;0.6;0.6;1.2
+Clasif. Grupo J — Austria;2º real;;2º previsto;;0.6;0.6;1.2
+Clasif. Grupo J — Argelia;3º real;;3º previsto;;0.6;0.6;1.2
+Clasif. Grupo K — Portugal;2º real;;1º previsto;;0.6;;0.6
+Clasif. Grupo K — Colombia;1º real;;2º previsto;;0.6;;0.6
+Clasif. Grupo L — Inglaterra;1º real;;1º previsto;;0.6;0.6;1.2
+Clasif. Grupo L — Croacia;2º real;;2º previsto;;0.6;0.6;1.2
+Clasif. Grupo L — Ghana;3º real;;3º previsto;;0.6;0.6;1.2
+;;;;;;Subtotal partidos;164
+;;;;;;Subtotal clasificación;31.8
+;;;;;;TOTAL ranking;195.8
