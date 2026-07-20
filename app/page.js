@@ -107,14 +107,12 @@ export default function Page() {
           return
         }
         const cached = readDashboardCache(groupId, userId)
-        if (cached?.group && cached?.user) {
-          perfMark(F.SESSION, 'Refresco Supabase en background (UI ya tiene caché)')
-          void restoreSession(groupId, userId)
-          return
-        }
-        perfMark(F.SESSION, 'Sin caché local — esperando Supabase antes de mostrar dashboard')
+        perfMark(F.SESSION, cached?.group
+          ? 'Refresco Supabase (actualizar ganadores y puntuación)'
+          : 'Sin caché local — esperando Supabase')
         const ok = await restoreSession(groupId, userId)
         if (ok) return
+        if (cached?.group && cached?.user) return
         setScreen('home')
         return
       }

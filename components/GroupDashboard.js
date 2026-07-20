@@ -17,6 +17,7 @@ import {
   calcLeaderboard,
 } from '../lib/gameData'
 import { bonusPlayerNamesMatch } from '../lib/bonusPlayerMatch'
+import { isGroupActualsComplete } from '../lib/groupActuals'
 import {
   getDefaultGroupDeadline,
   getDefaultKnockoutDeadline,
@@ -229,6 +230,16 @@ export default function GroupDashboard({
     userId: user.id,
     refreshGroup,
   })
+
+  /** Caché local puede quedar sin ganadores reales; forzar lectura fresca de Supabase. */
+  useEffect(() => {
+    if (!currentGroup?.id || isGroupActualsComplete(currentGroup.actuals)) return
+    let cancelled = false
+    void refreshGroup(currentGroup.id).then(g => {
+      if (!cancelled && g) setCurrentGroup(g)
+    })
+    return () => { cancelled = true }
+  }, [currentGroup?.id, currentGroup?.actuals, refreshGroup, setCurrentGroup])
 
   const handleRefresh = useCallback(async () => {
     await reloadWc()
