@@ -11,8 +11,8 @@ import { summarizeMatchPoints } from '../lib/matchPointsDisplay.js'
 import { enrichKnockoutResultWithAdvances } from '../lib/knockoutRegulationScore.js'
 import { resolveKnockoutResult, resolveKnockoutTeamsForScoring, buildKnockoutScoringContext } from '../lib/knockoutMatchScoring.js'
 import { calcMatchPointsSplit } from '../lib/gameData.js'
-import { transformGroupMatches, transformKnockoutMatches } from '../lib/footballData.js'
 import { getWcMatchesSafe } from '../lib/fotmobServerCache.js'
+import { buildScoringOptsFromWc } from './scoringOptsFromWc.mjs'
 import { indexApiMatches } from '../lib/apiMatchScores.js'
 import { PHASE_WEIGHT } from '../lib/gameData.js'
 
@@ -43,17 +43,13 @@ if (!participant) throw new Error('user not found')
 
 const wcData = await getWcMatchesSafe()
 const wcMatches = wcData?.matches || []
-const groupMatches = transformGroupMatches(wcMatches)
-const knockoutMatches = transformKnockoutMatches(wcMatches)
+const scoringOpts = buildScoringOptsFromWc(wcData)
+const { groupMatches, knockoutMatches } = scoringOpts
 const apiById = indexApiMatches(wcMatches)
 
 function scoreWith(km, label) {
   const p = { predictions: participant.predictions }
-  const cols = calcParticipantScoreColumns(p, group, {
-    groupMatches,
-    knockoutMatches: km,
-    apiMatches: wcMatches,
-  })
+  const cols = calcParticipantScoreColumns(p, group, scoringOpts)
   return { label, ...cols }
 }
 
