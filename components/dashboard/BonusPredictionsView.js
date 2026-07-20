@@ -1,6 +1,7 @@
 'use client'
 
 import { SCORING } from '../../lib/gameData'
+import { bonusPlayerNamesMatch } from '../../lib/bonusPlayerMatch'
 import { Icon, BONUS_FIELD_ICONS } from '../icons'
 
 export const BONUS_PRED_FIELDS = [
@@ -25,10 +26,7 @@ export default function BonusPredictionsView({ preds = {}, readOnly = false, act
         {BONUS_PRED_FIELDS.map(f => {
           const pred = String(preds[f.id] ?? '').trim()
           const actual = actuals[f.id]
-          const hit =
-            pred &&
-            actual &&
-            pred.toLowerCase() === actual.trim().toLowerCase()
+          const hit = pred && actual && bonusPlayerNamesMatch(pred, actual)
 
           return (
             <article key={f.id} className="participant-preds-bonus-card">
@@ -63,10 +61,7 @@ export default function BonusPredictionsView({ preds = {}, readOnly = false, act
       {BONUS_PRED_FIELDS.map(f => {
         const pred = String(preds[f.id] ?? '').trim()
         const actual = actuals[f.id]
-        const hit =
-          pred &&
-          actual &&
-          pred.toLowerCase() === actual.trim().toLowerCase()
+        const hit = pred && actual && bonusPlayerNamesMatch(pred, actual)
 
         return (
           <div key={f.id} className="dash-bonus-field">

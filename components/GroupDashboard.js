@@ -16,6 +16,7 @@ import {
   KNOCKOUT_ROUNDS, SCORING, ALL_TEAMS, PROVISIONAL_TEAMS_NOTE,
   calcLeaderboard,
 } from '../lib/gameData'
+import { bonusPlayerNamesMatch } from '../lib/bonusPlayerMatch'
 import {
   getDefaultGroupDeadline,
   getDefaultKnockoutDeadline,
@@ -1367,10 +1368,7 @@ function BonusPreds({ preds, setPreds, locked, actuals = {} }) {
       {fields.map(f => {
         const actual = actuals[f.id]
         const pred = preds[f.id]
-        const hit =
-          pred &&
-          actual &&
-          pred.trim().toLowerCase() === actual.trim().toLowerCase()
+        const hit = pred && actual && bonusPlayerNamesMatch(pred, actual)
         const earned = hit ? f.pts : 0
         return (
         <div key={f.id} className="dash-bonus-field">
